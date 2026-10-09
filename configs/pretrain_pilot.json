@@ -1,0 +1,42 @@
+{
+  "mode": "formal",
+  "stage": "pretrain",
+  "model": {
+    "vocab_size": 8192,
+    "hidden_size": 512,
+    "num_hidden_layers": 6,
+    "num_attention_heads": 8,
+    "num_key_value_heads": 4,
+    "intermediate_size": 1664,
+    "max_position_embeddings": 512,
+    "rms_norm_eps": 1e-06,
+    "rope_theta": 1000000.0,
+    "dropout": 0.0,
+    "qk_norm": true,
+    "tie_word_embeddings": true
+  },
+  "tokenizer": "tokenizer/english",
+  "data": "data/processed/general/manifest.json",
+  "validation_data": "data/processed/general_validation/manifest.json",
+  "output_dir": "runs/pretrain",
+  "train": {
+    "device": "auto",
+    "seed": 130,
+    "batch_size": 4,
+    "grad_accumulation": 8,
+    "seq_len": 512,
+    "max_updates": 61,
+    "max_tokens": 100000000,
+    "schedule_updates": 6104,
+    "learning_rate": 0.0003,
+    "min_lr_ratio": 0.1,
+    "warmup_updates": 122,
+    "weight_decay": 0.1,
+    "clip_grad": 1.0,
+    "save_every": 10,
+    "validation_every": 10,
+    "validation_max_batches": 50,
+    "amp": true,
+    "num_workers": 0
+  }
+}

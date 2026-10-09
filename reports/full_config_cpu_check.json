@@ -1,0 +1,27 @@
+{
+  "check": "full_24m_cpu_forward_backward_adamw_step",
+  "parameters": 24255744,
+  "batch": 1,
+  "sequence_length": 16,
+  "loss": 8.97475814819336,
+  "elapsed_seconds": 0.1843295999997281,
+  "environment": {
+    "python": "3.12.14",
+    "platform": "Windows",
+    "packages": {
+      "torch": "2.14.1",
+      "numpy": "2.5.3",
+      "tokenizers": "0.22.2",
+      "scikit-learn": "1.9.1",
+      "datasets": null
+    },
+    "git_commit": null,
+    "cuda_available": false,
+    "cuda": null,
+    "gpu": null,
+    "gpu_total_bytes": null,
+    "system_ram_bytes": null,
+    "disk_free_bytes": 737466183680
+  },
+  "note": "One engineering update on random IDs, not pretraining or T4 measurement"
+}

@@ -1,0 +1,58 @@
+{
+  "status": "engineering_smoke_completed",
+  "synthetic_only": true,
+  "warning": "These tiny runs and overlapping synthetic templates do not measure financial ability.",
+  "model": {
+    "vocab_size": 441,
+    "hidden_size": 64,
+    "num_hidden_layers": 2,
+    "num_attention_heads": 4,
+    "num_key_value_heads": 2,
+    "intermediate_size": 192,
+    "max_position_embeddings": 256
+  },
+  "stages": {
+    "pretrain": {
+      "updates": 2,
+      "tokens": 1727,
+      "num_parameters": 126912,
+      "completed_epochs": 1
+    },
+    "domain": {
+      "updates": 2,
+      "tokens": 1727,
+      "num_parameters": 126912,
+      "completed_epochs": 1
+    },
+    "sft": {
+      "updates": 2,
+      "tokens": 8,
+      "num_parameters": 126912,
+      "completed_epochs": 0
+    },
+    "dpo": {
+      "updates": 2,
+      "tokens": 8,
+      "num_parameters": 126912,
+      "completed_epochs": 0
+    },
+    "resume": {
+      "updates": 3,
+      "tokens": 12,
+      "num_parameters": 126912,
+      "completed_epochs": 0
+    }
+  },
+  "environment": {
+    "python": "3.12.14",
+    "platform": "Windows",
+    "packages": {
+      "torch": "2.14.1",
+      "numpy": "2.5.3",
+      "tokenizers": "0.22.2",
+      "scikit-learn": "1.9.1",
+      "datasets": null
+    },
+    "cuda_available": false
+  }
+}
