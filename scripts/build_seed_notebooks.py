@@ -82,6 +82,7 @@ def build():
                        "--destination", destination, "--working-copy")
         ''')
     cells += [code('''
+        SEED_TRAIN_SUCCEEDED = False
         if not torch.cuda.is_available():
             raise RuntimeError("请选择 T4 GPU 运行时。")
         CONFIG = Path("data/processed") / SEED_VERSION / "pilot_config.json"
@@ -93,15 +94,23 @@ def build():
         runtime_path.write_text(json.dumps(runtime_config, indent=2), encoding="utf-8")
         print(json.dumps(runtime_config, indent=2))
         print("GPU:", torch.cuda.get_device_name(0))
-        '''), markdown("运行下面单元格开始短段训练。已有本版本检查点时自动校验并恢复最新进度；数据或运行时不兼容会明确报错，不覆盖进度重新开始。"), code('''
+        '''), markdown("运行下面单元格开始短段训练。已有本版本检查点时自动校验并恢复最新进度；数据或运行时不兼容会明确报错。已经达到本段训练预算时只读取结果，保留原检查点和性能记录。"), code('''
+        SEED_TRAIN_SUCCEEDED = False
         from finllm.runtime import restore_seed_checkpoint
         RESUME_CHECKPOINT = restore_seed_checkpoint(runtime_config["output_dir"], runtime_config["backup_dir"])
         arguments = ["train", "--config", runtime_path]
         if RESUME_CHECKPOINT:
             arguments += ["--resume", RESUME_CHECKPOINT]
         finllm(*arguments)
-        print((Path(runtime_config["output_dir"]) / "run_summary.json").read_text(encoding="utf-8"))
-        '''), code(SEED_BACKUP), markdown("将上方显示的 GPU 型号及 run_summary.json 中的峰值显存、tokens/second、tokens 和验证 loss 带回工作对话后决定下一段预算。SEntFiN 的立场审核和资产映射仍是 SFT/DPO 的前置材料；本次不声称金融预测能力。")]
+        RUN_SUMMARY = Path(runtime_config["output_dir"]) / "run_summary.json"
+        require(RUN_SUMMARY, Path(runtime_config["output_dir"]) / "latest.pt",
+                Path(runtime_config["output_dir"]) / "latest.pt.json")
+        print(RUN_SUMMARY.read_text(encoding="utf-8"))
+        SEED_TRAIN_SUCCEEDED = True
+        '''), code('if not globals().get("SEED_TRAIN_SUCCEEDED", False):\n'
+                   '    raise RuntimeError("训练单元格尚未成功结束；请先处理上方错误。现有备份保持不变。")\n'
+                   + SEED_BACKUP),
+        markdown("将上方显示的 GPU 型号及 run_summary.json 中的峰值显存、tokens/second、tokens 和验证 loss 带回工作对话后决定下一段预算。SEntFiN 的立场审核和资产映射仍是 SFT/DPO 的前置材料；本次不声称金融预测能力。")]
     write("02a_seed_pilot.ipynb", cells)
 
 

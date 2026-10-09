@@ -1,0 +1,32 @@
+{
+  "date": "2026-10-09",
+  "issue": "https://github.com/130U/130U-FinLLM/issues/1",
+  "reported_revision": "703d606bd1debfbf71a526ec57507e83fb667bd2",
+  "execution": "Local Windows CPU, Python 3.12.14; actual long-lived Jupyter kernels and actual editable installation",
+  "local_tests": {"passed": 120, "seconds": 73.26},
+  "notebooks_validated": 9,
+  "pip_check": "passed",
+  "integration": {
+    "old_live_kernel_error_reproduced": "ModuleNotFoundError: No module named 'finllm'",
+    "current_kernel_and_fresh_process_import": "passed",
+    "repeat_bootstrap_in_same_kernel": "passed",
+    "seed_prepare_configuration_restore_and_reuse": "passed",
+    "training_failure_blocks_final_snapshot": "passed",
+    "first_training_updates": 2,
+    "completed_budget_rerun_preserves_artifact_hashes_and_mtimes": true,
+    "fresh_python_kernel_and_project_directory_restore": "passed",
+    "restored_training_updates": 3,
+    "restored_training_tokens": 96,
+    "local_and_live_checkpoint_sha256_match": true
+  },
+  "substitutions": [
+    "Local Git fixture replaces GitHub for the kernel integration test.",
+    "Existing dependencies reused offline; editable package installation is real.",
+    "Local snapshot directory replaces Google Drive service.",
+    "Explicit tiny synthetic CPU model/data/config replaces the 24M T4 budget."
+  ],
+  "limitations": [
+    "No new cloud T4 execution or throughput/VRAM measurement was performed.",
+    "Screenshot of an 01a runtime disconnect does not establish its cause."
+  ]
+}

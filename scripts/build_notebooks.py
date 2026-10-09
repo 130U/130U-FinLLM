@@ -17,7 +17,7 @@ def code(text):
 
 
 BOOTSTRAP = '''
-import os, sys, json, shutil, subprocess
+import os, sys, json, shutil, subprocess, importlib
 from pathlib import Path
 
 REPOSITORY = "https://github.com/130U/130U-FinLLM.git"
@@ -82,13 +82,86 @@ def check_tokenizer_compatibility(requirements):
         raise RuntimeError(f"tokenizers {installed} 与现有环境不兼容：{incompatible}")
     print("tokenizers 兼容性检查通过：", installed)
 
+def check_project_dependencies():
+    # Read the refreshed installed metadata, not the previous editable checkout.
+    problems = []
+    for value in metadata.requires("finllm-130u") or []:
+        requirement = Requirement(value)
+        if requirement.marker is not None and not requirement.marker.evaluate({"extra": ""}):
+            continue
+        try:
+            installed = metadata.version(requirement.name)
+        except metadata.PackageNotFoundError:
+            problems.append(f"缺少 {requirement.name}")
+            continue
+        if installed not in requirement.specifier:
+            problems.append(f"{requirement.name}=={installed} 不满足 {requirement}")
+    if problems:
+        raise RuntimeError("项目依赖检查失败：" + "; ".join(problems))
+    print("项目已安装依赖检查通过。")
+
+def activate_project_in_kernel():
+    # pip installs the editable .pth for NEW Python processes. A notebook kernel
+    # that was already running does not process that .pth again automatically.
+    source = (PROJECT / "src").resolve()
+    expected = source / "finllm"
+    if not (expected / "__init__.py").is_file():
+        raise RuntimeError(f"缺少项目 Python 源码：{expected}")
+    sys.path[:] = [str(source)] + [entry for entry in sys.path if entry != str(source)]
+    # Git may have changed code in the same directory since an earlier cell run.
+    # Refresh only our modules; never reload Torch or its live CUDA state.
+    for name in tuple(sys.modules):
+        if name == "finllm" or name.startswith("finllm."):
+            del sys.modules[name]
+    importlib.invalidate_caches()
+    package = importlib.import_module("finllm")
+    runtime = importlib.import_module("finllm.runtime")
+    for module, filename in ((package, "__init__.py"), (runtime, "runtime.py")):
+        if Path(module.__file__).resolve() != expected / filename:
+            raise RuntimeError(f"当前 Notebook 导入了错误的项目位置：{module.__file__}")
+    if not callable(runtime.restore_seed_checkpoint):
+        raise RuntimeError("当前 Notebook 的检查点恢复接口不可用。")
+    print("当前 Notebook 内核导入检查通过：", runtime.__file__)
+
+def check_fresh_process_import():
+    # Verify the installed editable package separately, without injecting src
+    # into PYTHONPATH. Both the current kernel and future CLI processes must work.
+    probe = """import json, sys
+from pathlib import Path
+import finllm
+import finllm.runtime as runtime
+expected = Path(sys.argv[1]).resolve() / 'finllm'
+for module, filename in ((finllm, '__init__.py'), (runtime, 'runtime.py')):
+    if Path(module.__file__).resolve() != expected / filename:
+        raise RuntimeError('Fresh process imported the wrong project: ' + str(module.__file__))
+if not callable(runtime.restore_seed_checkpoint):
+    raise RuntimeError('Fresh process checkpoint restore is unavailable')
+print(json.dumps({'finllm': str(Path(finllm.__file__).resolve()), 'runtime': str(Path(runtime.__file__).resolve())}))
+"""
+    result = subprocess.check_output([sys.executable, "-c", probe, str(PROJECT / "src")],
+                                     cwd=PROJECT, text=True)
+    print("新 Python 进程导入检查通过：", result.strip())
+
 if tuple(int(v) for v in torch.__version__.split("+")[0].split(".")[:2]) < (2, 5):
     raise RuntimeError("需要 PyTorch >= 2.5；请更换较新的 Colab 运行环境。")
 tokenizer_requirements = tokenizer_install_requirements()
 print("本次 tokenizers 约束：", tokenizer_requirements)
-command(sys.executable, "-m", "pip", "install", "-q", "numpy>=1.26,<3", *tokenizer_requirements, "scikit-learn>=1.5,<2")
-command(sys.executable, "-m", "pip", "install", "-q", "-e", ".", "--no-deps")
+torch_version_before = metadata.version("torch")
+torch_file_before = Path(torch.__file__).resolve()
+# One resolver transaction replaces the previous finllm metadata AND its
+# dependencies. Upgrading tokenizers first leaves old finllm bounds active and
+# produces a misleading conflict warning even when the eventual install works.
+# The exact installed Torch build is constrained, so pip keeps Colab's CUDA build.
+command(sys.executable, "-m", "pip", "install", "-q", "-e", ".",
+        "torch==" + torch_version_before, *tokenizer_requirements)
+importlib.invalidate_caches()
+if metadata.version("torch") != torch_version_before or Path(torch.__file__).resolve() != torch_file_before:
+    raise RuntimeError("PyTorch 环境意外变化，请保留输出并停止训练。")
 check_tokenizer_compatibility(tokenizer_requirements)
+check_project_dependencies()
+activate_project_in_kernel()
+check_fresh_process_import()
+print("Notebook 环境准备完成；PyTorch 保持：", torch_version_before)
 
 def finllm(*args):
     command(sys.executable, "-u", "-m", "finllm", *args, cwd=PROJECT)

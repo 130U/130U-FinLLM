@@ -416,6 +416,7 @@ def run_training(config: dict[str, Any]) -> dict[str, Any]:
     progress: dict[str, Any] = dict(updates=0, attempted_updates=0, tokens=0, successful_tokens=0, input_tokens=0,
                                    epoch=0, cursor=0, best_validation_loss=None, best_macro_f1=None,
                                    consecutive_amp_skips=0, partial_token_batch=False)
+    resumed = None
     if config.get("resume"):
         resumed = load_checkpoint(config["resume"])
         _check_compatible(resumed, model_config, tokenizer_hash, mode)
@@ -440,12 +441,52 @@ def run_training(config: dict[str, Any]) -> dict[str, Any]:
     if latest_path.exists() and not config.get("resume"):
         raise ValueError(f"Output directory already contains a run; resume it or use a new directory: {output}")
     model.train()
-    last_loss: float | None = None
-    last_validation: dict[str, float] | None = None
+    last_loss: float | None = resumed.get("last_loss") if resumed is not None else None
+    last_validation: dict[str, float] | None = resumed.get("last_validation") if resumed is not None else None
     start = time.perf_counter()
     start_tokens = progress["tokens"]
     backed_up_paths: dict[str, str] = {}
     saved_attempts: dict[str, int] = {}
+
+    def session_report(elapsed: float, no_training: bool = False) -> dict[str, Any]:
+        return {
+            "stage": stage, "mode": mode, "updates": progress["updates"], "attempted_updates": progress["attempted_updates"],
+            "tokens": progress["tokens"], "successful_tokens": progress["successful_tokens"], "input_tokens": progress["input_tokens"],
+            "token_definition": "nonpadding supervised positions; one chosen label per DPO pair",
+            "latest_checkpoint": str(latest_path), "best_checkpoint": str(best_path) if best_path.exists() else None,
+            "loss": last_loss, "validation": last_validation, "elapsed_seconds": elapsed,
+            "tokens_per_second": None if no_training else (progress["tokens"] - start_tokens) / max(elapsed, 1e-9),
+            "peak_vram_bytes": torch.cuda.max_memory_allocated(device) if device.type == "cuda" and not no_training else None,
+            "num_parameters": sum(parameter.numel() for parameter in model.parameters()),
+            "epoch": cursor.epoch, "cursor": cursor.cursor,
+            "completed_epochs": cursor.epoch + int(cursor.cursor == len(dataset)),
+            "max_epochs": settings["max_epochs"], "effective_max_tokens": max_tokens,
+            "backup_checkpoints": backed_up_paths,
+            "resumed_no_training": no_training,
+        }
+
+    # Run-all is common in Colab. A verified completed checkpoint is a no-op:
+    # do not replace it, upload it again, or erase its measured pilot summary.
+    budget_complete = progress["updates"] >= settings["max_updates"] or (max_tokens is not None and progress["tokens"] >= max_tokens)
+    if resumed is not None and budget_complete:
+        report = session_report(0.0, no_training=True)
+        if Path(config["resume"]).resolve() != latest_path.resolve():
+            report["latest_checkpoint"] = str(config["resume"])
+        try:
+            previous_report = json.loads((output / "run_summary.json").read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            previous_report = None
+        measured_keys = {"elapsed_seconds", "tokens_per_second", "peak_vram_bytes", "backup_checkpoints", "resumed_no_training"}
+        if isinstance(previous_report, dict) and all(previous_report.get(key) == value for key, value in report.items() if key not in measured_keys):
+            # Retain the original session's throughput and memory measurements;
+            # the return flag distinguishes them from a new training session.
+            return {**previous_report, "resumed_no_training": True}
+        # Live checkpoint backups need not contain a completed run summary.
+        # Checkpoint metrics are known; new-session throughput/VRAM are not.
+        report_text = json.dumps(report, indent=2) + "\n"
+        (output / "report.json").write_text(report_text, encoding="utf-8")
+        (output / "run_summary.json").write_text(report_text, encoding="utf-8")
+        return report
 
     def checkpoint(path: Path) -> None:
         progress.update(cursor.state_dict())
@@ -526,6 +567,7 @@ def run_training(config: dict[str, Any]) -> dict[str, Any]:
         event = {"stage": stage, "updates": progress["updates"], "attempted_updates": progress["attempted_updates"], "supervised_tokens": progress["tokens"], "loss": last_loss, "learning_rate": optimizer.param_groups[0]["lr"], "amp_skipped": not successful}
         with (output / "metrics.jsonl").open("a", encoding="utf-8") as handle:
             handle.write(json.dumps(event) + "\n")
+        print(json.dumps(event), flush=True)
         if progress["consecutive_amp_skips"] >= settings["max_consecutive_amp_skips"]:
             checkpoint(latest_path)
             raise FloatingPointError("Repeated AMP overflow; saved a complete boundary checkpoint. Lower learning rate or inspect data before continuing.")
@@ -533,20 +575,7 @@ def run_training(config: dict[str, Any]) -> dict[str, Any]:
     if saved_attempts.get(latest_path.name) != progress["attempted_updates"]:
         checkpoint(latest_path)
     elapsed = time.perf_counter() - start
-    report = {
-        "stage": stage, "mode": mode, "updates": progress["updates"], "attempted_updates": progress["attempted_updates"],
-        "tokens": progress["tokens"], "successful_tokens": progress["successful_tokens"], "input_tokens": progress["input_tokens"],
-        "token_definition": "nonpadding supervised positions; one chosen label per DPO pair",
-        "latest_checkpoint": str(latest_path), "best_checkpoint": str(best_path) if best_path.exists() else None,
-        "loss": last_loss, "validation": last_validation, "elapsed_seconds": elapsed,
-        "tokens_per_second": (progress["tokens"] - start_tokens) / max(elapsed, 1e-9),
-        "peak_vram_bytes": torch.cuda.max_memory_allocated(device) if device.type == "cuda" else None,
-        "num_parameters": sum(parameter.numel() for parameter in model.parameters()),
-        "epoch": cursor.epoch, "cursor": cursor.cursor,
-        "completed_epochs": cursor.epoch + int(cursor.cursor == len(dataset)),
-        "max_epochs": settings["max_epochs"], "effective_max_tokens": max_tokens,
-        "backup_checkpoints": backed_up_paths,
-    }
+    report = session_report(elapsed)
     report_text = json.dumps(report, indent=2) + "\n"
     (output / "report.json").write_text(report_text, encoding="utf-8")
     (output / "run_summary.json").write_text(report_text, encoding="utf-8")

@@ -11,7 +11,7 @@ dependencies = ["torch>=2.5,<3", "numpy>=1.26,<3", "tokenizers>=0.21,<0.24", "sc
 
 [project.optional-dependencies]
 data = ["datasets>=3.6,<5", "beautifulsoup4>=4.12,<5", "requests>=2.32,<3"]
-test = ["pytest>=8,<10", "nbformat>=5.10,<6", "beautifulsoup4>=4.12,<5"]
+test = ["pytest>=8,<10", "nbformat>=5.10,<6", "beautifulsoup4>=4.12,<5", "ipykernel>=6.29,<8", "jupyter_client>=8.6,<9", "wheel>=0.44", "setuptools>=69"]
 
 [project.scripts]
 finllm = "finllm.cli:main"

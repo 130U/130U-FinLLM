@@ -12,6 +12,8 @@ An English financial stance language model trained from random weights: pretrain
 
 01a 支持完整性校验后的重复运行及 Drive 恢复，可使用 CPU。旧版出现目录已存在或 tokenizers 依赖冲突时，请按 [Colab 修复说明](docs/COLAB_DEBUG.md) 重新打开最新版，无需删除已有成果。
 
+02a 出现 `No module named 'finllm'` 的内核安装问题已修复，并新增实际 Jupyter 内核的训练／恢复集成测试。已有 seed_v1 备份时直接使用最新版 02a，见 [内核修复记录](docs/COLAB_KERNEL_FIX.md)及 [Issue #1](https://github.com/130U/130U-FinLLM/issues/1)。
+
 首批训练数据为 4,976,894 个通用 tokens 和 341,309 个金融 tokens；验证文本另存。全部 10,686 个不同候选任务标题在词表训练前排除。没有将来源情绪标签自动改为资产立场标签。
 
 ## 第一次：只运行这个 Notebook

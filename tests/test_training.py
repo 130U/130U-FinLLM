@@ -255,3 +255,65 @@ def test_periodic_backup_survives_later_training_failure(tiny_config, tmp_path, 
     assert payload["progress"]["updates"] == 1
     assert payload["progress"]["tokens"] == 64
     assert not (Path(tiny_config["output_dir"]) / "run_summary.json").exists()
+
+
+@pytest.mark.parametrize("token_limited", [False, True])
+def test_completed_resume_preserves_checkpoints_and_measured_summary(tiny_config, tmp_path, monkeypatch, token_limited):
+    import finllm.training as module
+
+    tiny_config["train"]["max_updates"] = 2
+    if token_limited:
+        tiny_config["train"]["max_tokens"] = 37
+    tiny_config["validation_data"] = tiny_config["data"]
+    tiny_config["backup_dir"] = str(tmp_path / "persistent_drive")
+    original = run_training(tiny_config)
+    assert original["loss"] is not None and original["validation"] is not None
+
+    def inventory():
+        return {str(path): (sha256_file(path), path.stat().st_mtime_ns)
+                for directory in (Path(tiny_config["output_dir"]), Path(tiny_config["backup_dir"]))
+                for path in directory.rglob("*") if path.is_file()}
+
+    before = inventory()
+
+    def unexpected_work(*args, **kwargs):
+        pytest.fail("A completed resume must not train, save, or upload a checkpoint")
+
+    monkeypatch.setattr(module, "_loss", unexpected_work)
+    monkeypatch.setattr(module, "save_checkpoint", unexpected_work)
+    monkeypatch.setattr(module, "snapshot_to_drive", unexpected_work)
+    tiny_config["resume"] = original["latest_checkpoint"]
+    repeated = run_training(tiny_config)
+    assert repeated == {**original, "resumed_no_training": True}
+    assert inventory() == before
+    persisted = json.loads((Path(tiny_config["output_dir"]) / "run_summary.json").read_text(encoding="utf-8"))
+    assert persisted == original
+
+
+def test_completed_live_restore_keeps_checkpoint_metrics_without_new_performance_claims(tiny_config, tmp_path, monkeypatch):
+    import finllm.training as module
+    from finllm.runtime import restore_seed_checkpoint
+
+    tiny_config["train"]["max_updates"] = 1
+    tiny_config["validation_data"] = tiny_config["data"]
+    tiny_config["backup_dir"] = str(tmp_path / "persistent_drive")
+    original = run_training(tiny_config)
+    tiny_config["output_dir"] = str(tmp_path / "fresh_runtime")
+    tiny_config["resume"] = restore_seed_checkpoint(tiny_config["output_dir"], tiny_config["backup_dir"])
+    before = {str(path): (sha256_file(path), path.stat().st_mtime_ns)
+              for path in Path(tiny_config["output_dir"]).rglob("*") if path.is_file()}
+
+    def unexpected_work(*args, **kwargs):
+        pytest.fail("Restoring a completed pilot must not change checkpoint pairs")
+
+    monkeypatch.setattr(module, "_loss", unexpected_work)
+    monkeypatch.setattr(module, "save_checkpoint", unexpected_work)
+    restored = run_training(tiny_config)
+    assert restored["resumed_no_training"] is True
+    for key in ("loss", "validation", "updates", "attempted_updates", "tokens", "successful_tokens"):
+        assert restored[key] == original[key]
+    assert restored["elapsed_seconds"] == 0.0
+    assert restored["tokens_per_second"] is None
+    assert restored["peak_vram_bytes"] is None
+    assert {path: (sha256_file(path), Path(path).stat().st_mtime_ns) for path in before} == before
+    assert json.loads((Path(tiny_config["output_dir"]) / "run_summary.json").read_text(encoding="utf-8")) == restored

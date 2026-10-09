@@ -1,5 +1,7 @@
 # 01a 重复运行与依赖冲突修复
 
+后续 02a 的 `No module named 'finllm'`、旧安装信息警告及训练重复执行问题，见 [内核安装修复](COLAB_KERNEL_FIX.md)。
+
 2026-10-09。用户提供的 Colab PDF 显示代码版本 `1c265b3`，在再次执行构建单元格时抛出 `FileExistsError: Use a new version: data/raw/seed_v1/prepared`。下载和 Drive 备份在此前已显示成功。目录存在本身不能判定成果损坏，旧入口把完成后的重复运行也拒绝了。
 
 另一个独立问题是依赖约束：该 Colab 自带 Transformers 5.18.0，要求 tokenizers >=0.23.1,<0.24，旧入口却安装 <0.23。项目现在支持 <0.24，安装时同时遵守现有 Transformers 的约束，安装后再检查；保留 Colab 的 PyTorch。Hugging Face 未登录提示不是此次中断原因，日志已经显示下载成功。
