@@ -1,0 +1,21 @@
+{
+  "date": "2026-10-09",
+  "execution": "local Windows CPU; read-only reuse of real legacy seed artifacts",
+  "legacy_revision": "1c265b39bacb66e9b4d5c6fda27b28022fcdfccb",
+  "legacy_rerun_error": "Use a new version: data\\raw\\seed_v1\\prepared",
+  "fixed_rerun": "passed",
+  "validate_only": "passed",
+  "unchanged_files_verified_by_sha256_and_mtime": 69,
+  "tokenizer_sha256": "3930526cf6d487291cca8ee5f027c0ebeb9a40defb3711110653a36c000ade8a",
+  "token_counts": {
+    "general": 4976894,
+    "general_validation": 135705,
+    "finance": 341309,
+    "finance_validation": 9209
+  },
+  "limitations": [
+    "User Colab has not been re-executed by this check.",
+    "Dependency probe is Python 3.12; user supplied runtime is Python 3.13.",
+    "This is data reuse validation, not model training."
+  ]
+}

@@ -17,6 +17,8 @@ print("本版本备份完成：", SEED_DRIVE)
 
 def build():
     cells = start("01a｜首批真实语料与 8K 词表", "下载固定版本的限量 Wikipedia 和 SEntFiN 候选标题，保存带日期和哈希的原创 FOMC 纪要快照。先冻结全部候选任务原文，再自训词表和分片。此页不会把新闻情绪自动改成看多/看空标签，也不会启动模型训练。预计原始文本为几十 MB，下载库仍有额外缓存。")
+    cells[0]["source"] = [line.replace("Colab 菜单：运行时 → 更改运行时类型 → T4 GPU。",
+        "本页准备语料可使用 CPU；下一本 02a 训练前再切换 T4 GPU。") for line in cells[0]["source"]]
     cells[2] = code('''
         MOUNT_DRIVE = True
         from google.colab import drive
@@ -25,7 +27,8 @@ def build():
         DRIVE_ROOT.mkdir(parents=True, exist_ok=True)
         print("Drive 项目目录：", DRIVE_ROOT)
         ''')
-    cells += [markdown("本页默认使用 seed_v1。若已完成或中途失败，不覆盖旧目录；恢复已完成成果或显式选择新的版本号。原始材料只保存到当前运行时及你自己的 Drive，不上传 GitHub。"), code('''
+    cells[3] = markdown("本页默认使用 seed_v1。重复运行时先校验并复用完整成果；新运行时会恢复 Drive 中本版本的快照。缺失或被修改的成果会明确报错并保留，届时选择新版本号或恢复完整备份。原始材料仅保存在当前运行时及你自己的 Drive，不上传 GitHub。")
+    cells += [code('''
         SEED_VERSION = "seed_v1"
         ROOT = Path("data/raw") / SEED_VERSION
         CORPORA = ROOT / "corpora"
@@ -35,17 +38,27 @@ def build():
         PROCESSED = Path("data/processed") / SEED_VERSION
         RUN_OUTPUT = Path("runs") / (SEED_VERSION + "_pretrain")
         command(sys.executable, "-m", "pip", "install", "-q", "-e", ".[data]", cwd=PROJECT)
+        SEED_DRIVE = DRIVE_ROOT / "seeds" / SEED_VERSION
+        for name, destination in (("raw", ROOT), ("processed", PROCESSED), ("tokenizer", TOKENIZER)):
+            source = SEED_DRIVE / name
+            if not destination.exists() and source.exists():
+                require(source / "SNAPSHOT_COMPLETE.json")
+                finllm("sync", "--source", source, "--destination", PROJECT / destination, "--working-copy")
+        SEED_BUILD_ARGS = ["--corpora", CORPORA, "--task-pool", TASK / "task_exclusions.jsonl",
+                           "--prepared", PREPARED, "--tokenizer", TOKENIZER,
+                           "--processed", PROCESSED, "--run-output", RUN_OUTPUT]
+        print("本页只准备数据；当前 CUDA 可用：", torch.cuda.is_available())
         '''), code('''
         command(sys.executable, "-u", "scripts/fetch_seed_corpora.py", "--output", CORPORA,
                 "--general-max-bytes", "20000000", cwd=PROJECT)
         command(sys.executable, "-u", "scripts/prepare_sentfin_review.py", "--download", "--output", TASK, cwd=PROJECT)
         '''), code('''
-        command(sys.executable, "-u", "scripts/build_seed_artifacts.py",
-                "--corpora", CORPORA, "--task-pool", TASK / "task_exclusions.jsonl",
-                "--prepared", PREPARED, "--tokenizer", TOKENIZER,
-                "--processed", PROCESSED, "--run-output", RUN_OUTPUT, cwd=PROJECT)
+        command(sys.executable, "-u", "scripts/build_seed_artifacts.py", *SEED_BUILD_ARGS, cwd=PROJECT)
         print((PROCESSED / "seed_summary.json").read_text(encoding="utf-8"))
-        '''), code(SEED_BACKUP), markdown("完成后先查看 seed_summary.json 的真实 token 数。200 条任务审核表在 data/raw/seed_v1/task，填写的是你对目标资产立场的判断；原数据作者的人类情绪标签保留在单独列中。下一本 02a 可使用本页产物运行 24M 模型的约 1M-token 预训练试跑。")]
+        '''), code('# 备份前重新检查完整产物，不能把中断执行的半成品显示为成功。\n'
+                   'command(sys.executable, "-u", "scripts/build_seed_artifacts.py", *SEED_BUILD_ARGS, '
+                   '"--validate-only", cwd=PROJECT)\n' + SEED_BACKUP),
+        markdown("完成后先查看 seed_summary.json 的真实 token 数。200 条任务审核表在 data/raw/seed_v1/task，填写的是你对目标资产立场的判断；原数据作者的人类情绪标签保留在单独列中。下一本 02a 可使用本页产物运行 24M 模型的约 1M-token 预训练试跑。")]
     write("01a_seed_data.ipynb", cells)
 
     cells = start("02a｜首批真实语料的 24M 预训练试跑", "从随机初始化开始，使用 seed_v1 的 8K tokenizer 和 Wikipedia 分片训练 61 次更新（约 1M tokens）。先完成 01a。本页只执行通用预训练的短段，不会自动进入 100M 长训练、SFT 或 DPO。")

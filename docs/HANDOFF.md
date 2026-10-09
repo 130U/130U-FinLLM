@@ -16,7 +16,7 @@
 
 内置浏览器再次出现 `Monaco: unable to load`，没有代用户运行 01a/02a，不声称 T4 24M 资源试跑通过。现阶段使用整个任务候选池作为预训练排除池，让语料准备可独立于标签审核继续；SFT/DPO 仍等待目标资产和立场审核。
 
-1. 用户已完成第一本 Colab。当前在 Chrome 打开 01a 准备并备份 seed 数据，再打开 02a 运行 24M 短段；这两本会挂载 Drive。
+1. 用户已运行 01a 并提供下载、Drive 备份成功及重复运行报错的 PDF。目录复用与 tokenizers 依赖冲突已修复（见 `docs/COLAB_DEBUG.md`）：从 GitHub 重新打开最新版 01a，保留 seed_v1 校验复用，再打开 02a 运行 24M 短段；这两本会挂载 Drive。旧 Drive Notebook 副本不会自动更新安装代码。
 2. 收取summary或报错，核对真实GPU型号、FP16兼容性、版本、内存和恢复。没有访问浏览器/内核时不声称已经代用户运行。
 3. 准备和审核真实来源；先冻结评测原文池，再训练正式tokenizer、编码语料。没有数据也可继续完善独立工程测试，但不能宣称完成正式训练。
 4. 先运行pretrain_pilot（约1M），保持同一优化器调度和数据版本恢复到100M。SFT/DPO按开发集而非test选择。FinBERT比较、消融/重复seed/组bootstrap等按数据和算力开展。

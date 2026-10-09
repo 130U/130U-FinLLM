@@ -108,9 +108,48 @@ def select_review(pool: list[dict], count: int, seed: int = 130) -> list[dict]:
     return sorted(selected, key=order)
 
 
+def reuse_complete_output(source_dir: Path, output: Path, count: int, seed: int) -> dict:
+    """Reuse a frozen pool; human review files may have been edited since export.
+
+    Legacy schema 1 writes its manifest last, without a status field. Its frozen
+    exclusion hash and pinned source metadata remain the completion contract.
+    Raw source files may be absent after restoring a Drive snapshot, so their
+    recorded provenance is checked and any locally present copy is also checked.
+    """
+    try:
+        manifest = json.loads((output / "manifest.json").read_text(encoding="utf-8"))
+        if not isinstance(manifest, dict) or manifest.get("schema_version") != 1 or manifest.get("status", "complete") != "complete":
+            raise ValueError("review export manifest is not complete")
+        if manifest["source_repository"] != "https://github.com/pyRis/SEntFiN" or manifest["source_revision"] != REVISION:
+            raise ValueError("source repository or pinned revision differs")
+        if manifest["review_seed"] != seed or manifest["review_rows"] != count:
+            raise ValueError("review count or seed differs from the completed export")
+        expected_sources = {name: {"url": f"{BASE_URL}/{name}", "bytes": size, "sha256": sha}
+                            for name, (size, sha) in FILES.items()}
+        if manifest["source_files"] != expected_sources:
+            raise ValueError("pinned source provenance does not match")
+        for name, (size, expected_hash) in FILES.items():
+            path = source_dir / name
+            if path.exists() and (path.stat().st_size != size or digest(path) != expected_hash):
+                raise ValueError(f"source integrity check failed: {name}")
+        for name in ("task_exclusions.jsonl", "review_200.csv", "SOURCE_LICENSE.txt", "review_instructions.md"):
+            if name not in manifest["artifacts"] or not (output / name).is_file():
+                raise ValueError(f"review export is incomplete: {name}")
+        frozen = output / "task_exclusions.jsonl"
+        record = manifest["artifacts"][frozen.name]
+        if frozen.stat().st_size != record["bytes"] or digest(frozen) != record["sha256"]:
+            raise ValueError("frozen task exclusion integrity check failed")
+        return manifest
+    except (OSError, ValueError, KeyError, TypeError) as error:
+        raise ValueError(
+            f"Cannot reuse existing review output: {error}. Keep the old directory and use a new seed version; "
+            "existing files are never overwritten."
+        ) from error
+
+
 def prepare(source_dir: Path, output: Path, count: int = 200, seed: int = 130, download: bool = False) -> dict:
-    if output.exists() and any(output.iterdir()):
-        raise ValueError("Output must be a new or empty directory; review files are never overwritten")
+    if output.exists() and (not output.is_dir() or any(output.iterdir())):
+        return reuse_complete_output(source_dir, output, count, seed)
     obtain_sources(source_dir, download)
     rows, pool, quarantined, headlines = parse_rows(source_dir / "SEntFiN.csv")
     selected = select_review(pool, count, seed)
@@ -154,7 +193,7 @@ def prepare(source_dir: Path, output: Path, count: int = 200, seed: int = 130, d
         f"Attribution: {ATTRIBUTION}. See SOURCE_LICENSE.txt.\n", encoding="utf-8")
 
     manifest = {
-        "schema_version": 1, "source_repository": "https://github.com/pyRis/SEntFiN",
+        "schema_version": 1, "status": "complete", "source_repository": "https://github.com/pyRis/SEntFiN",
         "source_revision": REVISION, "license": "MIT", "attribution": ATTRIBUTION,
         "paper": "https://arxiv.org/abs/2305.12257", "review_seed": seed,
         "source_headline_rows": len(rows), "unique_exact_headline_texts": len(headlines),

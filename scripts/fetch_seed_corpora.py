@@ -25,6 +25,7 @@ FED_TERMS = FED_ORIGIN + "/disclaimer.htm"
 WIKI_TERMS = "https://foundation.wikimedia.org/wiki/Policy:Terms_of_Use/en#7._Licensing_of_Content"
 MAX_RESPONSE_BYTES = 2_000_000
 USER_AGENT = "130U-FinLLM/0.1 (bounded research corpus; https://github.com/130U/130U-FinLLM)"
+LIMIT_FIELDS = ("general_max_bytes", "max_general_documents", "max_finance_documents", "finance_max_bytes")
 
 
 def utc_now():
@@ -37,12 +38,65 @@ def sha256(content):
     return hashlib.sha256(content).hexdigest()
 
 
+def file_sha256(path):
+    digest = hashlib.sha256()
+    with Path(path).open("rb") as stream:
+        for chunk in iter(lambda: stream.read(1_048_576), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
 def json_line(row):
     return (json.dumps(row, ensure_ascii=False, sort_keys=True) + "\n").encode("utf-8")
 
 
 def write_json(path, value):
     Path(path).write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
+def reuse_complete_output(args):
+    """Validate a completed download without fetching or changing any files.
+
+    Schema 1 manifests already record the limits and pinned source revision, so
+    older downloads remain reusable even when this script's own hash changes.
+    """
+    try:
+        output = args.output
+        manifest = json.loads((output / "manifest.json").read_text(encoding="utf-8"))
+        if not isinstance(manifest, dict) or manifest.get("schema_version") != 1 or manifest.get("status") != "complete":
+            raise ValueError("download manifest is not complete")
+        if manifest["limits"] != {name: getattr(args, name) for name in LIMIT_FIELDS}:
+            raise ValueError("download limits differ from the completed run")
+        general, finance = manifest["general"], manifest["finance"]
+        if (general["dataset"], general["revision"], general["config"]) != (WIKI_DATASET, WIKI_REVISION, WIKI_CONFIG):
+            raise ValueError("Wikipedia source revision or configuration differs")
+        if finance["calendar_url"] != FED_CALENDAR or finance["years"] != args.finance_years:
+            raise ValueError("Federal Reserve source or requested years differ")
+        for section, filename in ((general, "general_candidate.jsonl"), (finance, "finance_candidate.jsonl")):
+            if section["file"] != filename or section["documents"] < 1:
+                raise ValueError("invalid candidate file metadata")
+            path = output / filename
+            if path.stat().st_size != section["bytes"] or file_sha256(path) != section["sha256"]:
+                raise ValueError(f"candidate integrity check failed: {filename}")
+        raw = output / "source_snapshots"
+        if file_sha256(raw / "fomc_calendar.html") != finance["calendar_sha256"]:
+            raise ValueError("Federal Reserve calendar snapshot integrity check failed")
+        if len(finance["admitted"]) != finance["documents"]:
+            raise ValueError("Federal Reserve admitted-document metadata is incomplete")
+        for item in finance["admitted"]:
+            relative = item["html_snapshot"]
+            path = output / relative
+            if not path.resolve().is_relative_to(raw.resolve()) or file_sha256(path) != item["html_sha256"]:
+                raise ValueError("Federal Reserve article snapshot integrity check failed")
+        discovered = json.loads((raw / "discovered_minutes.json").read_text(encoding="utf-8"))
+        if not isinstance(discovered, list) or len(discovered) != finance["discovered"]:
+            raise ValueError("Federal Reserve discovered-document metadata is incomplete")
+        return manifest
+    except (OSError, ValueError, KeyError, TypeError) as error:
+        raise ValueError(
+            f"Cannot reuse existing corpus output: {error}. Keep the old directory and use a new seed version; "
+            "existing files are never overwritten."
+        ) from error
 
 
 def allowed_fed_url(url):
@@ -247,7 +301,7 @@ def main(argv=None):
     parser.add_argument("--max-finance-documents", type=int, default=32)
     parser.add_argument("--finance-max-bytes", type=int, default=5_000_000)
     args = parser.parse_args(argv)
-    for name in ("general_max_bytes", "max_general_documents", "max_finance_documents", "finance_max_bytes"):
+    for name in LIMIT_FIELDS:
         if getattr(args, name) < 1:
             parser.error(name + " must be positive")
     try:
@@ -256,15 +310,21 @@ def main(argv=None):
         parser.error("finance-years must contain comma-separated years")
     if not args.finance_years or any(year < 1900 or year > datetime.now().year for year in args.finance_years):
         parser.error("finance-years contains an invalid or future year")
-    if args.output.exists() and any(args.output.iterdir()):
-        parser.error("output must be a new or empty directory")
+    if args.output.exists() and (not args.output.is_dir() or any(args.output.iterdir())):
+        try:
+            manifest = reuse_complete_output(args)
+        except ValueError as error:
+            parser.error(str(error))
+        print(json.dumps({"status": "complete", "reused": True, "manifest": str(args.output / "manifest.json"),
+                          "general_documents": manifest["general"]["documents"],
+                          "finance_documents": manifest["finance"]["documents"]}, indent=2))
+        return 0
     args.output.mkdir(parents=True, exist_ok=True)
     args.retrieved_at = utc_now()
     manifest = {"schema_version": 1, "status": "in_progress", "retrieved_at": args.retrieved_at,
                 "extractor_sha256": sha256(Path(__file__).read_bytes()),
                 "rights_review": "docs/research/corpus_sources_20261009.md",
-                "limits": {name: getattr(args, name) for name in
-                           ("general_max_bytes", "max_general_documents", "max_finance_documents", "finance_max_bytes")},
+                "limits": {name: getattr(args, name) for name in LIMIT_FIELDS},
                 "candidates_only": True, "note": "Not yet deduplicated, split, tokenized or checked against frozen evaluation texts"}
     manifest_path = args.output / "manifest.json"
     write_json(manifest_path, manifest)

@@ -10,6 +10,8 @@ An English financial stance language model trained from random weights: pretrain
 
 [01a：下载限量真实语料、冻结评测排除池、训练词表并备份](https://colab.research.google.com/github/130U/130U-FinLLM/blob/main/notebooks/01a_seed_data.ipynb) → [02a：24M 模型约 1M-token GPU 预训练试跑](https://colab.research.google.com/github/130U/130U-FinLLM/blob/main/notebooks/02a_seed_pilot.ipynb)。两本都默认挂载 Drive，并按 seed 版本独立备份。完整操作与实际产物见 [首批数据执行记录](docs/SEED_DATA.md)。
 
+01a 支持完整性校验后的重复运行及 Drive 恢复，可使用 CPU。旧版出现目录已存在或 tokenizers 依赖冲突时，请按 [Colab 修复说明](docs/COLAB_DEBUG.md) 重新打开最新版，无需删除已有成果。
+
 首批训练数据为 4,976,894 个通用 tokens 和 341,309 个金融 tokens；验证文本另存。全部 10,686 个不同候选任务标题在词表训练前排除。没有将来源情绪标签自动改为资产立场标签。
 
 ## 第一次：只运行这个 Notebook

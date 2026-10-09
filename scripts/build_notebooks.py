@@ -55,10 +55,40 @@ print("本次固定代码提交：", REVISION)
 
 # 保留 Colab 自带的 CUDA / PyTorch；此处仅安装项目的其他依赖。
 import torch
+from importlib import metadata
+from packaging.requirements import Requirement
+
+def tokenizer_install_requirements():
+    # Colab can include Transformers even though this project does not use it.
+    # Pass its active tokenizer bounds to pip so an old runtime can retain 0.22,
+    # while a current runtime (or an already broken one) can use 0.23.
+    requirements = ["tokenizers>=0.21,<0.24"]
+    try:
+        existing = metadata.requires("transformers") or []
+    except metadata.PackageNotFoundError:
+        existing = []
+    for value in existing:
+        requirement = Requirement(value)
+        if requirement.name.lower().replace("_", "-") == "tokenizers":
+            if requirement.marker is None or requirement.marker.evaluate({"extra": ""}):
+                requirements.append(str(requirement))
+    return list(dict.fromkeys(requirements))
+
+def check_tokenizer_compatibility(requirements):
+    installed = metadata.version("tokenizers")
+    incompatible = [value for value in requirements
+                    if installed not in Requirement(value).specifier]
+    if incompatible:
+        raise RuntimeError(f"tokenizers {installed} 与现有环境不兼容：{incompatible}")
+    print("tokenizers 兼容性检查通过：", installed)
+
 if tuple(int(v) for v in torch.__version__.split("+")[0].split(".")[:2]) < (2, 5):
     raise RuntimeError("需要 PyTorch >= 2.5；请更换较新的 Colab 运行环境。")
-command(sys.executable, "-m", "pip", "install", "-q", "numpy>=1.26,<3", "tokenizers>=0.21,<0.23", "scikit-learn>=1.5,<2")
+tokenizer_requirements = tokenizer_install_requirements()
+print("本次 tokenizers 约束：", tokenizer_requirements)
+command(sys.executable, "-m", "pip", "install", "-q", "numpy>=1.26,<3", *tokenizer_requirements, "scikit-learn>=1.5,<2")
 command(sys.executable, "-m", "pip", "install", "-q", "-e", ".", "--no-deps")
+check_tokenizer_compatibility(tokenizer_requirements)
 
 def finllm(*args):
     command(sys.executable, "-u", "-m", "finllm", *args, cwd=PROJECT)

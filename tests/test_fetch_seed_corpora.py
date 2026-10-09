@@ -61,3 +61,77 @@ def test_existing_output_is_not_overwritten(tmp_path):
     with pytest.raises(SystemExit):
         seed.main(["--output", str(tmp_path)])
     assert (tmp_path / "precious.txt").read_text() == "keep"
+
+
+@pytest.fixture
+def complete_download(tmp_path, monkeypatch):
+    def general(args, output):
+        payload = b'{"text":"General fixture"}\n'
+        (output / "general_candidate.jsonl").write_bytes(payload)
+        return {"file": "general_candidate.jsonl", "documents": 1, "bytes": len(payload),
+                "sha256": seed.sha256(payload), "dataset": seed.WIKI_DATASET,
+                "revision": seed.WIKI_REVISION, "config": seed.WIKI_CONFIG}
+
+    def finance(args, output):
+        payload = b'{"text":"Finance fixture"}\n'
+        (output / "finance_candidate.jsonl").write_bytes(payload)
+        raw = output / "source_snapshots"
+        raw.mkdir()
+        (raw / "fomc_calendar.html").write_bytes(b"calendar")
+        (raw / "2024-01-01.html").write_bytes(b"article")
+        seed.write_json(raw / "discovered_minutes.json", [{"meeting_date": "2024-01-01"}])
+        return {"file": "finance_candidate.jsonl", "documents": 1, "bytes": len(payload),
+                "sha256": seed.sha256(payload), "calendar_url": seed.FED_CALENDAR,
+                "calendar_sha256": seed.sha256(b"calendar"), "years": args.finance_years,
+                "discovered": 1, "admitted": [{"html_snapshot": "source_snapshots/2024-01-01.html",
+                                               "html_sha256": seed.sha256(b"article")} ]}
+
+    monkeypatch.setattr(seed, "fetch_general", general)
+    monkeypatch.setattr(seed, "fetch_finance", finance)
+    output = tmp_path / "corpora"
+    assert seed.main(["--output", str(output)]) == 0
+
+    def forbid(*args, **kwargs):
+        pytest.fail("Existing output must be validated without refetching")
+
+    monkeypatch.setattr(seed, "fetch_general", forbid)
+    monkeypatch.setattr(seed, "fetch_finance", forbid)
+    return output
+
+
+def test_completed_download_rerun_is_read_only(complete_download, capsys):
+    output = complete_download
+    before = {p: (p.read_bytes(), p.stat().st_mtime_ns) for p in output.rglob("*") if p.is_file()}
+    assert seed.main(["--output", str(output)]) == 0
+    assert '"reused": true' in capsys.readouterr().out
+    assert before == {p: (p.read_bytes(), p.stat().st_mtime_ns) for p in before}
+
+
+@pytest.mark.parametrize("change", ["incomplete", "missing_manifest", "candidate", "snapshot", "revision"])
+def test_invalid_completed_download_requires_new_version(complete_download, capsys, change):
+    output = complete_download
+    manifest_path = output / "manifest.json"
+    if change == "missing_manifest":
+        manifest_path.unlink()
+    elif change in {"incomplete", "revision"}:
+        manifest = json.loads(manifest_path.read_text())
+        if change == "incomplete":
+            manifest["status"] = "incomplete"
+        else:
+            manifest["general"]["revision"] = "different"
+        seed.write_json(manifest_path, manifest)
+    else:
+        changed = output / ("general_candidate.jsonl" if change == "candidate" else "source_snapshots/2024-01-01.html")
+        changed.write_bytes(b"modified")
+    before = {p: p.read_bytes() for p in output.rglob("*") if p.is_file()}
+    with pytest.raises(SystemExit):
+        seed.main(["--output", str(output)])
+    assert "use a new seed version" in capsys.readouterr().err
+    assert before == {p: p.read_bytes() for p in before}
+
+
+@pytest.mark.parametrize("options", [["--general-max-bytes", "30000000"], ["--finance-years", "2024"]])
+def test_download_config_change_is_not_silently_reused(complete_download, options, capsys):
+    with pytest.raises(SystemExit):
+        seed.main(["--output", str(complete_download), *options])
+    assert "use a new seed version" in capsys.readouterr().err
