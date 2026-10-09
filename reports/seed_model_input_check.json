@@ -1,0 +1,14 @@
+{
+  "status": "passed",
+  "device": "cpu",
+  "parameters": 24255744,
+  "batch_size": 1,
+  "sequence_length": 128,
+  "loss": 9.04381275177002,
+  "elapsed_seconds": 0.4025418000001082,
+  "tokenizer_sha256": "3930526cf6d487291cca8ee5f027c0ebeb9a40defb3711110653a36c000ade8a",
+  "data_manifest_sha256": "5717d95ac97e1528f06607694120029ea84c58090203fbdec3e10e9046b89b8b",
+  "optimizer_updates": 0,
+  "saved_weights": false,
+  "scope": "Real-token CPU forward/backward only; not the T4 pilot or a finance quality result"
+}

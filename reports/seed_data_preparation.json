@@ -1,0 +1,65 @@
+{
+  "date": "2026-10-09",
+  "execution": "local Windows CPU; dataset download, filtering, BPE training and packing actually executed",
+  "source_revisions": {
+    "wikipedia": "b04c8d1ceb2f5cd4588862100d08de323dccfbaa",
+    "sentfin": "eba43610fe3cb57a3e5773cd6c037da1f8992ad5"
+  },
+  "source_documents": {
+    "general": 825,
+    "finance": 32
+  },
+  "source_jsonl_bytes": 21776615,
+  "prepared_counts": {
+    "general_train": 794,
+    "general_validation": 31,
+    "finance_train": 31,
+    "finance_validation": 1,
+    "tokenizer_train": 455,
+    "frozen_task_exclusions": 10686,
+    "frozen_exclusions": 10718
+  },
+  "token_counts": {
+    "general": 4976894,
+    "general_validation": 135705,
+    "finance": 341309,
+    "finance_validation": 9209
+  },
+  "tokenizer_sha256": "3930526cf6d487291cca8ee5f027c0ebeb9a40defb3711110653a36c000ade8a",
+  "tokenizer_vocabulary": 8192,
+  "candidate_stance_review_rows": 200,
+  "human_confirmed_stance_rows": 0,
+  "token_payload_bytes": 10926234,
+  "stage_directory_bytes": {
+    "data/raw/seed_v1/corpora": 26299150,
+    "data/raw/seed_v1/prepared": 40182621,
+    "data/raw/sentfin_review_v1": 3035040,
+    "tokenizer/seed_v1": 551130,
+    "data/processed/seed_v1": 11107281
+  },
+  "scripts_sha256": {
+    "scripts/build_seed_artifacts.py": "52ceaae108658226ae64a3d32688f098e0aa52708ec669248da073f2a218ccae",
+    "src/finllm/preparation.py": "47f5c24238d336347c5aead3ef01ea435f502de80d7939147692b2447a5bdd73",
+    "scripts/fetch_seed_corpora.py": "94b06ca390ddcaf8ea5e78b8df0ec0e79391f75a62f1ecd44fa2cfdf34d0eb51",
+    "scripts/prepare_sentfin_review.py": "2e9776fca33e6becca32af03a53381f338789e6b4cf1d383a3ca07cb91f655df"
+  },
+  "limitations": [
+    "Wikipedia is a deterministic prefix, not a representative random sample.",
+    "Finance validation has only one independent FOMC document; diagnostic only.",
+    "Token payload is not total disk/RAM/checkpoint usage.",
+    "All SEntFiN candidate headlines excluded; stance/asset mapping not accepted yet.",
+    "No T4 24M pilot, SFT, DPO or finance accuracy test has run."
+  ],
+  "source_manifest_complete_and_hashes_rechecked": true,
+  "ai_stance_review": {
+    "reviewed_by": "Codex AI preliminary review",
+    "counts": {
+      "bullish": 22,
+      "bearish": 16,
+      "neutral": 122,
+      "exclude": 40
+    },
+    "human_reviewed_rows": 0,
+    "csv_sha256": "daf27c223ed7e2cac9e462522495b00e5966730cc959c4d60812590b71ced4f3"
+  }
+}

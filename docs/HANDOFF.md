@@ -12,7 +12,11 @@
 
 ## 下一步
 
-1. 用户打开README第一本Colab，选择T4，运行环境和smoke；需要持久化时在Google界面挂载Drive。
+2026-10-09 进展：用户截图已证明 00 的 T4 小实验、Drive 挂载与备份完成。首批真实来源、排除池、8192 词表与四份分片已在本地生成，见 `docs/SEED_DATA.md` 与 `reports/seed_data_preparation.json`。下一入口为 01a → 02a；seed 路径和 Drive 备份独立于原有 `general/english/pretrain` 路径，不可混用配置。200 条 AI 初判表已完成，人工字段仍未确认。
+
+内置浏览器再次出现 `Monaco: unable to load`，没有代用户运行 01a/02a，不声称 T4 24M 资源试跑通过。现阶段使用整个任务候选池作为预训练排除池，让语料准备可独立于标签审核继续；SFT/DPO 仍等待目标资产和立场审核。
+
+1. 用户已完成第一本 Colab。当前在 Chrome 打开 01a 准备并备份 seed 数据，再打开 02a 运行 24M 短段；这两本会挂载 Drive。
 2. 收取summary或报错，核对真实GPU型号、FP16兼容性、版本、内存和恢复。没有访问浏览器/内核时不声称已经代用户运行。
 3. 准备和审核真实来源；先冻结评测原文池，再训练正式tokenizer、编码语料。没有数据也可继续完善独立工程测试，但不能宣称完成正式训练。
 4. 先运行pretrain_pilot（约1M），保持同一优化器调度和数据版本恢复到100M。SFT/DPO按开发集而非test选择。FinBERT比较、消融/重复seed/组bootstrap等按数据和算力开展。

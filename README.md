@@ -4,7 +4,13 @@ An English financial stance language model trained from random weights: pretrain
 
 输入英文短文本和指定资产，输出对该资产的 **看空 / 中性 / 看多**、三类概率、方向分数和复核标记。首版正式配置为 **24,255,744 参数**，自建 8192-token byte-level BPE。代码结构参考 [MiniMind](https://github.com/jingyaogong/minimind/tree/f659b55761b754d306bd140573493a6543cafd7f)，主模型不下载其他模型的预训练权重。
 
-**当前交付是可运行的训练工程，不是已训练完成的金融模型。**本地 CPU 小实验使用约 0.127M 的调试模型和自编文本，仅检验各阶段与恢复路径。正式 24M 训练、真实数据效果和用户 T4 显存/速度仍需实测。
+**当前交付是可运行的训练工程，不是已训练完成的金融模型。**用户已在 T4 完成微型流程验证及 Drive 备份。首批真实英文语料、8192-token 自训词表及训练分片已在本地生成；24M 模型的 GPU 预训练与真实金融效果仍待执行。
+
+## 已完成试跑：从这里继续
+
+[01a：下载限量真实语料、冻结评测排除池、训练词表并备份](https://colab.research.google.com/github/130U/130U-FinLLM/blob/main/notebooks/01a_seed_data.ipynb) → [02a：24M 模型约 1M-token GPU 预训练试跑](https://colab.research.google.com/github/130U/130U-FinLLM/blob/main/notebooks/02a_seed_pilot.ipynb)。两本都默认挂载 Drive，并按 seed 版本独立备份。完整操作与实际产物见 [首批数据执行记录](docs/SEED_DATA.md)。
+
+首批训练数据为 4,976,894 个通用 tokens 和 341,309 个金融 tokens；验证文本另存。全部 10,686 个不同候选任务标题在词表训练前排除。没有将来源情绪标签自动改为资产立场标签。
 
 ## 第一次：只运行这个 Notebook
 
@@ -25,6 +31,8 @@ Colab Notebook 分享不共享正在运行的虚拟机。`/content` 为临时工
 |---|---|---|
 | [00_setup_and_smoke](notebooks/00_setup_and_smoke.ipynb) | 环境、小模型全流程、恢复、校准与预测 | 仅需运行环境 |
 | [01_prepare_data](notebooks/01_prepare_data.ipynb) | 审核数据、分区、排除评测内容、自建词表、分片、80/20 token 混合 | 获准使用的正式原文与目标标签 |
+| [01a_seed_data](notebooks/01a_seed_data.ipynb) | 限量真实来源、完整候选池排除、自训 8K 词表、版本备份 | 可联网；标签审核可以并行 |
+| [02a_seed_pilot](notebooks/02a_seed_pilot.ipynb) | 首批数据的 24M、61 次更新预训练试跑 | 01a 完成、T4 和 Drive |
 | [02_pretrain](notebooks/02_pretrain.ipynb) | 从随机权重开始通用预训练 | 正式 tokenizer、训练/验证分片 |
 | [03_domain_pretrain](notebooks/03_domain_pretrain.ipynb) | 金融继续预训练 | 通用预训练检查点及金融混合分片 |
 | [04_sft](notebooks/04_sft.ipynb) | 全参数目标资产立场监督学习 | 训练标签和开发集 |

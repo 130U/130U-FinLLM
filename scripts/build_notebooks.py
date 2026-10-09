@@ -25,7 +25,14 @@ REF = "main"  # 首次解析并显示提交；复现时替换成完整的 40 位
 PROJECT = Path("/content/130U-FinLLM")
 
 def command(*args, cwd=None):
-    subprocess.run([str(x) for x in args], cwd=cwd, check=True)
+    # Explicitly relay subprocess output into the notebook's captured stdout.
+    with subprocess.Popen([str(x) for x in args], cwd=cwd, stdout=subprocess.PIPE,
+                          stderr=subprocess.STDOUT, text=True, encoding="utf-8",
+                          errors="replace", bufsize=1) as process:
+        for line in process.stdout:
+            print(line, end="", flush=True)
+        if process.wait():
+            raise subprocess.CalledProcessError(process.returncode, process.args)
 
 if len(REF) == 40 and all(c in "0123456789abcdefABCDEF" for c in REF):
     REVISION = REF.lower()
@@ -54,7 +61,7 @@ command(sys.executable, "-m", "pip", "install", "-q", "numpy>=1.26,<3", "tokeniz
 command(sys.executable, "-m", "pip", "install", "-q", "-e", ".", "--no-deps")
 
 def finllm(*args):
-    command(sys.executable, "-m", "finllm", *args, cwd=PROJECT)
+    command(sys.executable, "-u", "-m", "finllm", *args, cwd=PROJECT)
 
 def require(*paths):
     missing = [str(p) for p in paths if not Path(p).is_file()]

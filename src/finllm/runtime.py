@@ -115,3 +115,93 @@ def sync_snapshot(source, destination, working_copy=False):
     incomplete.unlink()
     return {"files": len(files), "bytes": sum(row["bytes"] for row in files),
             "verified": True, "working_copy": bool(working_copy)}
+
+
+def restore_seed_checkpoint(local_dir, live_dir):
+    """Select a verified latest seed checkpoint without restarting saved progress.
+
+    Both directories must contain only this trusted training run. Existing
+    complete checkpoint pairs, including the recoverable previous generation,
+    are inspected with ``load_checkpoint``. A newer live directory is copied in
+    full to preserve its best and previous pairs. Divergent run identity or
+    incomparable progress refuses automatic selection. This helper never writes
+    to the persistent live directory.
+
+    Return the absolute local ``latest.pt`` path for ``--resume``, or ``None``
+    only when neither location contains any checkpoint artifacts. Training still
+    checks the selected checkpoint against the current configuration/runtime.
+    """
+    from .checkpoint import load_checkpoint
+
+    local, live = Path(local_dir).resolve(), Path(live_dir).resolve()
+    if local == live or local in live.parents or live in local.parents:
+        raise ValueError("Local/live checkpoint directories must be separate and non-nested")
+
+    def inspect(directory):
+        if not directory.exists():
+            return None, False, None
+        if not directory.is_dir():
+            raise ValueError(f"Checkpoint location is not a directory: {directory}")
+        artifacts = list(directory.glob("*.pt*"))
+        incomplete = (directory / "SNAPSHOT_INCOMPLETE.json").exists()
+        if not artifacts and not incomplete:
+            return None, False, None
+        try:
+            if incomplete:
+                raise ValueError("Checkpoint directory has an incomplete snapshot marker")
+            payload = load_checkpoint(directory / "latest.pt", map_location="cpu")
+            for key in ("model_config", "provenance"):
+                if not isinstance(payload.get(key), dict) or not payload[key]:
+                    raise ValueError(f"Checkpoint requires nonempty {key}")
+            if not isinstance(payload.get("tokenizer_hash"), str) or not payload["tokenizer_hash"]:
+                raise ValueError("Checkpoint requires tokenizer_hash")
+            progress = payload.get("progress")
+            if not isinstance(progress, dict):
+                raise ValueError("Checkpoint requires progress counters")
+            for key in ("attempted_updates", "updates", "tokens"):
+                value = progress.get(key)
+                if not isinstance(value, int) or isinstance(value, bool) or value < 0:
+                    raise ValueError(f"Invalid checkpoint progress counter: {key}")
+            if progress["updates"] > progress["attempted_updates"]:
+                raise ValueError("Successful updates cannot exceed attempted_updates")
+            return payload, True, None
+        except (OSError, ValueError, EOFError, RuntimeError) as error:
+            return None, True, str(error)
+
+    local_payload, local_artifacts, local_error = inspect(local)
+    live_payload, live_artifacts, live_error = inspect(live)
+    if local_payload is None and live_payload is None:
+        if local_artifacts or live_artifacts:
+            raise ValueError("Checkpoint artifacts exist but no recoverable latest checkpoint was found; "
+                             f"refusing fresh training. Local: {local_error}; live: {live_error}")
+        return None
+
+    selected = local_payload
+    restore_live = local_payload is None
+    if local_payload is not None and live_payload is not None:
+        for key in ("model_config", "tokenizer_hash", "provenance"):
+            if local_payload[key] != live_payload[key]:
+                raise ValueError(f"Local/live checkpoint provenance diverges ({key}); select the correct run explicitly")
+        local_progress, live_progress = local_payload["progress"], live_payload["progress"]
+        counters = ("attempted_updates", "tokens", "updates")
+        differences = [live_progress[key] - local_progress[key] for key in counters]
+        if any(value > 0 for value in differences) and any(value < 0 for value in differences):
+            raise ValueError("Local/live checkpoint progress has inconsistent ordering")
+        if differences[0] == 0 and any(differences[1:]):
+            raise ValueError("Local/live checkpoint progress disagrees at the same attempted_updates")
+        if not any(differences) and local_progress != live_progress:
+            raise ValueError("Local/live checkpoint progress disagrees at the same counters")
+        restore_live = any(value > 0 for value in differences)
+    if restore_live:
+        selected = live_payload
+        sync_snapshot(live, local, working_copy=True)
+
+    # The source could have changed while copying, or an old local fallback
+    # could have survived a partial copy. Confirm selection again before resume.
+    verified, _, error = inspect(local)
+    if verified is None:
+        raise ValueError(f"Selected local checkpoint failed verification: {error}")
+    for key in ("model_config", "tokenizer_hash", "provenance", "progress"):
+        if verified[key] != selected[key]:
+            raise ValueError("Selected checkpoint changed during restoration; refusing resume")
+    return str(local / "latest.pt")
