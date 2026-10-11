@@ -16,7 +16,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: pip
       - run: python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
-      - run: python -m pip install -e '.[test]'
+      - run: python -m pip install -e '.[test,data]'
       - run: python -m finllm environment
       - run: python -m pytest -q
       - run: python scripts/validate_notebooks.py

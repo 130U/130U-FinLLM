@@ -305,6 +305,87 @@ def _settings(config: dict[str, Any]) -> dict[str, Any]:
     return defaults
 
 
+def _pretrain_transition(config: dict[str, Any], model_config: ModelConfig,
+                         tokenizer_hash: str, provenance: dict[str, Any]) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Verify a frozen parent for an explicit expanded-data weights-only run.
+
+    The parent is also checked on exact resume. Its content hash, rather than
+    its filesystem location, binds the new run to its initialization lineage.
+    No parent optimizer, schedule, RNG, counters, or data cursor is restored.
+    """
+    transition = config["pretrain_transition"]
+    if not isinstance(transition, dict) or set(transition) - {
+        "kind", "parent_checkpoint", "expected_parent_sha256", "min_parent_updates"
+    }:
+        raise ValueError("pretrain_transition requires the explicit data_expansion parent checkpoint and hash fields.")
+    if config["stage"] != "pretrain" or config["mode"] != "formal" or transition.get("kind") != "data_expansion":
+        raise ValueError("data_expansion is a formal pretrain-to-pretrain weights-only transition.")
+    parent_path = transition.get("parent_checkpoint")
+    expected_hash = transition.get("expected_parent_sha256")
+    if not isinstance(parent_path, (str, Path)) or not str(parent_path):
+        raise ValueError("pretrain_transition.parent_checkpoint must name a frozen checkpoint pair.")
+    if not isinstance(expected_hash, str) or len(expected_hash) != 64 or any(char not in "0123456789abcdef" for char in expected_hash):
+        raise ValueError("pretrain_transition.expected_parent_sha256 must be a lowercase SHA256 digest.")
+    minimum = transition.get("min_parent_updates", 300)
+    if not isinstance(minimum, int) or isinstance(minimum, bool) or minimum < 1:
+        raise ValueError("pretrain_transition.min_parent_updates must be a positive integer.")
+    parent_path = Path(parent_path)
+    if not config.get("resume") and not config.get("init_checkpoint"):
+        raise ValueError("A new data_expansion run requires init_checkpoint matching its frozen parent.")
+    if config.get("init_checkpoint") and Path(config["init_checkpoint"]).resolve() != parent_path.resolve():
+        raise ValueError("init_checkpoint must match pretrain_transition.parent_checkpoint.")
+    if sha256_file(parent_path) != expected_hash:
+        raise ValueError("Data-expansion parent checkpoint SHA256 mismatch.")
+    parent = load_checkpoint(parent_path, allow_previous=False)
+    # Bind the exact pair, never an automatically selected previous generation.
+    if sha256_file(parent_path) != expected_hash:
+        raise ValueError("Data-expansion parent checkpoint changed during verification.")
+    _check_compatible(parent, model_config, tokenizer_hash, "formal")
+    parent_config = parent.get("config", {})
+    parent_provenance = parent.get("provenance", {})
+    if parent_config.get("stage") != "pretrain" or parent_provenance.get("stage") != "pretrain":
+        raise ValueError("A data-expansion parent must be a formal pretrain checkpoint.")
+    if (parent_provenance.get("mode") != "formal" or parent_provenance.get("model_config") != asdict(model_config)
+            or parent_provenance.get("tokenizer_sha256") != tokenizer_hash):
+        raise ValueError("Data-expansion parent provenance is inconsistent with its model or tokenizer.")
+    progress = parent.get("progress", {})
+    updates, tokens = progress.get("updates"), progress.get("tokens")
+    if not isinstance(updates, int) or isinstance(updates, bool) or updates < minimum:
+        raise ValueError(f"Data-expansion parent requires at least {minimum} completed optimizer updates.")
+    if not isinstance(tokens, int) or isinstance(tokens, bool) or tokens < 1:
+        raise ValueError("Data-expansion parent must record positive supervised-token progress.")
+    parent_settings = parent_config.get("train", {})
+    update_cap, token_cap = parent_settings.get("max_updates"), parent_settings.get("max_tokens")
+    finished = (isinstance(update_cap, int) and not isinstance(update_cap, bool) and updates >= update_cap) or (
+        isinstance(token_cap, int) and not isinstance(token_cap, bool) and tokens >= token_cap)
+    if not finished:
+        raise ValueError("Data-expansion parent has not reached its own completed training budget.")
+    parent_data = parent_provenance.get("data_sha256")
+    if not isinstance(parent_data, str) or len(parent_data) != 64 or not parent_provenance.get("validation_sha256"):
+        raise ValueError("Data-expansion parent must record formal training and validation identities.")
+    if parent_data == provenance["data_sha256"]:
+        raise ValueError("data_expansion requires a distinct training dataset; use exact resume for unchanged data.")
+    protected_directories = {parent_path.parent.resolve()}
+    for key in ("output_dir", "backup_dir"):
+        if parent_config.get(key):
+            protected_directories.add(Path(parent_config[key]).resolve())
+    for key in ("output_dir", "backup_dir"):
+        if config.get(key):
+            target = Path(config[key]).resolve()
+            if any(target == old or target.is_relative_to(old) or old.is_relative_to(target) for old in protected_directories):
+                raise ValueError("Data-expansion output and backups must use new directories and preserve the parent run.")
+    lineage = {
+        "kind": "data_expansion", "initialization": "weights_only",
+        "parent_checkpoint_sha256": expected_hash,
+        "parent_provenance_sha256": _json_digest(parent_provenance),
+        "parent_updates": updates, "parent_tokens": tokens,
+        "parent_data_sha256": parent_data,
+        "parent_validation_sha256": parent_provenance["validation_sha256"],
+        "min_parent_updates": minimum,
+    }
+    return parent, lineage
+
+
 def run_training(config: dict[str, Any]) -> dict[str, Any]:
     """Execute a bounded training stage using a local tokenizer and prepared data.
 
@@ -378,7 +459,12 @@ def run_training(config: dict[str, Any]) -> dict[str, Any]:
     init = None
     if config.get("init_checkpoint") and config.get("resume"):
         raise ValueError("Choose init_checkpoint for a new stage or resume, not both.")
-    if config.get("init_checkpoint"):
+    if "pretrain_transition" in config:
+        init, lineage = _pretrain_transition(config, model_config, tokenizer_hash, provenance)
+        provenance["parent_lineage"] = lineage
+        if not config.get("resume"):
+            model.load_state_dict(init["model_state"], strict=True)
+    elif config.get("init_checkpoint"):
         if stage == "pretrain":
             raise ValueError("Pretraining starts from random initialization; use resume to continue it.")
         init = load_checkpoint(config["init_checkpoint"], allow_previous=False)
@@ -449,7 +535,7 @@ def run_training(config: dict[str, Any]) -> dict[str, Any]:
     saved_attempts: dict[str, int] = {}
 
     def session_report(elapsed: float, no_training: bool = False) -> dict[str, Any]:
-        return {
+        report = {
             "stage": stage, "mode": mode, "updates": progress["updates"], "attempted_updates": progress["attempted_updates"],
             "tokens": progress["tokens"], "successful_tokens": progress["successful_tokens"], "input_tokens": progress["input_tokens"],
             "token_definition": "nonpadding supervised positions; one chosen label per DPO pair",
@@ -464,6 +550,9 @@ def run_training(config: dict[str, Any]) -> dict[str, Any]:
             "backup_checkpoints": backed_up_paths,
             "resumed_no_training": no_training,
         }
+        if "parent_lineage" in provenance:
+            report["parent_lineage"] = provenance["parent_lineage"]
+        return report
 
     # Run-all is common in Colab. A verified completed checkpoint is a no-op:
     # do not replace it, upload it again, or erase its measured pilot summary.

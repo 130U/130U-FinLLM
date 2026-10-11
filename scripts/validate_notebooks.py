@@ -6,8 +6,8 @@ import nbformat
 
 root = Path(__file__).resolve().parents[1]
 paths = sorted((root / "notebooks").glob("*.ipynb"))
-if len(paths) != 10:
-    raise SystemExit("Expected seven stage notebooks and three seed-data/continuation notebooks")
+if len(paths) != 12:
+    raise SystemExit("Expected seven stage notebooks, three seed notebooks and two expansion notebooks")
 for path in paths:
     notebook = nbformat.read(path, as_version=4)
     nbformat.validate(notebook)

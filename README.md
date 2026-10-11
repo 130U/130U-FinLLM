@@ -30,5 +30,9 @@ Start with the [small training-to-prediction notebook](https://colab.research.go
 
 A user-run Colab T4 experiment reached 300 cumulative updates and 4,914,941 supervised tokens, with validation loss decreasing from 7.2726 at the pilot to 5.5419. The continuation took about 19 minutes, and the final Drive backup reported successful verification. The [training record](docs/T4_PILOT.md) documents the user-supplied evidence, measurement limits, and next steps. Financial stance accuracy has not yet been evaluated.
 
+The next stage uses [01b: additional data](https://colab.research.google.com/github/130U/130U-FinLLM/blob/main/notebooks/01b_expand_data.ipynb) and [02c: expanded pretraining](https://colab.research.google.com/github/130U/130U-FinLLM/blob/main/notebooks/02c_expanded_pretrain.ipynb). It keeps the existing tokenizer, removes overlap with seed and evaluation documents, and transfers the 300-step model weights into a separately recorded training stage. The [expansion guide](docs/DATA_EXPANSION.md) explains the data limits, new optimizer state, recovery checks, and initial 610-update budget. This Colab stage is pending execution.
+
+The [local preparation report](reports/expansion_local_validation_20261011.json) records 41,499,364 additional general training tokens and 972,438 financial training tokens with the unchanged 8K tokenizer. CPU preparation took 544.91 seconds, sampled process RSS peaked at 344.7 MiB, and the candidate, prepared, and tokenized outputs occupied 560.2 MiB, excluding the earlier seed and checkpoints. These are local preparation measurements; the new Colab training has not run. All 205 local tests and checks for 12 notebooks passed.
+
 The decoder architecture is adapted from [MiniMind](https://github.com/jingyaogong/minimind/tree/f659b55761b754d306bd140573493a6543cafd7f). Attribution and project-specific changes appear in [THIRD_PARTY_NOTICES](THIRD_PARTY_NOTICES.md). Code is licensed under [Apache-2.0](LICENSE).
 

@@ -1,0 +1,134 @@
+{
+  "status": "local_expansion_data_pipeline_verified_colab_training_pending",
+  "date": "2026-10-11",
+  "scope": "Actual bounded network download and CPU preparation using the local verified seed tokenizer; no user Drive checkpoint was independently read or trained.",
+  "sources": {
+    "general": {
+      "documents": 28486,
+      "bytes": 199996572,
+      "sha256": "5b2b8def467868f177afd438c27ba4254fe41d746a5bbabb4bbbf3046769d547"
+    },
+    "finance": {
+      "documents": 120,
+      "bytes": 6977681,
+      "sha256": "5a9b357c4b979b5e85dc7622e28c5793068baeb67a48abbd218e81e7d8219a0a"
+    }
+  },
+  "tokenizer_sha256": "3930526cf6d487291cca8ee5f027c0ebeb9a40defb3711110653a36c000ade8a",
+  "tokenizer_vocabulary": 8192,
+  "tokenizer_retrained": false,
+  "protected_seed_inventory_unchanged": true,
+  "source_statistics": {
+    "general": {
+      "input": 28486,
+      "prior_group_excluded": 825,
+      "prior_text_excluded": 0,
+      "exact_duplicates": 0,
+      "validation_overlap_removed": 0,
+      "train": 26267,
+      "validation": 1394
+    },
+    "finance": {
+      "input": 120,
+      "prior_group_excluded": 32,
+      "prior_text_excluded": 0,
+      "exact_duplicates": 0,
+      "validation_overlap_removed": 0,
+      "train": 84,
+      "validation": 4
+    }
+  },
+  "prior_exclusions": {
+    "seed_documents": 857,
+    "task_documents": 10686,
+    "new_validation_documents": 1398
+  },
+  "token_counts": {
+    "general": 41499364,
+    "general_validation": 2235968,
+    "finance": 972438,
+    "finance_validation": 50999,
+    "domain_mix": 1215545
+  },
+  "domain_mix": {
+    "finance_tokens": 972436,
+    "general_tokens": 243109,
+    "finance_fraction": 0.8,
+    "repeated_source_tokens": 0,
+    "counts_are_not_additional_unique_data": true
+  },
+  "measurements": {
+    "build_elapsed_seconds": 544.9070000000065,
+    "sampled_process_peak_rss_bytes": 361443328,
+    "rss_sampling_interval_seconds": 0.1,
+    "disk_bytes": {
+      "corpora": 247243919,
+      "prepared": 248168041,
+      "processed": 91966277
+    }
+  },
+  "planned_training": {
+    "parent_min_updates": 300,
+    "new_probe_updates": 1,
+    "new_target_updates": 610,
+    "nominal_new_positions": 9994240,
+    "initialization": "weights_only",
+    "stage": "pretrain",
+    "colab_execution_verified": false
+  },
+  "limitations": [
+    "Counts describe additional documents after seed/task lexical exclusion, not extra training already performed.",
+    "Domain mixture rearranges the additional source tokens and must not be counted again as unique data.",
+    "Financial minutes are not tweet coverage or audited target-asset stance labels.",
+    "No SFT, DPO or financial stance accuracy is established by this build.",
+    "Sampled CPU RSS is not an exact allocator peak or a T4 VRAM measurement.",
+    "The user's Colab artifacts must match their own frozen seed/tokenizer; local bytes are not proof of cloud identity."
+  ],
+  "source_contract": {
+    "contract_version": 1,
+    "limits": {
+      "general_max_bytes": 200000000,
+      "max_general_documents": 50000,
+      "max_finance_documents": 128,
+      "finance_max_bytes": 12000000
+    },
+    "finance_years": [
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016,
+      2017,
+      2018,
+      2019,
+      2020,
+      2021,
+      2022,
+      2023,
+      2024,
+      2025
+    ],
+    "wiki_dataset": "wikimedia/wikipedia",
+    "wiki_revision": "b04c8d1ceb2f5cd4588862100d08de323dccfbaa",
+    "wiki_config": "20231101.en",
+    "fed_calendar": "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm",
+    "fed_history": "https://www.federalreserve.gov/monetarypolicy/fomc_historical_year.htm"
+  },
+  "source_manifest_sha256": "f82e2085fd1b660c4531e9ad117fbf24a20593f525dada15ceffacefaf1c37af",
+  "preparation_manifest_sha256": "c1a6787cd0d81050e5d7ea7987b3432dd511f6486694bf755c8aa533aab79c6c",
+  "engineering_checks": {
+    "full_cpu_suite_passed": 205,
+    "full_cpu_suite_elapsed_seconds": 274.58,
+    "notebooks_validated": 12,
+    "pip_check": "No broken requirements found",
+    "notebook_execution": "Real isolated Jupyter kernels with local Git and fixture Drive/external data; tiny CPU models; no Colab GPU execution"
+  },
+  "local_environment": {
+    "python": "3.12.14",
+    "platform": "Windows",
+    "torch": "2.14.1+cpu",
+    "cuda": null,
+    "cuda_available": false
+  }
+}
