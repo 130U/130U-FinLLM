@@ -16,11 +16,11 @@
 
 02b 的本段训练和备份已完成，无需重跑。输入位置为 4,915,200，扣除 259 个 padding 后有效训练 tokens 为 4,914,941。通用池约 4.98M tokens，已接近一遍；下一阶段先扩充语料并明确新实验版本。seed 路径独立于 `general/english/pretrain`，03 的默认配置不能直接衔接。200 条 AI 初判表已完成，人工字段仍未确认。
 
-本地扩充准备已验证：新增通用 train 26,267 篇／41,499,364 tokens，金融 train 84 篇／972,438 tokens；新增 validation 为通用 1,394 篇／2,235,968 tokens、金融 4 篇／50,999 tokens。原 seed 的 825＋32 篇已排除，10,686 条任务原文保持冻结，原 8K 词表未重训。CPU 构建耗时 544.91 秒、采样 RSS 峰值约 344.7 MiB，三类产物合计约 560.2 MiB（不含旧 seed、检查点及外部缓存）。205 项测试、12 本 Notebook 检查和 `pip check` 均通过。见 [本地扩充报告](../reports/expansion_local_validation_20261011.json) 和 [运行说明](DATA_EXPANSION.md)；这些不是新阶段 Colab 运行成绩，云端仍需匹配用户自己的冻结文件。
+本地扩充准备已验证：新增通用 train 26,267 篇／41,499,364 tokens，金融 train 84 篇／972,438 tokens；新增 validation 为通用 1,394 篇／2,235,968 tokens、金融 4 篇／50,999 tokens。原 seed 的 825＋32 篇已排除，10,686 条任务原文保持冻结，原 8K 词表未重训。CPU 构建耗时 544.91 秒、采样 RSS 峰值约 344.7 MiB，三类产物合计约 560.2 MiB（不含旧 seed、检查点及外部缓存）。01b／02c 初次交付时205项测试、12本Notebook检查通过；加入02d后完整232项测试通过（343.60秒），13本Notebook检查和 `pip check` 通过。见 [本地扩充报告](../reports/expansion_local_validation_20261011.json)、[02d工程检查](../reports/expanded_continuation_checks_20261011.json) 和 [运行说明](DATA_EXPANSION.md)；这些不是新阶段 Colab 运行成绩，云端仍需匹配用户自己的冻结文件。
 
 1. 保留 `seed_v1` 的原始数据、词表、300 步检查点、报告归档和已验证快照，不重做 01a/02a/02b。
-2. 打开 `01b_expand_data.ipynb`，CPU 准备独立 `expansion_v1`：固定来源、原 seed／任务原文排除、去重、文档 train/dev 切分、原 tokenizer 编码及三部分校验备份。来源默认 Wikipedia 200MB 和 2011–2025 FOMC；实际新增规模看报告。不能把旧数据重复约 20 遍写成新增 100M 数据。
-3. 完成 01b 后打开 T4 的 `02c_expanded_pretrain.ipynb`。显式冻结至少 300 步的母检查点，只承接模型权重并重新建立新阶段优化器／调度器／游标及计数；原 `--resume` 仍拒绝数据哈希变化，新阶段只在同版本严格恢复。先测原验证集，再验证 0→1 步、训练至新阶段 610 步、重测原验证集并备份。新阶段 Colab 执行尚未完成。细节见 `docs/DATA_EXPANSION.md`。
+2. 保留并复用已完成 01b 的独立 `expansion_v1` 输入和三部分校验备份，不重新下载或构建。该版本已按固定来源排除原 seed／任务原文、去重、文档 train/dev 切分并用原 tokenizer 编码。来源为限量 Wikipedia 和 2011–2025 FOMC；实际新增规模见报告。不能把重复文本计为新增 100M 数据。
+3. 用户已完成 01b 及 T4 的 02c。扩充阶段 610 步／9,994,240 tokens，新通用验证 loss 4.1311，原 seed 保留子集 after loss 4.4032；最终 7 文件／615,996,721 字节快照显示 `verified: true`。本轮 before 数值未提供，不计算变化幅度；代理未独立读回 Drive。记录见 `reports/colab_t4_expansion_20261011.json`。下一入口是 02d：先完整归档 610 步成果，再严格恢复优化器／调度器／AMP／RNG／数据游标，验证 611 步并继续至扩充累计 1220 步。原 02c 测量不覆盖；02d 新 Colab 段仍待执行。见 `docs/EXPANDED_CONTINUATION.md`。
 4. 本地已验证 01b 生成独立 `expansion_v1/domain_mix`，共 1,215,545 tokens，按 80% 金融／20% 通用取得源内容且不循环复制；这是新增训练源的重排，不能再次计为独立新增数据。金融阶段还需承接新阶段选定检查点的配置与 Notebook，重新建立该阶段优化器／调度，不能原样运行旧 03。
 5. SFT/DPO 等待资产映射和人工标签，按开发集而非 test 选择；后续开展 FinBERT 比较、消融与重复 seed。此时不自动启动金融长训练。
 

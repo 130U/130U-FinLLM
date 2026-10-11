@@ -1,0 +1,119 @@
+{
+  "date": "2026-10-11",
+  "status": "locally_validated_colab_pending",
+  "scope": "Actual local CPU tests and isolated Jupyter kernels with tiny training budgets and local Git/Drive substitutes. No new 02d Colab/T4 training or independent user checkpoint download.",
+  "base_revision": "143eaa92171c2071ef107f3623fcc667d478cb43",
+  "environment": {
+    "platform": "Windows",
+    "python": "3.12.14",
+    "torch": "2.14.1+cpu",
+    "cuda_version": null,
+    "cuda_available": false,
+    "packages": {
+      "pytest": "9.1.1",
+      "tokenizers": "0.22.2",
+      "ipykernel": "7.4.0",
+      "jupyter_client": "8.10.0"
+    }
+  },
+  "full_suite": {
+    "command": "python -X utf8 -m pytest -q --basetemp runs/02d_full_tests_20261011_01 --junitxml runs/02d_full_tests_20261011.xml",
+    "tests": 232,
+    "passed": 232,
+    "failed": 0,
+    "skipped": 0,
+    "junit_suite_seconds": 343.599,
+    "junit_sha256": "388b629fcab2fa9ba0375f3354fa042f0bd63df59fef19fa476161fd62769abb",
+    "new_runtime_tests": 25,
+    "new_notebook_tests": 2
+  },
+  "additional_checks": {
+    "notebook_validation": {
+      "count": 13,
+      "syntax_valid": true,
+      "stored_outputs": false
+    },
+    "pip_check": "No broken requirements found.",
+    "git_diff_check": "passed"
+  },
+  "numerical_resume_check": {
+    "device": "cpu",
+    "dropout": 0.2,
+    "direct_updates": [
+      4,
+      8
+    ],
+    "segmented_updates": [
+      4,
+      5,
+      8
+    ],
+    "equality": "torch.equal for tensors and exact equality for scalar state",
+    "checked": [
+      "model",
+      "AdamW",
+      "scheduler",
+      "scaler",
+      "RNG",
+      "progress and cursor",
+      "last loss and validation"
+    ]
+  },
+  "notebook_execution": {
+    "isolated_kernels": 2,
+    "actual_published_cells_executed": true,
+    "substitutions": [
+      "cloud Git/Drive and downloads use local fixtures",
+      "tiny CPU model replaces the T4 formal budget"
+    ],
+    "parent_seed_updates": 2,
+    "completed_expansion_updates": 4,
+    "probe_updates": 5,
+    "target_updates": 7,
+    "verified": [
+      "editable install and active-kernel imports",
+      "strict CLI resume and checkpoint persistence",
+      "retention diagnostics and final snapshot",
+      "failed-cell guards",
+      "fresh kernel and directory recovery",
+      "completed reruns retain measured report bytes",
+      "original seed and original retention hashes and mtimes unchanged"
+    ]
+  },
+  "failure_coverage": [
+    "missing or corrupt predecessor evidence",
+    "runtime and training-settings drift",
+    "positive-time measurement requirement",
+    "interrupted immutable archive and changed-source retry",
+    "failed training or retention blocks final backup",
+    "interrupted retention and report archive copies",
+    "interrupted final snapshot restored from verified live checkpoint",
+    "newer checkpoint recovery without rollback",
+    "no epoch replay",
+    "invalid boundaries write nothing"
+  ],
+  "published_defaults": {
+    "completed_updates": 610,
+    "probe_updates": 611,
+    "target_updates": 1220,
+    "initialization": "exact_resume",
+    "allowed_training_setting_change": "max_updates only",
+    "new_colab_execution_established": false
+  },
+  "artifact_sha256_scope": "Staged Git file bytes after line-ending normalization, matching published blobs.",
+  "artifact_sha256": {
+    "src/finllm/expansion_continuation.py": "6f22b970eaf04c59b305610709c09657de460a79603ecf94a602aa60ba0491de",
+    "tests/test_expansion_continuation.py": "f2a13a17f563433b829ebe3799e197a729330184b913065226af3a3ccf398518",
+    "tests/test_expansion_continuation_notebook.py": "72ea5841e4bd70d1f2e64c29cd32c109a472fe4c707f81145e8bdf5f1987b9f2",
+    "notebooks/02d_expanded_continue.ipynb": "885707f75b1dae0ac067619e4802022c304bfda8267e964c4c383b128a083539",
+    "scripts/build_expanded_continue_notebook.py": "9ecf0c6dd0d9f8e301b0b330db22814a39b1ccd4c2943d1fc3884769cee352de",
+    "scripts/validate_notebooks.py": "d42c376b0b19e50d5ba91c5a36b86fee6c0ab1f917e32f1b90620c3a26f52101"
+  },
+  "user_previous_training_evidence": "reports/colab_t4_expansion_20261011.json",
+  "limitations": [
+    "Local filesystem substitutes do not establish Google Drive service behavior.",
+    "Exact resume is bound to unchanged data, tokenizer, model, optimizer semantics and runtime identity.",
+    "Strict byte identities reject changed serialization rather than silently replacing cached measurements.",
+    "No financial stance accuracy or new 611-to-1220 cloud result is established by these tests."
+  ]
+}
