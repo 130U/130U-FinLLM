@@ -1,0 +1,89 @@
+{
+  "recorded_date": "2026-10-11",
+  "evidence_type": "user_provided_colab_log_and_final_backup_output",
+  "evidence_scope": "Continuation summary parsed from user-pasted Colab output; final backup values supplied by the user. No independent cloud run or Drive/checkpoint download.",
+  "notebook": "notebooks/02b_seed_continue.ipynb",
+  "seed_version": "seed_v1",
+  "gpu_from_prior_user_screenshot": "T4",
+  "source_revision": null,
+  "torch_version": null,
+  "cuda_version": null,
+  "source_log_sha256": "c832121311c970aabb80af4eb7c3ea5275ed52d3226d3ec933d31c72fd7b3feb",
+  "observed_summary": {
+    "stage": "pretrain",
+    "mode": "formal",
+    "updates": 300,
+    "attempted_updates": 300,
+    "tokens": 4914941,
+    "successful_tokens": 4914941,
+    "input_tokens": 4915200,
+    "token_definition": "nonpadding supervised positions; one chosen label per DPO pair",
+    "latest_checkpoint": "runs/seed_v1_pretrain/latest.pt",
+    "best_checkpoint": "runs/seed_v1_pretrain/best.pt",
+    "loss": 5.415145695209503,
+    "validation": {
+      "loss": 5.541868772506714,
+      "supervised_tokens": 102400.0
+    },
+    "elapsed_seconds": 1150.167076669,
+    "tokens_per_second": 3390.057913405314,
+    "peak_vram_bytes": 1141189120,
+    "num_parameters": 24255744,
+    "epoch": 0,
+    "cursor": 9600,
+    "completed_epochs": 0,
+    "max_epochs": null,
+    "effective_max_tokens": 100000000,
+    "backup_checkpoints": {
+      "best.pt": "/content/drive/MyDrive/130U-FinLLM/live_checkpoints/seed_v1_pretrain/best.pt",
+      "latest.pt": "/content/drive/MyDrive/130U-FinLLM/live_checkpoints/seed_v1_pretrain/latest.pt"
+    },
+    "resumed_no_training": false
+  },
+  "observed_segment": {
+    "phase": "continue",
+    "start_updates": 62,
+    "end_updates": 300,
+    "new_updates": 238,
+    "tokens": 4914941,
+    "report_archive": "/content/drive/MyDrive/130U-FinLLM/seeds/seed_v1/report_archive/updates_000062_to_000300"
+  },
+  "log_check": {
+    "event_count": 238,
+    "first_update": 63,
+    "last_update": 300,
+    "contiguous": true,
+    "amp_skips": 0,
+    "finite_losses": true,
+    "exception_text_present": false
+  },
+  "final_backup_evidence": {
+    "reported_result": {
+      "files": 7,
+      "bytes": 615936768,
+      "verified": true,
+      "working_copy": false
+    },
+    "displayed_seed_root": "/content/drive/MyDrive/130U-FinLLM/seeds/seed_v1",
+    "snapshot_subdirectory": "run",
+    "displayed_pilot_archive": "/content/drive/MyDrive/130U-FinLLM/seeds/seed_v1/report_archive/pilot_updates_000061",
+    "independent_drive_or_checkpoint_verification": false
+  },
+  "interpretation": {
+    "cumulative_successful_tokens": 4914941,
+    "segment_new_successful_tokens": 3899133,
+    "padding_positions_excluded": 259,
+    "peak_allocated_vram_gib": 1.0628151893615723,
+    "vram_scope": "torch.cuda.max_memory_allocated, not total reserved or device memory",
+    "throughput_scope": "Measured 62-to-300 update segment, including in-loop validation and checkpoint backups",
+    "validation_scope": "102400 supervised positions; configured bounded subset, not the entire held-out corpus",
+    "effective_max_tokens_scope": "Configured ceiling; not actual trained tokens",
+    "task_accuracy_established": false,
+    "fresh_virtual_machine_resume_established_by_this_output": false
+  },
+  "next_stage": {
+    "status": "requires_data_expansion_and_explicit_checkpoint_transition",
+    "existing_03_ready_for_seed_v1": false,
+    "reason": "Current independent general corpus is about 4.98M tokens. Expand and version approved data; preserve the trained tokenizer and source checkpoint. Data changes cannot bypass exact-resume provenance checks."
+  }
+}

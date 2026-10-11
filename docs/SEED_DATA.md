@@ -33,11 +33,11 @@
 
 1. 打开 [01a_seed_data.ipynb](https://colab.research.google.com/github/130U/130U-FinLLM/blob/main/notebooks/01a_seed_data.ipynb)，保存副本，按顺序运行。它先恢复并校验已有成果；首次运行才下载限量来源、建立排除池、训练自己的词表、编码并备份。它可使用 CPU，不会启动模型训练。
 2. 完成后打开 [02a_seed_pilot.ipynb](https://colab.research.google.com/github/130U/130U-FinLLM/blob/main/notebooks/02a_seed_pilot.ipynb)，选择 T4，按顺序运行。它恢复版本快照，从随机权重开始预训练 61 次更新；已有检查点时先校验并恢复进度。
-3. 这段约 1M-token 预训练结束后，读取上方 GPU 型号和 `run_summary.json` 的实际 tokens、吞吐、峰值显存及验证 loss，再决定扩充数据与下一段预算。2026-10-11 用户试跑结果已收到，见 [T4 试跑记录](T4_PILOT.md)。下一入口为 [02b_seed_continue.ipynb](https://colab.research.google.com/github/130U/130U-FinLLM/blob/main/notebooks/02b_seed_continue.ipynb)：检查恢复后继续到累计 300 步。保持原调度不意味着现在就自动跑完 100M。
+3. 这段约 1M-token 预训练结束后，读取 GPU 型号和 `run_summary.json` 的实际 tokens、吞吐、峰值显存及验证 loss，再决定下一段预算。[02b_seed_continue.ipynb](https://colab.research.google.com/github/130U/130U-FinLLM/blob/main/notebooks/02b_seed_continue.ipynb) 复用检查点继续到累计 300 步。2026-10-11 用户已提供该段 4,914,941-token 结果与最终备份校验通过输出，见 [T4 训练记录](T4_PILOT.md)，现有成果无需重训。下一阶段先扩充语料并明确跨数据版本承接，不自动跑完 100M。
 
 Colab 复现会记录自己的来源快照和 tokenizer 哈希；网页可能更新、库版本也可能不同，不能把本地哈希无条件当作未来 Colab 哈希。续训只能使用与原检查点匹配的那一套输入。重复执行 01a 会校验复用；需要重建时才选择新版本目录，不能覆盖已有 tokenizer。旧版重复执行及依赖冲突的处理见 [Colab 修复说明](COLAB_DEBUG.md)。
 
-01a/02a 由用户在自己的 Colab 中执行。2026-10-11 用户截图显示 24M 模型完成 999,424-token 试跑及 Drive 备份；这一结果不代表完整预训练预算、金融后训练或云端恢复已完成。代理尚未独立读取云端检查点。
+01a/02a/02b 由用户在自己的 Colab 中执行。2026-10-11 用户提供的截图、日志和备份输出显示，24M 模型完成累计 4,914,941-token 通用预训练及 Drive 快照校验；这不代表完整预训练预算、金融后训练或新虚拟机恢复已完成。代理尚未独立读取云端检查点。
 
 ## 200 条立场审核
 
