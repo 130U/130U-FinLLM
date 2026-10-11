@@ -113,6 +113,58 @@ def build():
         markdown("将上方显示的 GPU 型号及 run_summary.json 中的峰值显存、tokens/second、tokens 和验证 loss 带回工作对话后决定下一段预算。SEntFiN 的立场审核和资产映射仍是 SFT/DPO 的前置材料；本次不声称金融预测能力。")]
     write("02a_seed_pilot.ipynb", cells)
 
+    cells = start("02b｜保留试跑成果并续训至累计 300 步", "先完成 02a。本页必须恢复 seed_v1 的已有检查点，先验证第 61→62 步的断点续训，再训练至累计 300 次更新（正常更新约 4,915,200 tokens）。所有模型、数据、优化器、学习率调度和精度设置保持原样，只延长停止步数。原始 61 步试跑报告会在 Drive 独立归档；不重新初始化模型。")
+    cells[2] = code('''
+        MOUNT_DRIVE = True
+        from google.colab import drive
+        drive.mount("/content/drive")
+        DRIVE_ROOT = Path("/content/drive/MyDrive/130U-FinLLM")
+        ''')
+    cells[3] = code('''
+        CONTINUATION_SUCCEEDED = False
+        RESUME_PROBE_SUCCEEDED = False
+        CONTINUATION_BACKED_UP = False
+        SEED_VERSION = "seed_v1"
+        PILOT_UPDATES = 61
+        PROBE_UPDATES = 62
+        TARGET_UPDATES = 300
+        if not torch.cuda.is_available():
+            raise RuntimeError("请选择 T4 GPU 运行时；不能在 CPU 上延续 T4 检查点。")
+        from finllm.continuation import prepare_seed_continuation, run_seed_segment, backup_seed_continuation
+        continuation = prepare_seed_continuation(
+            PROJECT, DRIVE_ROOT, SEED_VERSION, pilot_updates=PILOT_UPDATES,
+            probe_updates=PROBE_UPDATES, target_updates=TARGET_UPDATES)
+        print("已恢复更新步数：", continuation["restored_updates"])
+        print("原始试跑报告已验证并归档：", continuation["pilot_archive"])
+        print("GPU:", torch.cuda.get_device_name(0))
+        ''')
+    cells += [markdown("先执行一次最短续训验证。已经完成第 62 步或后续步骤时，本单元格只校验并读取现有进度，不倒退、不重跑。若 Colab 的 PyTorch/CUDA 等环境与原检查点不同，会明确停止；请保留报错，不要通过改精度、批次大小或重新初始化绕过检查。"), code('''
+        RESUME_PROBE_SUCCEEDED = False
+        CONTINUATION_SUCCEEDED = False
+        CONTINUATION_BACKED_UP = False
+        probe_result = run_seed_segment(continuation, "probe", finllm)
+        print(json.dumps(probe_result, indent=2, ensure_ascii=False))
+        RESUME_PROBE_SUCCEEDED = True
+        '''), markdown("续训到累计 300 步，包含原先的 61 步。原始 pilot_config.json 保持不变。每 10 次更新自动备份检查点；若中断，重新从本页第一格执行即可恢复已保存进度。各段报告中的 updates/tokens 是累计计数，elapsed_seconds/tokens_per_second 则只计该段实际新训练。"), code('''
+        CONTINUATION_SUCCEEDED = False
+        CONTINUATION_BACKED_UP = False
+        if not globals().get("RESUME_PROBE_SUCCEEDED", False):
+            raise RuntimeError("请先成功完成上方断点续训验证。")
+        continuation_result = run_seed_segment(continuation, "continue", finllm)
+        print(json.dumps(continuation_result, indent=2, ensure_ascii=False))
+        CONTINUATION_SUCCEEDED = True
+        '''), code('''
+        CONTINUATION_BACKED_UP = False
+        if not globals().get("CONTINUATION_SUCCEEDED", False):
+            raise RuntimeError("续训尚未成功结束；保留现有备份，先处理上方错误。")
+        backup_result = backup_seed_continuation(continuation)
+        print(json.dumps(backup_result, indent=2, ensure_ascii=False))
+        CONTINUATION_BACKED_UP = True
+        print("累计续训与校验备份完成：", continuation["seed_drive"])
+        print("原始试跑报告：", continuation["pilot_archive"])
+        '''), markdown("完成后保留本页的续训报告与 verified: true 备份输出，再比较验证 loss 和资源消耗来决定下一段语料及预算。本页不会自动进入领域训练、SFT 或 DPO；不要修改原始 01a/02a 配置或删除 seed_v1 备份。")]
+    write("02b_seed_continue.ipynb", cells)
+
 
 if __name__ == "__main__":
     build()

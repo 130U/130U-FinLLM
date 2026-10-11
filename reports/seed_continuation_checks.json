@@ -1,0 +1,43 @@
+{
+  "date": "2026-10-11",
+  "environment": {
+    "platform": "Windows",
+    "python": "3.12.14",
+    "torch": "2.14.1+cpu",
+    "device": "cpu"
+  },
+  "full_suite": {
+    "passed": 128,
+    "seconds": 127.5,
+    "command": "python -m pytest -q --basetemp .pytest-tmp-continuation-full-20261011"
+  },
+  "new_continuation_tests": {
+    "passed": 8,
+    "targeted_seconds": 39.76
+  },
+  "notebooks": {
+    "count": 10,
+    "nbformat_and_code_syntax_valid": true,
+    "stored_execution_outputs": false
+  },
+  "coverage": [
+    "published notebook cells in two real Jupyter kernels",
+    "tiny CPU checkpoint progression 2 to 3 to 5",
+    "mandatory checkpoint resume; no random restart",
+    "preserved pilot bytes and unchanged pilot_config",
+    "completed rerun without duplicate updates or changed checkpoint bytes/mtime",
+    "strict runtime mismatch rejection",
+    "training/backup failure blocks success",
+    "interrupted report archive recovery",
+    "interrupted final snapshot recovery through verified live checkpoints and archived reports"
+  ],
+  "boundary": "External Git/Drive use local directories and large installed dependencies are reused offline. CPU synthetic fixtures validate orchestration; the 02b Colab T4 continuation has not been executed.",
+  "source_sha256": {
+    "src/finllm/continuation.py": "b8977d0d4ec73a5043cb0d3604d14353e856030ac200b20bdaac4cab69417e8f",
+    "scripts/build_seed_notebooks.py": "e3fcaa704857d2d9b0c3fc2fc6779dc34da402bae722cda3bd1de0ab25886023",
+    "scripts/validate_notebooks.py": "414c1849f8b1a2ad0c4e93cef5cb1529df83094c8aca9dcadb48eabd1d3e3841",
+    "notebooks/02b_seed_continue.ipynb": "8203915649718e8da2f09b2114ba4c43b873ef8a64b3e75f5cf6642e4107c9be",
+    "tests/test_seed_continuation.py": "0bc0304eac6acbef7c9e91edc67b016d2bf1bb67d5fb129bf2efde50cb5fe8b6"
+  },
+  "source_hash_scope": "UTF-8 text with LF line endings, matching Git blob contents; Windows working-tree CRLF is normalized."
+}

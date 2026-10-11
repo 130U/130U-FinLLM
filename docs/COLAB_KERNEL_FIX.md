@@ -2,6 +2,8 @@
 
 问题记录：[GitHub #1](https://github.com/130U/130U-FinLLM/issues/1)。2026-10-09 用户截图显示，02a 已选择 Tesla T4，但训练单元格在导入 `finllm.runtime` 时抛出 `ModuleNotFoundError`。同一组截图的 01a 显示 CPU 运行时；它的断开连接提示无法单独证明内存不足或确定断开原因。
 
+2026-10-11 更新：用户提供的 T4 截图显示 02a 已完成 61 次更新、999,424 tokens，并成功备份到 Drive。此前的导入故障已在该次用户运行中越过。实际报告数字及证据边界见 [T4 试跑记录](T4_PILOT.md)；下一入口为 02b，云端断点续训仍待执行。
+
 ## 根因与修复
 
 项目采用 `src` 布局。Notebook 的 Python 内核早于 `pip install -e .` 启动；editable 安装产生的 `.pth` 会被后续新 Python 进程读取，已运行内核不会自动重新读取。因此原先 `python -m finllm environment` 成功，不能证明后面的内核内 `from finllm.runtime import ...` 会成功。

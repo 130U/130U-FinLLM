@@ -26,7 +26,9 @@ This provides a concrete setup for researching financial language models from sc
 
 [Training code](src/finllm/training.py) · [Data preparation](docs/SEED_DATA.md) · [Evaluation](src/finllm/evaluation.py) · [Model specification](docs/MODEL_CARD.md)
 
-Start with the [small training-to-prediction notebook](https://colab.research.google.com/github/130U/130U-FinLLM/blob/main/notebooks/00_setup_and_smoke.ipynb). Continue through [seed preparation](notebooks/01a_seed_data.ipynb) and the [model pilot](notebooks/02a_seed_pilot.ipynb); the [notebook guide](notebooks/) contains the remaining training stages.
+Start with the [small training-to-prediction notebook](https://colab.research.google.com/github/130U/130U-FinLLM/blob/main/notebooks/00_setup_and_smoke.ipynb). Continue through [seed preparation](notebooks/01a_seed_data.ipynb), the [model pilot](notebooks/02a_seed_pilot.ipynb), and [checkpoint continuation](https://colab.research.google.com/github/130U/130U-FinLLM/blob/main/notebooks/02b_seed_continue.ipynb).
+
+A user-run Colab T4 pilot completed 61 updates over 999,424 tokens in 296 seconds. The [pilot record](docs/T4_PILOT.md) documents the screenshot evidence, measurement limits, and next training segment. Financial stance accuracy has not yet been evaluated.
 
 The decoder architecture is adapted from [MiniMind](https://github.com/jingyaogong/minimind/tree/f659b55761b754d306bd140573493a6543cafd7f). Attribution and project-specific changes appear in [THIRD_PARTY_NOTICES](THIRD_PARTY_NOTICES.md). Code is licensed under [Apache-2.0](LICENSE).
 

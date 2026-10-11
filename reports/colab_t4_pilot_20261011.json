@@ -1,0 +1,59 @@
+{
+  "recorded_date": "2026-10-11",
+  "evidence_type": "user_provided_colab_screenshots",
+  "transcription": "Selected fields manually transcribed from the displayed Drive run_summary.json; not a downloaded report or an independent rerun.",
+  "notebook": "notebooks/02a_seed_pilot.ipynb",
+  "seed_version": "seed_v1",
+  "gpu_as_displayed": "T4",
+  "source_revision": null,
+  "torch_version": null,
+  "cuda_version": null,
+  "observed_summary": {
+    "stage": "pretrain",
+    "mode": "formal",
+    "updates": 61,
+    "attempted_updates": 61,
+    "tokens": 999424,
+    "successful_tokens": 999424,
+    "input_tokens": 999424,
+    "num_parameters": 24255744,
+    "loss": 7.159514963626862,
+    "validation": {
+      "loss": 7.272579336166382,
+      "supervised_tokens": 102400.0
+    },
+    "elapsed_seconds": 296.42790212900013,
+    "tokens_per_second": 3371.5584559413996,
+    "peak_vram_bytes": 1136339456,
+    "epoch": 0,
+    "cursor": 1952,
+    "completed_epochs": 0,
+    "effective_max_tokens": 100000000,
+    "resumed_no_training": false
+  },
+  "backup_evidence": {
+    "displayed_destination": "MyDrive/130U-FinLLM/seeds/seed_v1",
+    "displayed_verified": true,
+    "displayed_complete": true,
+    "independent_checkpoint_or_drive_hash_verification": false
+  },
+  "interpretation": {
+    "peak_allocated_vram_gib": 1.0582985877990723,
+    "vram_scope": "torch.cuda.max_memory_allocated, not total reserved or device memory",
+    "throughput_scope": "Session training loop, including in-loop validation and checkpoint backups",
+    "validation_scope": "102400 supervised positions; configured bounded validation, not the entire held-out corpus",
+    "effective_max_tokens_scope": "Configured ceiling, not tokens actually trained",
+    "task_accuracy_established": false,
+    "cloud_resume_established": false
+  },
+  "next_bounded_segment": {
+    "notebook": "notebooks/02b_seed_continue.ipynb",
+    "resume_probe_update": 62,
+    "target_cumulative_updates": 300,
+    "target_cumulative_successful_tokens": 4915200,
+    "additional_successful_tokens_after_pilot": 3915776,
+    "estimated_additional_minutes_at_pilot_rate": 19.356903991483886,
+    "estimate_assumptions": "Same effective batch, no skipped AMP updates, similar validation and backup costs; runtime variation and setup time are not guaranteed.",
+    "cloud_execution_status": "not_run"
+  }
+}
