@@ -2,6 +2,8 @@
 
 更新日期：2026-10-30。
 
+最新推进：已生成NSE资产证据与类别候选，及只读SFT母检查点预检；数据和官方快照保存在本地私有目录，资产身份仍待核验。预检通过10项小型CPU真实训练快照测试，尚未读取用户Drive。见[资产证据统计](../reports/nse_asset_evidence_20261030.json)及[项目进度](PROJECT_PROGRESS.md)。
+
 02a 的当前内核导入与依赖安装修复见 `docs/COLAB_KERNEL_FIX.md` 和 Issue #1。2026-10-11 用户提供的 Colab T4 截图显示，该入口已完成 61 次更新、999,424 tokens，Drive 备份校验通过。此前 01a 的目录复用修复记录见 `docs/COLAB_DEBUG.md`。
 
 本轮验收：用户提供的 02b 日志显示，24,255,744 参数模型已从第 62 步续训到累计 300 步、4,914,941 个有效 tokens，最后训练 loss 5.4151、限量验证 loss 5.5419。本段 238 次更新耗时 1150.17 秒、吞吐 3390.06 tokens/秒、PyTorch 分配峰值显存约 1.063 GiB。用户随后提供最终快照输出：7 个文件、615,936,768 字节、`verified: true`。续训与最终备份完成；代理未独立下载检查点或读回 Drive 清单。详见 `docs/T4_PILOT.md`、`reports/colab_t4_pilot_20261011.json` 和 `reports/colab_t4_continuation_20261011.json`。

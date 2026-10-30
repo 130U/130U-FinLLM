@@ -1,0 +1,17 @@
+{
+  "date": "2026-10-30",
+  "source_page": "https://www.nseindia.com/static/market-data/securities-available-for-trading",
+  "retrieved_at_utc": "2026-10-30T09:37:46.492354+00:00",
+  "sources": {
+    "current_equities": {"url": "https://nsearchives.nseindia.com/content/equities/EQUITY_L.csv", "sha256": "e99e5163b9edd041d3bed2c31c60c26ba954e741ca2d87a4594ffc3fea9c4cec", "rows": 2620},
+    "symbol_changes": {"url": "https://nsearchives.nseindia.com/content/equities/symbolchange.csv", "sha256": "7057d05af5f70705636855e40e46da3609dd4db61e121342a1cdba410931ea90", "rows": 1078},
+    "name_changes": {"url": "https://nsearchives.nseindia.com/content/equities/namechange.csv", "sha256": "b193ed17c6da556b52c59cad5c5cda4563f2b7506a1a66a5fe5e394e0756faa3", "rows": 2342}
+  },
+  "three_class_candidates": 1879,
+  "candidate_groups": 740,
+  "lexical_evidence_groups": {"single_historical_symbol_found_in_current_nse": 347, "old_symbol_change_record": 30, "not_found_in_current_nse": 301, "no_historical_candidate": 60, "multiple_historical_candidates": 2},
+  "asset_verified_rows": 0,
+  "formal_training_ready": false,
+  "scope": "Symbol matches and AI asset kinds are triage clues only. Current listings cannot establish the security identity or listing at the original headline date; some source codes describe asset classes rather than securities.",
+  "private_artifacts": "runs/review_packages/nse_asset_evidence_20261030/"
+}
