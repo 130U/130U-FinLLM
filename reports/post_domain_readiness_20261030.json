@@ -1,0 +1,33 @@
+{
+  "date": "2026-10-30",
+  "status": "awaiting_actual_workbench_progress_export",
+  "completed_domain_record": "reports/colab_t4_domain_20261030.json",
+  "importer": {
+    "module": "src/finllm/review_import.py",
+    "entry": "scripts/import_review_progress.py",
+    "format": "130u-review-decisions-v1",
+    "source_rows_validated": 2000,
+    "source_sha256": "becc92113c191f807c8a4d73fe8e792cfc7d0ea193f2b2627c4e66f80ac4070c",
+    "actual_human_progress_received": false,
+    "human_reviewed_count": null,
+    "human_asset_verified_count": null,
+    "formal_training_ready": false
+  },
+  "local_verification": {
+    "command": ".venv/Scripts/python.exe -X utf8 -m pytest tests/test_review_import.py tests/test_review_workspace.py tests/test_assemble_review_annotations.py -q --tb=short --basetemp=runs/test_tmp/post_domain_20261030_root",
+    "tests_passed": 57,
+    "elapsed_seconds": 8.75,
+    "notebooks_validated": 14,
+    "independent_importer_review": "No blocking issues; 37 importer tests independently passed.",
+    "scope": "Local source/import/UI validation; not an import of real human decisions or a cloud SFT run."
+  },
+  "remaining_before_real_sft": [
+    "Receive and validate the actual workbench progress JSON against its exact frozen source.",
+    "Resolve confirmed assets to legal target identifiers and aliases; audit source rights and semantic/event grouping.",
+    "Freeze independent task partitions and check class/group coverage, including both calibration subsets.",
+    "Read back and verify the selected completed domain snapshot, report and diagnostics before freezing the SFT parent."
+  ],
+  "sft_started": false,
+  "dpo_started": false,
+  "guide": "docs/POST_DOMAIN_NEXT.md"
+}

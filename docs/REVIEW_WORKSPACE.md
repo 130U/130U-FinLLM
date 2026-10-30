@@ -34,3 +34,9 @@
 每行JSON必须包含非空`id`、英文`text`、`source_entity`和`ai_stance`（或`proposed_stance`）；建议字段为`ai_rationale`、逐字原文`evidence_quotes`、`ai_asset_candidate`、`mapping_status`、`priority`、`difficulty`、`batch_id`和分组／来源字段。输入只接受AI待审核状态，不能夹带人工批准。
 
 页面数据与进度以输入文件SHA256绑定。生成器不会覆盖不同内容的已有HTML；需要新版本界面或新数据时指定新文件名，并保留已导出的进度JSON。同一输入的界面升级可通过进度文件恢复；改变输入字节后的进度不能无校验地直接导入。
+
+## 交给训练流水线之前
+
+优先交接「备份进度 JSON」下载的`review_progress_*.json`；它包含草稿、待查、排除和明确确认，便于保留完整操作。项目新增`scripts/import_review_progress.py`，核对精确源文件SHA和全部有序ID后，生成进度、标签候选、资产待核表及清单。缺少决定的行保留为未审，立场已审但资产未核实的行仍单独列出，所有产物继续禁止正式训练。
+
+完整命令与下一步见[03a之后的交接](POST_DOMAIN_NEXT.md)。该导入器只接受实际进度JSON，不接受把AI初稿改名为人工结果。当前工作台数据的SHA为`becc92113c191f807c8a4d73fe8e792cfc7d0ea193f2b2627c4e66f80ac4070c`；其他版本须使用匹配的原始数据。

@@ -1,0 +1,107 @@
+{
+  "date_received": "2026-10-30",
+  "status": "bounded_domain_pilot_completed",
+  "evidence": {
+    "type": "user_pasted_colab_output",
+    "source": "User supplied complete 03a setup, parent audit, training summary, retention and final backup output in this conversation.",
+    "notebook": "notebooks/03a_domain_pretrain.ipynb",
+    "code_revision": "673effe9b8b88fa5b686d8a0ed6db471a73a85de",
+    "independent_drive_download": false,
+    "independent_checkpoint_verification": false,
+    "raw_log_file_archived": false
+  },
+  "runtime": {
+    "python": "3.13.16",
+    "torch": "2.11.0+cu130",
+    "cuda": "13.0",
+    "gpu": "Tesla T4",
+    "amp": true,
+    "tokenizers": "0.23.3",
+    "gpu_total_bytes": 15637086208
+  },
+  "parent": {
+    "stage": "pretrain",
+    "updates": 1220,
+    "tokens": 19988195,
+    "seed_tokens": 4914941,
+    "checkpoint_sha256": "3600a2a686faa07ee00b8b40785fa0810821f4bb4cf8bd52d00d9ddc4bc5e461",
+    "tokenizer_sha256": "3930526cf6d487291cca8ee5f027c0ebeb9a40defb3711110653a36c000ade8a",
+    "data_sha256": "7de18d4705f2c978d27e24daae12766aad77d80be3b7e9bffbd3f70b7190bd0b",
+    "validation_sha256": "3a41adc9ca07450796f8bf5eb3fff3f685de2d46a6f8389f853773a90c2ac0d6"
+  },
+  "domain": {
+    "version": "domain_v1",
+    "stage": "domain",
+    "initialization": "parent_weights_only_new_optimizer_and_schedule",
+    "num_parameters": 24255744,
+    "vocab_size": 8192,
+    "batch_size": 4,
+    "gradient_accumulation": 8,
+    "sequence_length": 512,
+    "updates": 74,
+    "attempted_updates": 74,
+    "successful_tokens": 1211960,
+    "input_tokens": 1212416,
+    "padding_positions": 456,
+    "loss": 3.3309105336666107,
+    "validation": {
+      "scope": "Frozen expansion finance-validation text; next-token loss, not target-asset stance accuracy",
+      "loss": 3.2375138715611396,
+      "supervised_tokens": 50998
+    },
+    "measured_continue_call": {
+      "start_updates": 1,
+      "end_updates": 74,
+      "new_updates": 73,
+      "elapsed_seconds": 342.6511550879999,
+      "tokens_per_second": 3489.19296563571,
+      "peak_vram_bytes": 1141189120,
+      "scope": "Metrics from the measured 1-to-74 continuation call; not the entire notebook wall time"
+    },
+    "latest_checkpoint_sha256_from_after_diagnostic": "2a6585bf18ed4753330221292d89b45ab17a52388ab7a0350eaf5d0dc4255c1f",
+    "model_path_total_tokens": 26115096,
+    "completed_epochs": 0,
+    "cursor": 2368,
+    "forbid_epoch_replay": true
+  },
+  "general_retention": {
+    "scope": "Same frozen seed general-validation subset and runtime before/after",
+    "data_sha256": "f9e89e89893368f157f1d0668e766083ffbe2e2706a3642a61b422dd153c5747",
+    "supervised_tokens_each": 102400,
+    "before_loss": 3.984176821708679,
+    "after_loss": 4.05735098361969,
+    "loss_delta_after_minus_before": 0.07317416191101074,
+    "interpretation": "A small observed increase on this subset; no statistical uncertainty estimate or financial stance score is established."
+  },
+  "completed_probe_rerun": {
+    "start_updates": 74,
+    "end_updates": 74,
+    "new_updates": 0,
+    "resumed_no_training": true,
+    "interpretation": "Read-only completed-run recovery preserved the earlier measured report; not another 74 updates."
+  },
+  "backup_output": {
+    "files": 7,
+    "bytes": 615896468,
+    "verified": true,
+    "working_copy": false,
+    "run": "/content/drive/MyDrive/130U-FinLLM/domains/domain_v1/run",
+    "reports": "/content/drive/MyDrive/130U-FinLLM/domains/domain_v1",
+    "report_archive": "/content/drive/MyDrive/130U-FinLLM/domains/domain_v1/report_archive/updates_000001_to_000074",
+    "live_checkpoints": "/content/drive/MyDrive/130U-FinLLM/live_checkpoints/domain_v1"
+  },
+  "review_status": {
+    "user_statement": "Reviewed in the workbench but not yet exported",
+    "actual_progress_export_received": false,
+    "confirmed_row_count": null,
+    "verified_asset_count": null
+  },
+  "next_step": "Import the actual workbench progress JSON against its exact source version; audit confirmed labels, asset resolution, rights and event grouping before frozen splits and real SFT.",
+  "limitations": [
+    "This completes the bounded 74-update domain pilot, not the original 25M financial or 100M general token budgets.",
+    "Model-path token counts are processed supervised positions, not unique corpus size.",
+    "Finance and seed-general validation losses use different texts and cannot be directly compared.",
+    "Best checkpoint selection has not been independently checked; only latest checkpoint identity was supplied.",
+    "Real SFT, preference-reviewed DPO, calibration and sealed financial-stance testing have not run."
+  ]
+}

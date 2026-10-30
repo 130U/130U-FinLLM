@@ -2,6 +2,8 @@
 
 2026-10-30。入口：[03a_domain_pretrain.ipynb](https://colab.research.google.com/github/130U/130U-FinLLM/blob/main/notebooks/03a_domain_pretrain.ipynb)。
 
+**最新验收：本段已完成。**用户随后提供完整Colab输出，领域阶段74步／1,211,960有效tokens，金融验证loss 3.2375，通用保留子集3.9842→4.0574，最终备份输出为`verified: true`。详见[领域记录](../reports/colab_t4_domain_20261030.json)。下面保留入口设计与恢复说明；当前下一步是[接收人工审核进度](POST_DOMAIN_NEXT.md)，无需重做本段。
+
 已完成的02d输出保存在[用户历史提交](https://github.com/130U/130U-FinLLM/blob/e14b85e5660c4bce175341ee4d9da2e3984a12b5/notebooks/02d_expanded_continue.ipynb)，读回记录见[1220步报告](../reports/colab_t4_expanded_continuation_20261030.json)。扩充阶段累计19,988,195个有效tokens；含seed路径累计24,903,136，不是独立语料大小。下一段先在Colab读回Drive文件并校验母检查点，GitHub保存输出不代替这项检查。
 
 ## 运行
@@ -12,7 +14,7 @@
 4. 运行第1步验证，再继续至本金融阶段累计74步。每10步保存并同步检查点；新阶段恢复优化器、scaler、随机状态和数据位置。
 5. 测量同一原seed保留子集的after loss，运行最后一格校验备份。保留金融验证loss、本段报告、`parent_audit`和最终`verified: true`输出。
 
-用户已于本次对话确认T4连接；代理读取Colab页面超时，未据此宣称Drive已挂载或新金融训练已执行。首个准备单元格承担实际云端核验；任何校验失败时保留输出和已有成果。
+用户已贴出T4、Drive挂载、母检查点SHA、训练和最终备份输出，构成本次云端执行证据；代理未独立下载Drive检查点。首个准备单元格承担实际云端核验；任何校验失败时保留输出和已有成果。
 
 ## 本段预算
 
@@ -52,7 +54,7 @@ Drive项目根目录为`MyDrive/130U-FinLLM`：
 
 ## 任务后训练的材料
 
-同时审核[200条标注包](TASK_REVIEW_NEXT.md)。它保留AI草稿和历史代码候选，人工字段仍为空。用户选择真实标签路线，只有审核、资产映射、去重／事件分组和分区通过后，才开展真实SFT／DPO、校准和封存测试。语言建模loss不能当成资产看多／看空准确率。
+审核材料已扩为[2000条工作台](REVIEW_WORKSPACE.md)，包含原200条。用户已审核但尚未导出，实际确认数未知。用户选择真实标签路线，只有接收实际进度、资产映射、去重／事件分组和分区通过后，才开展真实SFT／DPO、校准和封存测试。语言建模loss不能当成资产看多／看空准确率。
 
 仓库中的可运行Notebook保持无存储输出。需要保存执行内容时保存到个人Drive副本；本次已保存的02d完整证据仍保留在上述历史提交及本地归档。
 
