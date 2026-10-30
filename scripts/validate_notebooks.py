@@ -6,8 +6,8 @@ import nbformat
 
 root = Path(__file__).resolve().parents[1]
 paths = sorted((root / "notebooks").glob("*.ipynb"))
-if len(paths) != 15:
-    raise SystemExit("Expected fifteen project notebooks")
+if len(paths) != 17:
+    raise SystemExit("Expected seventeen project notebooks")
 for path in paths:
     notebook = nbformat.read(path, as_version=4)
     nbformat.validate(notebook)

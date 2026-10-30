@@ -324,7 +324,21 @@ def run_sft_pilot(state, phase, runner):
                     (output / name).write_bytes(report_bytes)
                 return {"phase": phase, "start_updates": start, "end_updates": start,
                         "scope": state["binding"]["scope"], "summary": summary, "resumed_no_training": True}
-        raise ValueError("No matching measured report for the completed SFT checkpoint")
+        if phase == "probe":
+            # A periodic live checkpoint can be newer than the last archived
+            # segment report. Probe only verifies that work already exists;
+            # the continuation runner performs strict provenance validation.
+            # Never present checkpoint-only counters as measured throughput.
+            return {"phase": phase, "start_updates": start, "end_updates": start,
+                    "scope": state["binding"]["scope"], "summary": None,
+                    "checkpoint_progress": dict(previous["progress"]),
+                    "report_status": "checkpoint_only_no_matching_measured_report",
+                    "resumed_no_training": True}
+        # The final checkpoint may have been saved just before a session was
+        # interrupted, before its report/archive was written. Let the normal
+        # trainer resume it with the same configuration: its budget-complete
+        # no-op generates checkpoint-derived metrics with throughput and VRAM
+        # unknown, while still enforcing strict full-provenance checks.
     if phase == "probe":
         config["train"]["max_updates"] = 1
     config_path = state["project"] / "configs/runtime" / (state["binding"]["run_version"] + ".json")

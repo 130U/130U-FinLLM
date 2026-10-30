@@ -120,6 +120,76 @@ def test_new_runtime_restores_live_probe_then_completes(pilot, tmp_path):
     assert backup_sft_pilot(resumed)["verified"] is True
 
 
+def _interrupt_after_live_update(monkeypatch, desired):
+    import finllm.training as training
+    original = training.snapshot_to_drive
+    def interrupt(path, destination):
+        result = original(path, destination)
+        if Path(path).name == "latest.pt" and runtime.load_checkpoint(path)["progress"]["updates"] == desired:
+            raise RuntimeError("simulated interruption immediately after live checkpoint")
+        return result
+    monkeypatch.setattr(training, "snapshot_to_drive", interrupt)
+    return training, original
+
+
+def test_interrupted_periodic_checkpoint_can_resume_from_notebook_probe(pilot, tmp_path, monkeypatch):
+    """Run a real 10-step live save without a matching segment report."""
+    _, drive, digest, source = pilot
+    path = source / "train.jsonl"
+    rows = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines()]
+    rng = random.Random(991)
+    for index in range(320):
+        words = ["".join(rng.choices("abcdefghijklmnopqrstuvwxyz", k=8)) for _ in range(8)]
+        rows.append({**rows[index % 32], "id": f"additional:{index}",
+                     "text": "ACME " + " ".join(words), "group_id": f"additional:{index}",
+                     "event_id": f"additional:{index}"})
+    path.write_text("".join(json.dumps(row) + "\n" for row in rows), encoding="utf-8")
+    task_manifest = source / "task_manifest.json"
+    manifest = json.loads(task_manifest.read_text(encoding="utf-8"))
+    manifest["files"][path.name] = {"sha256": sha256_file(path), "bytes": path.stat().st_size}
+    task_manifest.write_text(json.dumps(manifest), encoding="utf-8")
+    sync_snapshot(source, drive / "tasks/entity_v1")
+    state = _prepare(pilot)
+    assert state["config"]["train"]["max_updates"] == 22
+    run_sft_pilot(state, "probe", _runner)
+    training, original = _interrupt_after_live_update(monkeypatch, 10)
+    with pytest.raises(RuntimeError, match="simulated interruption"):
+        run_sft_pilot(state, "continue", _runner)
+    monkeypatch.setattr(training, "snapshot_to_drive", original)
+    fresh = tmp_path / "fresh-kaggle"
+    fresh.mkdir()
+    resumed = prepare_sft_pilot(fresh, drive, expected_checkpoint_sha256=digest,
+                                expected_domain_updates=3, expected_task_manifest_sha256=sha256_file(task_manifest))
+    probe = run_sft_pilot(resumed, "probe", _runner)
+    assert probe["start_updates"] == 10 and probe["end_updates"] == 10
+    assert probe["summary"] is None and probe["report_status"] == "checkpoint_only_no_matching_measured_report"
+    result = run_sft_pilot(resumed, "continue", _runner)
+    assert result["start_updates"] == 10 and result["end_updates"] == 22
+    assert backup_sft_pilot(resumed)["verified"] is True
+
+
+def test_interrupted_final_checkpoint_recovers_report_without_invented_metrics(pilot, tmp_path, monkeypatch):
+    _, drive, digest, source = pilot
+    state = _prepare(pilot)
+    run_sft_pilot(state, "probe", _runner)
+    training, original = _interrupt_after_live_update(monkeypatch, 2)
+    with pytest.raises(RuntimeError, match="simulated interruption"):
+        run_sft_pilot(state, "continue", _runner)
+    monkeypatch.setattr(training, "snapshot_to_drive", original)
+    fresh = tmp_path / "fresh-kaggle"
+    fresh.mkdir()
+    resumed = prepare_sft_pilot(fresh, drive, expected_checkpoint_sha256=digest,
+                                expected_domain_updates=3,
+                                expected_task_manifest_sha256=sha256_file(source / "task_manifest.json"))
+    probe = run_sft_pilot(resumed, "probe", _runner)
+    assert probe["start_updates"] == 2 and probe["summary"] is None
+    result = run_sft_pilot(resumed, "continue", _runner)
+    assert result["start_updates"] == result["end_updates"] == 2
+    assert result["summary"]["resumed_no_training"] is True
+    assert result["summary"]["tokens_per_second"] is None and result["summary"]["peak_vram_bytes"] is None
+    assert backup_sft_pilot(resumed)["verified"] is True
+
+
 def test_changed_local_task_is_rejected_before_update(pilot):
     state = _prepare(pilot)
     train = state["task_local"] / "train.jsonl"
