@@ -15,15 +15,87 @@ from pathlib import Path
 
 from .checkpoint import load_checkpoint, sha256_file
 from .continuation import _recover_report_archives, _snapshot_file, _write_archive
-from .data import DuplicateIndex, read_jsonl, write_json
+from .data import DuplicateIndex, read_jsonl, text_hash, write_json
 from .expansion_runtime import _inventory, _restore_input, _version, restore_expansion_materials
 from .runtime import restore_seed_checkpoint, sync_snapshot
 from .sft_preflight import audit_domain_parent
 from .tokenizer import load_tokenizer, encode_prompt
-from .training import _audit_formal_data
+from .training import _audit_formal_data, _data_digest
 
 SPLITS = ("train", "development", "calibration_temperature", "calibration_threshold", "test")
 LABELS = {"bearish", "neutral", "bullish"}
+
+
+def _audit_training_exclusions(paths, task_local, domain_drive):
+    """Prove each actual task text was excluded by every upstream data pack.
+
+    Independent builds need not serialize the exclusion lists identically.
+    Read only the four verified lists, bind each to the exact pretrained
+    manifest/checkpoint and require exact normalized membership for all task
+    splits. Missing evidence never permits training.
+    """
+    seed_parent_dir = paths["drive"] / "parent"
+    expansion_parent_dir = Path(domain_drive) / "parent"
+    seed_checkpoint_path = _snapshot_file(seed_parent_dir, "latest.pt")
+    _snapshot_file(seed_parent_dir, "latest.pt.json")
+    expansion_checkpoint_path = _snapshot_file(expansion_parent_dir, "latest.pt")
+    _snapshot_file(expansion_parent_dir, "latest.pt.json")
+    seed_checkpoint = load_checkpoint(seed_checkpoint_path, allow_previous=False)
+    expansion_checkpoint = load_checkpoint(expansion_checkpoint_path, allow_previous=False)
+    seed_train = paths["seed_processed"] / "general/manifest.json"
+    seed_validation = paths["seed_processed"] / "general_validation/manifest.json"
+    expansion_train = paths["processed"] / "general/manifest.json"
+    expansion_validation = paths["processed"] / "general_validation/manifest.json"
+    domain_mix = paths["processed"] / "domain_mix/manifest.json"
+    domain_validation = paths["processed"] / "finance_validation/manifest.json"
+    lineage = expansion_checkpoint.get("provenance", {}).get("parent_lineage", {})
+    if (lineage.get("kind") != "data_expansion"
+            or lineage.get("parent_checkpoint_sha256") != sha256_file(seed_checkpoint_path)
+            or seed_checkpoint.get("provenance", {}).get("data_sha256") != _data_digest(seed_train)
+            or seed_checkpoint.get("provenance", {}).get("validation_sha256") != _data_digest(seed_validation)
+            or expansion_checkpoint.get("provenance", {}).get("data_sha256") != _data_digest(expansion_train)
+            or expansion_checkpoint.get("provenance", {}).get("validation_sha256") != _data_digest(expansion_validation)):
+        raise ValueError("Pretraining checkpoints do not match the actual seed/expansion data manifests")
+    if (json.loads(domain_mix.read_text(encoding="utf-8")).get("eval_exclusion_sha256")
+            != json.loads(expansion_train.read_text(encoding="utf-8")).get("eval_exclusion_sha256")
+            or json.loads(domain_validation.read_text(encoding="utf-8")).get("eval_exclusion_sha256")
+            != json.loads(expansion_validation.read_text(encoding="utf-8")).get("eval_exclusion_sha256")):
+        raise ValueError("Domain-stage exclusion files differ from the expansion-stage lineage")
+    task_hashes = set()
+    task_count = 0
+    for split in SPLITS:
+        for row in read_jsonl(Path(task_local) / (split + ".jsonl")):
+            text = row.get("text") if isinstance(row, dict) else None
+            if not isinstance(text, str) or not text.strip():
+                raise ValueError("Task exclusion check requires nonempty task texts")
+            task_hashes.add(text_hash(text))
+            task_count += 1
+    if not task_hashes:
+        raise ValueError("Task exclusion check requires nonempty task splits")
+    sources = (
+        ("seed_train", paths["seed_drive"] / "raw", "prepared/frozen_exclusions.jsonl", seed_train),
+        ("seed_validation", paths["seed_drive"] / "raw", "prepared/frozen_task_exclusions.jsonl", seed_validation),
+        ("expansion_train", paths["drive"] / "prepared", "frozen_exclusions.jsonl", expansion_train),
+        ("expansion_validation", paths["drive"] / "prepared", "frozen_prior_exclusions.jsonl", expansion_validation),
+    )
+    result = {}
+    for name, folder, filename, manifest_path in sources:
+        exclusion_path = _snapshot_file(folder, filename)
+        actual_hash = sha256_file(exclusion_path)
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        if manifest.get("eval_exclusion_sha256") != actual_hash:
+            raise ValueError(f"{name} exclusion file does not match the pretrained-data manifest")
+        missing = set(task_hashes)
+        for row in read_jsonl(exclusion_path):
+            text = row.get("text") if isinstance(row, dict) else None
+            if not isinstance(text, str) or not text.strip():
+                raise ValueError(f"Invalid text in {name} exclusion file")
+            missing.discard(text_hash(text))
+        if missing:
+            raise ValueError(f"{name} exclusion file does not contain {len(missing)} distinct task titles")
+        result[name] = {"sha256": actual_hash, "task_rows": task_count,
+                        "distinct_task_texts": len(task_hashes), "missing": 0}
+    return result
 
 
 def install_task_zip(zip_path, drive_root, expected_sha256, task_version="entity_v1"):
@@ -167,12 +239,8 @@ def prepare_sft_pilot(project, drive_root, *, task_version="entity_v1", run_vers
     if sha256_file(task_local / "task_manifest.json") != expected_task_manifest_sha256:
         raise ValueError("Task manifest does not match the independently prepared dataset")
     manifest = json.loads((task_local / "task_manifest.json").read_text(encoding="utf-8"))
-    seed_train = json.loads((paths["seed_processed"] / "general/manifest.json").read_text(encoding="utf-8"))
-    expansion_train = json.loads((paths["processed"] / "general/manifest.json").read_text(encoding="utf-8"))
-    if (manifest.get("format") != "130u-entity-pilot-v1"
-            or manifest.get("seed_exclusions_sha256") != seed_train.get("eval_exclusion_sha256")
-            or manifest.get("expansion_exclusions_sha256") != expansion_train.get("eval_exclusion_sha256")):
-        raise ValueError("Task package exclusions differ from the actual pretrained-data lineage")
+    if manifest.get("format") != "130u-entity-pilot-v1":
+        raise ValueError("Invalid task package format")
     for name in (split + ".jsonl" for split in SPLITS):
         item = manifest.get("files", {}).get(name, {})
         path = task_local / name
@@ -181,6 +249,8 @@ def prepare_sft_pilot(project, drive_root, *, task_version="entity_v1", run_vers
     parent = load_checkpoint(domain_drive / "run/latest.pt", allow_previous=False)
     seq_len = min(512, parent["model_config"]["max_position_embeddings"])
     counts = audit_task_inputs(task_local, tok, seq_len)
+    exclusion_audit = _audit_training_exclusions(paths, task_local, domain_drive)
+    parent_audit["actual_pretraining_exclusions"] = exclusion_audit
     stage_drive = drive_root / "sft" / run_version
     parent_drive, frozen_tasks = stage_drive / "parent", stage_drive / "task_data"
     _freeze_copy(domain_drive / "run", parent_drive)
@@ -194,6 +264,7 @@ def prepare_sft_pilot(project, drive_root, *, task_version="entity_v1", run_vers
     total_updates = max(2, math.ceil(counts["train"] * epochs / 32))
     binding = {"scope": "literal_entity_pilot_not_verified_security", "parent_sha256": expected_checkpoint_sha256,
                "task_snapshot_sha256": sha256_file(task_drive / "SNAPSHOT_COMPLETE.json"),
+               "actual_exclusion_sha256": {name: value["sha256"] for name, value in exclusion_audit.items()},
                "task_version": task_version, "run_version": run_version, "epochs": epochs,
                "code_revision": ((project / "runtime_revision.txt").read_text(encoding="utf-8").strip()
                                  if (project / "runtime_revision.txt").is_file() else None)}
