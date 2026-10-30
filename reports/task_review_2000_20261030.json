@@ -1,0 +1,99 @@
+{
+  "date": "2026-10-30",
+  "status": "ai_proposals_ready_for_human_review",
+  "rows": 2000,
+  "unique_normalized_headlines": 2000,
+  "original_200_included": true,
+  "original_csv_unchanged": true,
+  "ai_stance_counts": {
+    "neutral": 1070,
+    "exclude": 113,
+    "bullish": 525,
+    "bearish": 292
+  },
+  "priority_counts": {
+    "high": 309,
+    "medium": 418,
+    "low": 1273
+  },
+  "mapping_status_counts": {
+    "unmapped": 82,
+    "unique_historical_candidate": 1916,
+    "ambiguous": 2
+  },
+  "human_reviewed_rows": 0,
+  "human_asset_verified_rows": 0,
+  "formal_training_ready": false,
+  "all_rows_in_frozen_pretraining_exclusion_pool": true,
+  "literal_evidence_validation": {
+    "checked": 2000,
+    "valid": 2000,
+    "scope": "Substring integrity only, not correctness of stance."
+  },
+  "second_ai_audit": {
+    "rows": 80,
+    "problem_enriched_original": 60,
+    "random_added": 20,
+    "first_pass_agreements": 72,
+    "first_pass_disagreements": 8,
+    "clear_draft_revision": 1,
+    "remaining_ambiguous_disagreements": 7,
+    "human_validation": false,
+    "population_error_rate_established": false
+  },
+  "selection": {
+    "count": 2000,
+    "unique_normalized_headlines": 2000,
+    "original_200_preserved": true,
+    "source_revision": "eba43610fe3cb57a3e5773cd6c037da1f8992ad5",
+    "original_csv_sha256": "d4f01a4ff12573dbbe2fc71aa4cfbcf2f6de202679ac4c769c7b80b756a5557a",
+    "selection_note": "First200 preserved. Additional rows prioritize source-mapped targets and a directional-cue-enriched stratum; cues select samples, not labels. This is not representative of natural class proportions or X posts.",
+    "pretraining_exclusion_pool_sha256": "7abf27be6df8fdedaaa6b5d1c8498bcc440dc8168d842bc0dbc9f496e91bb2d1"
+  },
+  "source": {
+    "repository": "https://github.com/pyRis/SEntFiN",
+    "revision": "eba43610fe3cb57a3e5773cd6c037da1f8992ad5",
+    "license_recorded": "MIT"
+  },
+  "grouping_scope": "2000 distinct normalized headlines; SimHash64 Hamming<=3 candidates checked, semantic/event grouping not verified.",
+  "limitations": [
+    "AI proposals are not human labels or verified security identifiers.",
+    "Source sentiment is distinct from investment stance.",
+    "Selection enriches directional cues and source-mapped entities; class proportions are not population estimates.",
+    "News headlines are not X posts; Twitter-domain generalization is untested.",
+    "No train/dev/calibration/test split, formal SFT/DPO or financial accuracy is established."
+  ],
+  "artifacts": {
+    "ai_annotations.jsonl": {
+      "bytes": 2956832,
+      "sha256": "becc92113c191f807c8a4d73fe8e792cfc7d0ea193f2b2627c4e66f80ac4070c"
+    },
+    "review_2000_ai_completed.csv": {
+      "bytes": 764737,
+      "sha256": "538be8fd2a3776c8bc09eeedb724a33110b0748776b1d28e47ca040d1dacdbdf"
+    },
+    "review_original_200_ai_completed.csv": {
+      "bytes": 83915,
+      "sha256": "299d190209838761df567fe10771c89fc12360c13623a89539d5e19cff7a63fb"
+    },
+    "review_workspace.html": {
+      "bytes": 3002138,
+      "sha256": "ef686111151655064dcdf2407b993c7cb382bb9b025f12411f86a3eac7ea7d0e"
+    },
+    "second_ai_audit.jsonl": {
+      "bytes": 57355,
+      "sha256": "4b9877c35d54cdeee40359589d2c8d3d624362bf4c4b731d1ec04f1e87effa2b"
+    }
+  },
+  "verification": {
+    "focused_tests": 20,
+    "passed": 20,
+    "human_label_accuracy_established": false,
+    "browser_visual_check": "not_completed_localhost_unreachable_from_automation_browser"
+  },
+  "delivery_archive": {
+    "name": "130U-FinLLM-review-2000.zip",
+    "bytes": 918564,
+    "sha256": "bd9dcbf7306317d92cc6554ba2c6ff19e6327fbd312b821358cdabf5d2592174"
+  }
+}
