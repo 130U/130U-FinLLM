@@ -1,0 +1,115 @@
+{
+  "date": "2026-10-30",
+  "status": "locally_validated_colab_domain_execution_pending",
+  "scope": "Local CPU engineering verification and real isolated Jupyter kernels with local cloud substitutes. No new domain T4 training or independent user Drive checkpoint verification.",
+  "base_revision": "e14b85e5660c4bce175341ee4d9da2e3984a12b5",
+  "environment": {
+    "platform": "Windows",
+    "python": "3.12.14",
+    "torch": "2.14.1+cpu",
+    "cuda_version": null,
+    "cuda_available": false,
+    "packages": {
+      "pytest": "9.1.1",
+      "tokenizers": "0.22.2",
+      "ipykernel": "7.4.0",
+      "jupyter_client": "8.10.0"
+    }
+  },
+  "full_suite": {
+    "tests": 274,
+    "passed": 274,
+    "failed": 0,
+    "skipped": 0,
+    "junit_suite_seconds": 557.427,
+    "junit_sha256": "1877c28de90fd895315c2a6b200579cfbbf8634cbcd5849f4663dce570ba4339",
+    "new_test_counts": {
+      "test_domain_runtime": 30,
+      "test_domain_notebook": 2,
+      "test_no_replay_training": 3,
+      "test_task_review_package": 7
+    }
+  },
+  "additional_checks": {
+    "notebooks": 14,
+    "syntax_valid": true,
+    "stored_outputs": false,
+    "pip_check": "No broken requirements found.",
+    "git_diff_check": "passed"
+  },
+  "domain_lifecycle": {
+    "first_initialization": "parent model weights only; fresh AdamW and scheduler at current runtime",
+    "later_initialization": "strict resume of full domain state",
+    "tiny_cpu_endpoints": {
+      "seed_updates": 2,
+      "expansion_updates": 4,
+      "domain_probe": 1,
+      "domain_target": 3
+    },
+    "numerical_comparison": "Dropout direct and segmented runs compare model, AdamW, scheduler, scaler, RNG and progress exactly.",
+    "kernel_execution": "Published cells executed in two isolated Jupyter kernels; real editable install, active-kernel imports, CLI training, snapshot backup and fresh-directory recovery.",
+    "guards": [
+      "parent and mixture source provenance",
+      "frozen parent transition identity",
+      "before/probe/train/after failure blocks final backup",
+      "own runtime drift blocks exact resume",
+      "newer live and interrupted final snapshot recovery",
+      "original measured completed-report reuse",
+      "source and parent artifacts remain unchanged",
+      "per-microbatch no-replay including simulated AMP skip"
+    ]
+  },
+  "actual_local_processed_input_review": {
+    "source_manifest_hashes": true,
+    "combined_source_digest": true,
+    "source_unique_counts": true,
+    "maximum_80_20_nonreplayed_pool": true,
+    "mixture_seed": true,
+    "training_exclusion_pool": true,
+    "validation_exclusion_pool": true,
+    "original_seed_task_boundary": true,
+    "domain_mix_tokens": 1215545,
+    "scope": "Independent read-only review of existing real local 8K processed artifacts; not user Drive inspection."
+  },
+  "published_defaults": {
+    "parent_min_updates": 1220,
+    "domain_probe_updates": 1,
+    "domain_target_updates": 74,
+    "nominal_positions": 1212416,
+    "schedule_updates": 74,
+    "warmup_updates": 5,
+    "forbid_epoch_replay": true,
+    "original_25m_budget_completed": false
+  },
+  "old_ci_failure": {
+    "commit": "e14b85e5660c4bce175341ee4d9da2e3984a12b5",
+    "run_url": "https://github.com/130U/130U-FinLLM/actions/runs/38162612855",
+    "cause": "Saved Colab execution output/metadata differs from generated runnable notebook.",
+    "python_3_12": "1 failed, 231 passed",
+    "python_3_13": "cancelled by matrix fail-fast",
+    "resolution": "Archive exact executed notebook and retain its Git commit; regenerate clean runnable source."
+  },
+  "artifact_sha256_scope": "Staged Git file bytes after line-ending normalization, matching published blobs.",
+  "artifact_sha256": {
+    "src/finllm/training.py": "d7d587ea7cc96d59a4bb792d931918b4d6b3aa7c72a04e8e0d7caf43986a3543",
+    "src/finllm/domain_runtime.py": "7cfd4b70a1a4b3acb50b2698655e5b37b46165185523bc642ab8bfb7591f6a73",
+    "notebooks/03a_domain_pretrain.ipynb": "2fcf2e89a6a17b3786c49edff2df7b835c1492034ce3197396fef5cc106bd52a",
+    "notebooks/02d_expanded_continue.ipynb": "885707f75b1dae0ac067619e4802022c304bfda8267e964c4c383b128a083539",
+    "scripts/build_domain_notebook.py": "db029dea5077ed92f28f0d3fade4b1d45719cbc68e4b1ca3b4d1388933856893",
+    "scripts/build_task_review_package.py": "b66686dcbbbaf2f3e906496127b1b088053fc3e29d4be0a3f9f2b78e0d2e4699",
+    "scripts/validate_notebooks.py": "fa5337870d98a9eba2f5349b99e9ab5fd76b746374a4718b4570252f302c5fdb",
+    "tests/test_domain_runtime.py": "4762120ef465df1ae254f0d0914d83327f4ce818ca1de8d54983b712aaa7a072",
+    "tests/test_domain_notebook.py": "0df8da1c99922bbce9fb3aa2efe221a75598926b2ae659df0e4525e728ee8354",
+    "tests/test_no_replay_training.py": "bc99fe6b6150e90267a213cf76f03c886beec715e1dade558953852781fc2af6",
+    "tests/test_task_review_package.py": "149f96dcc93b30d88f78a0fd6850607bf9c72be4c94d1c01360c3762c8827bac"
+  },
+  "related_evidence": [
+    "reports/colab_t4_expanded_continuation_20261030.json",
+    "reports/task_review_readiness_20261030.json"
+  ],
+  "limitations": [
+    "Cloud services are substituted locally; actual Drive and T4 results remain to be produced.",
+    "74 updates are a bounded domain pilot, not completion of the 25M financial budget.",
+    "No human-approved labels, financial stance accuracy, SFT/DPO or final test result is established."
+  ]
+}

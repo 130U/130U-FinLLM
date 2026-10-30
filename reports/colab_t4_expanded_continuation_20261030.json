@@ -1,0 +1,136 @@
+{
+  "recorded_date": "2026-10-30",
+  "status": "completed_1220_outputs_read_back_from_github_drive_verification_pending",
+  "evidence_type": "saved_notebook_outputs_independently_read_from_git_commit",
+  "source_commit": "e14b85e5660c4bce175341ee4d9da2e3984a12b5",
+  "source_url": "https://github.com/130U/130U-FinLLM/blob/e14b85e5660c4bce175341ee4d9da2e3984a12b5/notebooks/02d_expanded_continue.ipynb",
+  "source_blob_sha": "106073cd98bc5d3eff1e76b0a9e456c16e2bed8c",
+  "source_notebook_sha256": "e9ffafe0b2776cb5607ec49e04e77bdc743e49201beb4b2e6ebdda1a97c454ff",
+  "source_runtime_revision_printed": "661a7cab195054cde8ea3a9a841a1565978a7246",
+  "observed_summary": {
+    "stage": "pretrain",
+    "mode": "formal",
+    "updates": 1220,
+    "attempted_updates": 1220,
+    "tokens": 19988195,
+    "successful_tokens": 19988195,
+    "input_tokens": 19988480,
+    "token_definition": "nonpadding supervised positions; one chosen label per DPO pair",
+    "latest_checkpoint": "/content/130U-FinLLM/runs/expansion_v1_pretrain/latest.pt",
+    "best_checkpoint": "/content/130U-FinLLM/runs/expansion_v1_pretrain/best.pt",
+    "loss": 3.6796116828918457,
+    "validation": {
+      "loss": 3.692865579128265,
+      "supervised_tokens": 102400.0
+    },
+    "elapsed_seconds": 3097.361235407,
+    "tokens_per_second": 3221.3133185574093,
+    "peak_vram_bytes": 1141189120,
+    "num_parameters": 24255744,
+    "epoch": 0,
+    "cursor": 39040,
+    "completed_epochs": 0,
+    "max_epochs": null,
+    "effective_max_tokens": 100000000,
+    "backup_checkpoints": {
+      "best.pt": "/content/drive/MyDrive/130U-FinLLM/live_checkpoints/expansion_v1_pretrain/best.pt",
+      "latest.pt": "/content/drive/MyDrive/130U-FinLLM/live_checkpoints/expansion_v1_pretrain/latest.pt"
+    },
+    "resumed_no_training": false,
+    "parent_lineage": {
+      "kind": "data_expansion",
+      "initialization": "weights_only",
+      "parent_checkpoint_sha256": "bd4912191e555d1680e06dc9036d21aae15b1df3dd12ab573055daa8b3709e1a",
+      "parent_provenance_sha256": "0bf7fd44148e4d41f445ad82cad1f73a500810e234e90237f3cf773606615464",
+      "parent_updates": 300,
+      "parent_tokens": 4914941,
+      "parent_data_sha256": "b1e90c1b128f46999349451efbc6d9e6678d4a3e58b21449332eb21536e9b459",
+      "parent_validation_sha256": "f9e89e89893368f157f1d0668e766083ffbe2e2706a3642a61b422dd153c5747",
+      "min_parent_updates": 300
+    }
+  },
+  "observed_continuation": {
+    "phase": "continue",
+    "start_updates": 611,
+    "end_updates": 1220,
+    "new_updates": 609,
+    "new_experiment_tokens": 19988195,
+    "parent_tokens": 4914941,
+    "model_path_total_tokens": 24903136,
+    "report_archive": "/content/drive/MyDrive/130U-FinLLM/expansions/expansion_v1/continuations/updates_000610_to_001220/report_archive/updates_000611_to_001220",
+    "segment_updates": 610,
+    "segment_tokens": 9993955,
+    "new_tokens": 9977571,
+    "predecessor_tokens": 9994240,
+    "predecessor_archive": "/content/drive/MyDrive/130U-FinLLM/expansions/expansion_v1/continuations/updates_000610_to_001220/baseline_run"
+  },
+  "retention_before": {
+    "phase": "before",
+    "inputs": {
+      "checkpoint_sha256": "dbc9ad909108b96443befd49f7c41e5d2f995cf24e1216e45111d222c40ee47c",
+      "data_sha256": "f9e89e89893368f157f1d0668e766083ffbe2e2706a3642a61b422dd153c5747",
+      "tokenizer_sha256": "3930526cf6d487291cca8ee5f027c0ebeb9a40defb3711110653a36c000ade8a",
+      "batch_size": 4,
+      "seq_len": 512,
+      "max_batches": 50,
+      "requested_device": "auto",
+      "device": "cuda:0",
+      "device_type": "cuda",
+      "amp": true,
+      "torch_version": "2.11.0+cu130",
+      "cuda_version": "13.0"
+    },
+    "validation": {
+      "loss": 4.40319363117218,
+      "supervised_tokens": 102400.0
+    },
+    "completed_updates": 610,
+    "scope": "Frozen seed general-validation subset; not a financial stance score"
+  },
+  "retention_after": {
+    "phase": "after",
+    "inputs": {
+      "checkpoint_sha256": "3600a2a686faa07ee00b8b40785fa0810821f4bb4cf8bd52d00d9ddc4bc5e461",
+      "data_sha256": "f9e89e89893368f157f1d0668e766083ffbe2e2706a3642a61b422dd153c5747",
+      "tokenizer_sha256": "3930526cf6d487291cca8ee5f027c0ebeb9a40defb3711110653a36c000ade8a",
+      "batch_size": 4,
+      "seq_len": 512,
+      "max_batches": 50,
+      "requested_device": "auto",
+      "device": "cuda:0",
+      "device_type": "cuda",
+      "amp": true,
+      "torch_version": "2.11.0+cu130",
+      "cuda_version": "13.0"
+    },
+    "validation": {
+      "loss": 3.984176821708679,
+      "supervised_tokens": 102400.0
+    },
+    "completed_updates": 1220,
+    "scope": "Frozen seed general-validation subset; not a financial stance score"
+  },
+  "reported_final_backup": {
+    "files": 7,
+    "bytes": 616109865,
+    "verified": true,
+    "working_copy": false
+  },
+  "independent_drive_checkpoint_download_or_inventory_verification": false,
+  "interpretation": {
+    "cumulative_expansion_effective_tokens": 19988195,
+    "cumulative_input_positions": 19988480,
+    "padding_positions": 285,
+    "seed_effective_tokens": 4914941,
+    "model_path_effective_tokens": 24903136,
+    "segment_new_effective_tokens_including_probe": 9993955,
+    "counts_are_unique_corpus_size": false,
+    "financial_stance_accuracy_established": false,
+    "domain_sft_dpo_calibration_completed": false
+  },
+  "evidence_preservation": {
+    "original_executed_notebook_retained_in_git_commit": "e14b85e5660c4bce175341ee4d9da2e3984a12b5",
+    "local_byte_identical_archive_sha256": "e9ffafe0b2776cb5607ec49e04e77bdc743e49201beb4b2e6ebdda1a97c454ff",
+    "runnable_notebook_can_be_regenerated_without_deleting_historical_execution_evidence": true
+  }
+}

@@ -403,6 +403,8 @@ def run_training(config: dict[str, Any]) -> dict[str, Any]:
     mode = config.get("mode", "formal")
     if mode not in {"smoke", "formal"}:
         raise ValueError("mode must be smoke or formal.")
+    if not isinstance(config.get("forbid_epoch_replay", False), bool):
+        raise ValueError("forbid_epoch_replay must be a boolean.")
     settings = _settings(config)
     config["train"] = settings
     config["mode"] = mode
@@ -456,6 +458,8 @@ def run_training(config: dict[str, Any]) -> dict[str, Any]:
         "device_type": device.type, "amp": amp,
         "torch_version": str(torch.__version__), "cuda_version": torch.version.cuda,
     }
+    if config.get("forbid_epoch_replay"):
+        provenance["forbid_epoch_replay"] = True
     init = None
     if config.get("init_checkpoint") and config.get("resume"):
         raise ValueError("Choose init_checkpoint for a new stage or resume, not both.")
@@ -599,6 +603,10 @@ def run_training(config: dict[str, Any]) -> dict[str, Any]:
             remaining = None if max_tokens is None else max_tokens - progress["tokens"] - accumulated_count
             if remaining is not None and remaining <= 0:
                 break
+            if config.get("forbid_epoch_replay") and (
+                cursor.epoch > 0 or cursor.cursor + settings["batch_size"] > len(dataset)
+            ):
+                raise ValueError("One-pass data exhausted before a full microbatch; epoch replay is forbidden.")
             batch = _batch(dataset, cursor.next_indices(), stage, pad_id)
             if remaining is not None:
                 batch, partial = _limit_supervision(batch, stage, remaining)

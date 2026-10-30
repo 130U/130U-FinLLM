@@ -2,6 +2,8 @@
 
 2026-10-11。入口：[02d_expanded_continue.ipynb](https://colab.research.google.com/github/130U/130U-FinLLM/blob/main/notebooks/02d_expanded_continue.ipynb)。
 
+2026-10-30更新：该入口已由用户运行完成，扩充累计1220步。已独立读回GitHub保存的执行输出，见[1220步记录](../reports/colab_t4_expanded_continuation_20261030.json)。后续从[03a金融阶段](DOMAIN_HANDOFF.md)核验并承接现有母检查点；以下保留02d原运行与恢复说明。
+
 用户提供的 02c 日志显示扩充阶段已到 610 步、9,994,240 个监督 tokens，最后训练 loss 4.1933，新通用验证子集 loss 4.1311。随后截图显示原 seed 保留子集训练后 loss 4.4032，最终 7 个文件／615,996,721 字节的快照为 `verified: true`。完整证据及边界见 [运行记录](../reports/colab_t4_expansion_20261011.json)。代理未独立下载云端检查点；用户没有提供原验证集 before 数值，因此不计算该集的改善幅度。
 
 ## 运行顺序
@@ -48,6 +50,6 @@
 
 ## 验收与边界
 
-02d 的成功标准是：恢复验证通过、扩充累计 1220 步、原验证集 before/after 记录可校验、本段报告已归档、最终快照显示 `verified: true`。本轮完整232项本地测试通过（343.60秒），13本Notebook格式／语法检查和依赖检查通过。02d代码单元格在两个隔离Jupyter内核中实际执行，另以带dropout的CPU小模型验证直接与分段续训的模型、优化器、调度器、RNG及进度完全一致。完整记录见 [续训工程检查](../reports/expanded_continuation_checks_20261011.json)。新的用户 Colab/T4 段尚未执行。
+02d 的成功标准是：恢复验证通过、扩充累计 1220 步、原验证集 before/after 记录可校验、本段报告已归档、最终快照显示 `verified: true`。初次交付时完整232项本地测试通过（343.60秒），13本Notebook格式／语法检查和依赖检查通过。02d代码单元格在两个隔离Jupyter内核中实际执行，另以带dropout的CPU小模型验证直接与分段续训的模型、优化器、调度器、RNG及进度完全一致。工程记录见 [续训检查](../reports/expanded_continuation_checks_20261011.json)；用户随后已完成该段，云端权重独立核验仍由后续入口执行。
 
 新通用验证集 loss 和原 seed 保留子集 loss 分开报告。它们均衡量语言建模，不是资产看多／看空准确率。金融阶段、真实 SFT/DPO、校准和独立测试仍需后续完成。

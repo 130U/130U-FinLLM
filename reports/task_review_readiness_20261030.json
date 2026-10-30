@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "status": "unapproved_review_draft",
+  "source_revision": "eba43610fe3cb57a3e5773cd6c037da1f8992ad5",
+  "source_repository": "https://github.com/pyRis/SEntFiN",
+  "source_inputs": {
+    "review_200.csv": "a7007d8e38a2d81c0356a22ea03f0b00f117a0c1d9d54f3914508dc4b2bd14b4",
+    "review_200_ai_proposals.csv": "daf27c223ed7e2cac9e462522495b00e5966730cc959c4d60812590b71ced4f3",
+    "manifest.json": "b6a2f4603fb2194304a7231317b90e75a8538629ff6b71cb9b951ab78ca35ae7",
+    "ai_review_manifest.json": "24928a584758a46bc13e44ee739bb8e560afb8dfc28c8b9b245b56bfb96c9561",
+    "entity_list_comprehensive.csv": "6ace045edc54c90bc0695ee5a78afec9f7a5294844ccfd0c9e85a14aeea4916b"
+  },
+  "creation_counts": {
+    "rows": 200,
+    "entity_source_rows": 1010,
+    "source_symbol_matches": {
+      "unique_source_symbol": 116,
+      "ambiguous_source_symbols": 2,
+      "unmapped": 82
+    },
+    "ai_proposed_stances": {
+      "bearish": 16,
+      "bullish": 22,
+      "exclude": 40,
+      "neutral": 122
+    },
+    "human_reviewed_rows": 0,
+    "human_stance_labels": 0,
+    "verified_asset_identifiers": 0
+  },
+  "formal_training_ready": false,
+  "mapping_scope": "Exact trimmed casefold alias matches to author historical source symbols; no current ticker, exchange or security-identity verification.",
+  "grouping_scope": "Source headline and normalized text IDs drafted; semantic near-duplicate/event grouping still required before split.",
+  "artifacts": {
+    "review_200_to_complete.csv": {
+      "bytes": 69597,
+      "sha256": "d4f01a4ff12573dbbe2fc71aa4cfbcf2f6de202679ac4c769c7b80b756a5557a"
+    },
+    "READ_ME_FIRST.md": {
+      "bytes": 1673,
+      "sha256": "de15bc0dfbd517b12ed045662926105408355e274f62936a390a3f227bd6348b"
+    }
+  },
+  "limitations": [
+    "Source sentiment and AI proposals are not human-approved asset stance labels.",
+    "Source symbol candidates must not be copied into verified asset identifiers without review.",
+    "No train/dev/calibration/test splits or DPO preference pairs are created.",
+    "The 200-row protocol sample is not the planned full-size labelled corpus."
+  ],
+  "date": "2026-10-30",
+  "local_package": "runs/review_packages/review_200_20261030",
+  "scope": "Local preparation from pinned author files and existing AI-only proposals; no external asset verification or human approval."
+}

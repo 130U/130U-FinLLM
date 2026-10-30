@@ -118,7 +118,8 @@
     "nominal_additional_tokens": 9994240,
     "estimated_minutes_at_previous_observed_throughput": 45.087172830065406,
     "estimate_is_guarantee": false,
-    "status": "locally_validated_colab_pending",
-    "engineering_verification": "reports/expanded_continuation_checks_20261011.json"
+    "status": "completed_outputs_read_back_20261030",
+    "engineering_verification": "reports/expanded_continuation_checks_20261011.json",
+    "completion_evidence": "reports/colab_t4_expanded_continuation_20261030.json"
   }
 }
