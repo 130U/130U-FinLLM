@@ -1,0 +1,17 @@
+{
+  "date": "2026-10-30",
+  "evidence": "User supplied the 2000-row CSV and explicitly confirmed in conversation individually reviewing all 1993 labeled headline-level rows; 7 remain unresolved.",
+  "source_csv_sha256": "740fc8b5a324f5e05c399f16c3b8a64dc99d38f5aaa613b164652d8848155058",
+  "frozen_ai_source_sha256": "becc92113c191f807c8a4d73fe8e792cfc7d0ea193f2b2627c4e66f80ac4070c",
+  "confirmed_derivative_csv_sha256": "c5f2859dd8bb307638559ef6d588d602200dc4c82ac03d28ac82b6a61568f528",
+  "identity_check": "All 2000 ordered IDs, texts and target entities match the frozen AI source.",
+  "human_confirmed": {"bullish": 426, "bearish": 234, "neutral": 1219, "exclude": 114, "total": 1993},
+  "unresolved": 7,
+  "three_class_candidates": 1879,
+  "candidate_asset_groups": 740,
+  "asset_verified_rows": 0,
+  "formal_training_ready_rows": 0,
+  "headline_context_disagreements_preserved": 5,
+  "privacy": "Full review and asset worksheets remain locally under ignored runs/review_packages; no source news is included in this report.",
+  "scope": "Confirmation applies to headline labels, not context labels, asset identity, event grouping, source rights, train/test split, or DPO preferences."
+}
