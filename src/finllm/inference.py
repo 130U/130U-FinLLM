@@ -12,7 +12,9 @@ from .evaluation import (LABELS, load_records, probabilities_from_logits, sha256
                          tokenizer_file, validate_calibration)
 
 
-def validate_input(record):
+def validate_input(record, target_mode="ticker"):
+    if target_mode not in ("ticker", "literal_entity"):
+        raise ValueError("Unknown target mode")
     text, target = record.get("text"), record.get("target")
     if not isinstance(text, str) or not text.strip():
         return "invalid_text"
@@ -25,6 +27,10 @@ def validate_input(record):
     letters = [c for c in text if c.isalpha()]
     if letters and sum("LATIN" not in unicodedata.name(c, "") for c in letters) / len(letters) > 0.25:
         return "unsupported_script"
+    if target_mode == "literal_entity":
+        # Research pilot only: match the actual textual entity, not a security ID.
+        literal = r"(?<!\w)" + re.escape(target) + r"(?!\w)"
+        return None if re.search(literal, text, flags=re.IGNORECASE) else "target_not_supported"
     cashtag = r"(?<![\w$])\$" + re.escape(target) + r"(?!\w|[.-]\w)"
     if re.search(cashtag, text, flags=re.IGNORECASE):
         return None
@@ -41,10 +47,13 @@ def validate_input(record):
 
 
 class Predictor:
-    def __init__(self, checkpoint, tokenizer_path, calibration_path=None, device="auto"):
+    def __init__(self, checkpoint, tokenizer_path, calibration_path=None, device="auto", target_mode="ticker"):
         from .checkpoint import load_checkpoint
         from .model import FinLLM, ModelConfig
         from .tokenizer import encode_prompt, label_token_ids, load_tokenizer
+        if target_mode not in ("ticker", "literal_entity"):
+            raise ValueError("Unknown target mode")
+        self.target_mode = target_mode
         self.device = torch.device("cuda" if device == "auto" and torch.cuda.is_available() else "cpu" if device == "auto" else device)
         payload = load_checkpoint(checkpoint, map_location="cpu", allow_previous=False)
         recorded_hash = payload.get("tokenizer_hash") or payload.get("provenance", {}).get("tokenizer_sha256")
@@ -62,13 +71,13 @@ class Predictor:
         self.temperature, self.review_threshold, self.calibrated = 1.0, 0.65, False
         if calibration_path:
             calibration = json.loads(Path(calibration_path).read_text(encoding="utf-8"))
-            validate_calibration(calibration, checkpoint, tokenizer_path)
+            validate_calibration(calibration, checkpoint, tokenizer_path, target_mode=target_mode)
             self.temperature = float(calibration["temperature"])
             self.review_threshold = float(calibration["review_threshold"])
             self.calibrated = True
 
     def class_logits(self, record):
-        reason = validate_input(record)
+        reason = validate_input(record, target_mode=self.target_mode)
         if reason:
             return None, reason
         try:
@@ -84,7 +93,8 @@ class Predictor:
         logits, reason = self.class_logits(record)
         result = {"text": record.get("text"), "target": record.get("target"),
                   "label": None, "probabilities": None, "sentiment_score": None,
-                  "confidence": None, "needs_review": True, "calibrated": self.calibrated}
+                  "confidence": None, "needs_review": True, "calibrated": self.calibrated,
+                  "target_mode": self.target_mode}
         for field in ("id", "group_id"):
             if field in record:
                 result[field] = record[field]
@@ -100,10 +110,10 @@ class Predictor:
                 "review_reason": "low_confidence" if needs_review else None}
 
 
-def run_prediction(checkpoint, tokenizer_path, input_path, output_path, calibration_path=None, device="auto"):
+def run_prediction(checkpoint, tokenizer_path, input_path, output_path, calibration_path=None, device="auto", target_mode="ticker"):
     if Path(input_path).resolve() == Path(output_path).resolve():
         raise ValueError("Prediction output must not overwrite its input file.")
-    predictor = Predictor(checkpoint, tokenizer_path, calibration_path, device)
+    predictor = Predictor(checkpoint, tokenizer_path, calibration_path, device, target_mode=target_mode)
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     count = rejected = 0
@@ -119,4 +129,5 @@ def run_prediction(checkpoint, tokenizer_path, input_path, output_path, calibrat
             destination.write(json.dumps(result, ensure_ascii=False, allow_nan=False) + "\n")
             count += 1
             rejected += result["status"] != "ok"
-    return {"count": count, "rejected_count": rejected, "output": str(output_path), "calibrated": predictor.calibrated}
+    return {"count": count, "rejected_count": rejected, "output": str(output_path), "calibrated": predictor.calibrated,
+            "target_mode": target_mode}

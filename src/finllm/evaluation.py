@@ -188,7 +188,11 @@ def assert_disjoint_calibration(temperature_records, threshold_records):
         raise ValueError("Temperature and threshold calibration partitions overlap by text/group.")
 
 
-def validate_calibration(calibration, checkpoint_path, tokenizer_path):
+def validate_calibration(calibration, checkpoint_path, tokenizer_path, target_mode="ticker"):
+    if target_mode not in ("ticker", "literal_entity"):
+        raise ValueError("Unknown target mode")
+    if calibration.get("target_mode", "ticker") != target_mode:
+        raise ValueError("Calibration belongs to a different target mode.")
     binding = calibration.get("bindings", {})
     if binding.get("checkpoint_sha256") != sha256_file(checkpoint_path):
         raise ValueError("Calibration belongs to a different checkpoint; recalibrate the final model.")
@@ -226,7 +230,7 @@ def _collect(predictor, records):
     return np.asarray(logits), labels, invalid
 
 
-def run_calibration(checkpoint, tokenizer_path, temperature_data, threshold_data, output_path, device="auto"):
+def run_calibration(checkpoint, tokenizer_path, temperature_data, threshold_data, output_path, device="auto", target_mode="ticker"):
     from .inference import Predictor
     first, second = load_records(temperature_data), load_records(threshold_data)
     for name, records in (("temperature", first), ("threshold", second)):
@@ -234,7 +238,7 @@ def run_calibration(checkpoint, tokenizer_path, temperature_data, threshold_data
         if any(row.get("split") is not None and row["split"] not in allowed for row in records):
             raise ValueError(f"The {name} calibration file contains records from another declared split.")
     assert_disjoint_calibration(first, second)
-    predictor = Predictor(checkpoint, tokenizer_path, device=device)
+    predictor = Predictor(checkpoint, tokenizer_path, device=device, target_mode=target_mode)
     first_logits, first_labels, first_invalid = _collect(predictor, first)
     second_logits, second_labels, second_invalid = _collect(predictor, second)
     # Silently fitting on a selected subset would hide input/schema problems.
@@ -243,7 +247,7 @@ def run_calibration(checkpoint, tokenizer_path, temperature_data, threshold_data
     fitted = fit_temperature(first_logits, first_labels)
     calibrated = probabilities_from_logits(second_logits, fitted["temperature"])
     threshold = select_review_threshold(second_labels, calibrated)
-    result = {"format_version": 1, "label_order": list(LABELS),
+    result = {"format_version": 1, "label_order": list(LABELS), "target_mode": target_mode,
               "temperature": fitted["temperature"], "review_threshold": threshold["threshold"],
               "temperature_fit": fitted, "threshold_fit": threshold,
               "bindings": {"checkpoint_sha256": sha256_file(checkpoint),
@@ -255,7 +259,7 @@ def run_calibration(checkpoint, tokenizer_path, temperature_data, threshold_data
     return result
 
 
-def run_evaluation(checkpoint, tokenizer_path, input_path, output_path, calibration_path=None, device="auto"):
+def run_evaluation(checkpoint, tokenizer_path, input_path, output_path, calibration_path=None, device="auto", target_mode="ticker"):
     from .inference import Predictor
     if calibration_path:
         calibration = json.loads(Path(calibration_path).read_text(encoding="utf-8"))
@@ -263,11 +267,11 @@ def run_evaluation(checkpoint, tokenizer_path, input_path, output_path, calibrat
         input_hash = sha256_file(input_path)
         if input_hash in (bindings.get("temperature_data_sha256"), bindings.get("threshold_data_sha256")):
             raise ValueError("Use an independent evaluation file, not a calibration fitting partition.")
-    predictor = Predictor(checkpoint, tokenizer_path, calibration_path, device)
+    predictor = Predictor(checkpoint, tokenizer_path, calibration_path, device, target_mode=target_mode)
     records = load_records(input_path)
     logits, labels, invalid = _collect(predictor, records)
     probs = probabilities_from_logits(logits, predictor.temperature)
-    result = {"format_version": 1, "input_count": len(records), "valid_count": len(labels),
+    result = {"format_version": 1, "target_mode": target_mode, "input_count": len(records), "valid_count": len(labels),
               "rejected_count": len(invalid), "rejected_records": invalid,
               "input_acceptance_coverage": len(labels) / len(records),
               "metrics": compute_metrics(labels, probs),

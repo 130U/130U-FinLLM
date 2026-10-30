@@ -71,6 +71,8 @@ def main(argv=None):
         action.add_argument("--tokenizer", required=True)
         action.add_argument("--output", required=True)
         action.add_argument("--device", default="auto", choices=["auto", "cpu", "cuda"])
+        action.add_argument("--target-mode", default="ticker", choices=["ticker", "literal_entity"],
+                            help="literal_entity is an exploratory headline-entity mode, not security verification")
         if command == "calibrate":
             action.add_argument("--temperature-data", required=True)
             action.add_argument("--threshold-data", required=True)
@@ -150,11 +152,11 @@ def main(argv=None):
         from .evaluation import run_evaluation, run_calibration
         if args.command == "calibrate":
             result = run_calibration(args.checkpoint, args.tokenizer, args.temperature_data, args.threshold_data,
-                                     args.output, device=args.device)
+                                     args.output, device=args.device, target_mode=args.target_mode)
         else:
             function = run_prediction if args.command == "predict" else run_evaluation
             result = function(args.checkpoint, args.tokenizer, args.input, args.output,
-                              calibration_path=args.calibration, device=args.device)
+                              calibration_path=args.calibration, device=args.device, target_mode=args.target_mode)
     elif args.command == "sync":
         from .runtime import sync_snapshot
         result = sync_snapshot(args.source, args.destination, working_copy=args.working_copy)
