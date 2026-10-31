@@ -1,6 +1,8 @@
-# 扩充语料与新阶段权重承接
+# 24M Trial｜扩充语料与新阶段权重承接
 
-2026-10-11建立，2026-10-30更新。本轮入口承接已完成的 `seed_v1` 300 步成果。原数据、8192-token 词表、检查点与报告归档均保留；新产物单独放在 `expansion_v1`。用户已完成01b、02c和02d，扩充累计1220步、19,988,195个有效tokens，最终快照输出校验通过。最新证据见[1220步读回记录](../reports/colab_t4_expanded_continuation_20261030.json)。下一段使用[03a金融衔接入口](DOMAIN_HANDOFF.md)，先在Drive核验母检查点；其新的T4金融执行尚未发生。
+范围：24M Trial 公开工程文档，记录 `expansion_v1` 的数据及权重承接；项目整体见[总览](../README.md)。
+
+2026-10-11建立，扩充结果于2026-10-30更新。本轮入口承接已完成的 `seed_v1` 300 步成果。原数据、8192-token 词表、检查点与报告归档均保留；新产物单独放在 `expansion_v1`。用户已完成01b、02c和02d，扩充累计1220步、19,988,195个有效tokens，最终快照输出校验通过。证据见[1220步读回记录](../reports/colab_t4_expanded_continuation_20261030.json)。后续[03a金融阶段](DOMAIN_HANDOFF.md)也已完成74步／1,211,960个有效tokens；任务 SFT 结果另见[Trial 实验报告](experiment-results.md)。
 
 ## 运行顺序
 

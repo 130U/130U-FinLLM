@@ -1,0 +1,112 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1600" viewBox="0 0 1920 1600" role="img" aria-labelledby="title desc">
+<title id="title">130U-FinLLM 2.4B 训练全流程</title><desc id="desc">130U-FinLLM. 2.4B private-use financial language model and public 24M Trial. Editable vector system architecture.</desc>
+<rect x="0" y="0" width="1920" height="1600" fill="#f7f6f5"/>
+<text x="80" y="63" font-family="Consolas, sans-serif" font-size="19" fill="#2200ff">130U / TRAINING SYSTEM / PRIVATE MODEL</text>
+<text x="80" y="144" font-family="Microsoft YaHei, sans-serif" font-size="58" font-weight="700" fill="#191919">从个人语料到金融判断</text>
+<text x="82" y="195" font-family="Microsoft YaHei, sans-serif" font-size="24" fill="#666462">2.4B 自用金融语言模型 · 从数据到判断的完整训练体系</text>
+<text x="1480" y="164" font-family="Bahnschrift, sans-serif" font-size="106" fill="#191919">2.4B</text>
+<text x="1484" y="209" font-family="Consolas, sans-serif" font-size="19" fill="#666462">130U / FINANCIAL LLM</text>
+<polyline points="80,252 1840,252" fill="none" stroke="#191919" stroke-width="1.5" stroke-linejoin="round"/>
+<text x="80" y="310" font-family="Consolas, sans-serif" font-size="19" fill="#2200ff">01 / DATA CONTRACT</text>
+<rect x="80" y="346" width="500" height="232" fill="#ffffff" stroke="#d7d4d1" stroke-width="1"/>
+<rect x="80" y="346" width="4" height="232" fill="#191919"/>
+<text x="106" y="380" font-family="Consolas, sans-serif" font-size="19" fill="#2200ff">SOURCES</text>
+<text x="106" y="428" font-family="Microsoft YaHei, sans-serif" font-size="30" font-weight="700" fill="#191919">两类个人材料 + 基础语料</text>
+<text x="106" y="469" font-family="Microsoft YaHei, sans-serif" font-size="22" fill="#666462">本人原创历史观点 / 本人审核公开文本</text>
+<text x="106" y="504" font-family="Microsoft YaHei, sans-serif" font-size="22" fill="#666462">通用语言语料 / 金融原文</text>
+<text x="106" y="539" font-family="Microsoft YaHei, sans-serif" font-size="22" fill="#666462">保留作者、标注者和真实可得时间</text>
+<rect x="710" y="346" width="500" height="232" fill="#ffffff" stroke="#d7d4d1" stroke-width="1"/>
+<rect x="710" y="346" width="4" height="232" fill="#191919"/>
+<text x="736" y="380" font-family="Consolas, sans-serif" font-size="19" fill="#2200ff">PROTOCOL</text>
+<text x="736" y="428" font-family="Microsoft YaHei, sans-serif" font-size="30" font-weight="700" fill="#191919">定义判断对象与证据范围</text>
+<text x="736" y="469" font-family="Microsoft YaHei, sans-serif" font-size="22" fill="#666462">task / target / holder / scope</text>
+<text x="736" y="504" font-family="Microsoft YaHei, sans-serif" font-size="22" fill="#666462">原文立场、事件方向、个人判断分开</text>
+<text x="736" y="539" font-family="Microsoft YaHei, sans-serif" font-size="22" fill="#666462">来源、事件与派生记录归入 family</text>
+<rect x="1340" y="346" width="500" height="232" fill="#ffffff" stroke="#d7d4d1" stroke-width="1"/>
+<rect x="1340" y="346" width="4" height="232" fill="#2200ff"/>
+<text x="1366" y="380" font-family="Consolas, sans-serif" font-size="19" fill="#2200ff">PARTITION</text>
+<text x="1366" y="428" font-family="Microsoft YaHei, sans-serif" font-size="30" font-weight="700" fill="#191919">先分区，再生成训练视图</text>
+<text x="1366" y="469" font-family="Microsoft YaHei, sans-serif" font-size="22" fill="#666462">32k gold 配额：12k train + 20k 验收</text>
+<text x="1366" y="504" font-family="Microsoft YaHei, sans-serif" font-size="22" fill="#666462">教师监督与审核编辑仅进入训练区</text>
+<text x="1366" y="539" font-family="Microsoft YaHei, sans-serif" font-size="22" fill="#666462">同一 family 及其全部视图保持同区</text>
+<polyline points="580,457 710,457" fill="none" stroke="#191919" stroke-width="1.6" stroke-linejoin="round"/>
+<polyline points="702.1017569429866,461.3148298474378 710,457 702.1017569429866,452.6851701525622" fill="none" stroke="#191919" stroke-width="1.6" stroke-linejoin="round"/>
+<polyline points="1210,457 1340,457" fill="none" stroke="#191919" stroke-width="1.6" stroke-linejoin="round"/>
+<polyline points="1332.1017569429866,461.3148298474378 1340,457 1332.1017569429866,452.6851701525622" fill="none" stroke="#191919" stroke-width="1.6" stroke-linejoin="round"/>
+<text x="80" y="652" font-family="Consolas, sans-serif" font-size="19" fill="#2200ff">02 / TRAINING RAIL</text>
+<text x="710" y="652" font-family="Microsoft YaHei, sans-serif" font-size="21" fill="#666462">验收原文从自建语料、词表及训练流中排除</text>
+<polyline points="1590,578 1590,694 330,694 330,754" fill="none" stroke="#2200ff" stroke-width="2" stroke-linejoin="round"/>
+<polyline points="325.6851701525622,746.1017569429866 330,754 334.3148298474378,746.1017569429866" fill="none" stroke="#2200ff" stroke-width="2" stroke-linejoin="round"/>
+<text x="900" y="682" font-family="Microsoft YaHei, sans-serif" font-size="20" fill="#2200ff">各阶段独立取数；A → B → C 的箭头表示权重传递</text>
+<rect x="80" y="754" width="500" height="252" fill="#ffffff" stroke="#d7d4d1" stroke-width="1"/>
+<rect x="80" y="754" width="4" height="252" fill="#191919"/>
+<text x="106" y="788" font-family="Consolas, sans-serif" font-size="19" fill="#2200ff">A / BASE PRETRAINING</text>
+<text x="106" y="836" font-family="Microsoft YaHei, sans-serif" font-size="30" font-weight="700" fill="#191919">基础语言训练</text>
+<text x="106" y="877" font-family="Microsoft YaHei, sans-serif" font-size="22" fill="#666462">50B tokens 配方 / 65,536 词表</text>
+<text x="106" y="912" font-family="Microsoft YaHei, sans-serif" font-size="22" fill="#666462">随机初始化：28 层、hidden 2,560</text>
+<text x="106" y="947" font-family="Microsoft YaHei, sans-serif" font-size="22" fill="#666462">Q20 / KV4 · SwiGLU · tied embedding</text>
+<rect x="710" y="754" width="500" height="252" fill="#ffffff" stroke="#d7d4d1" stroke-width="1"/>
+<rect x="710" y="754" width="4" height="252" fill="#2200ff"/>
+<text x="736" y="788" font-family="Consolas, sans-serif" font-size="19" fill="#2200ff">B / MIXED ADAPTATION</text>
+<text x="736" y="836" font-family="Microsoft YaHei, sans-serif" font-size="30" font-weight="700" fill="#191919">金融混合适配</text>
+<text x="736" y="877" font-family="Microsoft YaHei, sans-serif" font-size="22" fill="#666462">4.0B 金融 + 0.75B 通用保持</text>
+<text x="736" y="912" font-family="Microsoft YaHei, sans-serif" font-size="22" fill="#666462">0.20B 阅读 QA + 0.05B 立场 / 事件</text>
+<text x="736" y="947" font-family="Microsoft YaHei, sans-serif" font-size="22" fill="#666462">各流 loss mask、抽样与权重分别管理</text>
+<rect x="1340" y="754" width="500" height="252" fill="#ffffff" stroke="#d7d4d1" stroke-width="1"/>
+<rect x="1340" y="754" width="4" height="252" fill="#2200ff"/>
+<text x="1366" y="788" font-family="Consolas, sans-serif" font-size="19" fill="#2200ff">C / TASK TRAINING</text>
+<text x="1366" y="836" font-family="Microsoft YaHei, sans-serif" font-size="30" font-weight="700" fill="#191919">目标条件化 SFT</text>
+<text x="1366" y="877" font-family="Microsoft YaHei, sans-serif" font-size="22" fill="#666462">目标 / 持有人 / 证据范围条件化</text>
+<text x="1366" y="912" font-family="Microsoft YaHei, sans-serif" font-size="22" fill="#666462">立场与指标方向采用不同任务前缀</text>
+<text x="1366" y="947" font-family="Microsoft YaHei, sans-serif" font-size="22" fill="#666462">逐轴语义许可接入监督与配对约束</text>
+<polyline points="580,878 710,878" fill="none" stroke="#2200ff" stroke-width="2" stroke-linejoin="round"/>
+<polyline points="702.1017569429866,882.3148298474379 710,878 702.1017569429866,873.6851701525621" fill="none" stroke="#2200ff" stroke-width="2" stroke-linejoin="round"/>
+<polyline points="1210,878 1340,878" fill="none" stroke="#2200ff" stroke-width="2" stroke-linejoin="round"/>
+<polyline points="1332.1017569429866,882.3148298474379 1340,878 1332.1017569429866,873.6851701525621" fill="none" stroke="#2200ff" stroke-width="2" stroke-linejoin="round"/>
+<text x="80" y="1095" font-family="Consolas, sans-serif" font-size="19" fill="#2200ff">03 / INDEPENDENT ACCEPTANCE</text>
+<text x="710" y="1095" font-family="Microsoft YaHei, sans-serif" font-size="21" fill="#666462">开发用于调参 · 校准、阈值与测试材料不进入训练</text>
+<polyline points="1590,1006 1590,1135 242,1135 242,1188" fill="none" stroke="#2200ff" stroke-width="2" stroke-linejoin="round"/>
+<polyline points="237.68517015256216,1180.1017569429866 242,1188 246.31482984743784,1180.1017569429866" fill="none" stroke="#2200ff" stroke-width="2" stroke-linejoin="round"/>
+<rect x="80" y="1188" width="320" height="193" fill="#ffffff" stroke="#d7d4d1" stroke-width="1"/>
+<rect x="80" y="1188" width="4" height="193" fill="#191919"/>
+<text x="106" y="1222" font-family="Consolas, sans-serif" font-size="19" fill="#2200ff">4k DEV</text>
+<text x="106" y="1270" font-family="Microsoft YaHei, sans-serif" font-size="30" font-weight="700" fill="#191919">开发选模</text>
+<text x="106" y="1311" font-family="Microsoft YaHei, sans-serif" font-size="22" fill="#666462">挑选 checkpoint</text>
+<text x="106" y="1346" font-family="Microsoft YaHei, sans-serif" font-size="22" fill="#666462">等预算比较 / 错误归因</text>
+<polyline points="400,1284 440,1284" fill="none" stroke="#191919" stroke-width="1.6" stroke-linejoin="round"/>
+<polyline points="432.10175694298664,1288.3148298474377 440,1284 432.10175694298664,1279.6851701525623" fill="none" stroke="#191919" stroke-width="1.6" stroke-linejoin="round"/>
+<rect x="440" y="1188" width="320" height="193" fill="#ffffff" stroke="#d7d4d1" stroke-width="1"/>
+<rect x="440" y="1188" width="4" height="193" fill="#191919"/>
+<text x="466" y="1222" font-family="Consolas, sans-serif" font-size="19" fill="#2200ff">4k CALIBRATION</text>
+<text x="466" y="1270" font-family="Microsoft YaHei, sans-serif" font-size="30" font-weight="700" fill="#191919">概率校准</text>
+<text x="466" y="1311" font-family="Microsoft YaHei, sans-serif" font-size="22" fill="#666462">按任务拟合 T</text>
+<text x="466" y="1346" font-family="Microsoft YaHei, sans-serif" font-size="22" fill="#666462">保留三类条件概率</text>
+<polyline points="760,1284 800,1284" fill="none" stroke="#191919" stroke-width="1.6" stroke-linejoin="round"/>
+<polyline points="792.1017569429866,1288.3148298474377 800,1284 792.1017569429866,1279.6851701525623" fill="none" stroke="#191919" stroke-width="1.6" stroke-linejoin="round"/>
+<rect x="800" y="1188" width="320" height="193" fill="#ffffff" stroke="#d7d4d1" stroke-width="1"/>
+<rect x="800" y="1188" width="4" height="193" fill="#191919"/>
+<text x="826" y="1222" font-family="Consolas, sans-serif" font-size="19" fill="#2200ff">4k THRESHOLD</text>
+<text x="826" y="1270" font-family="Microsoft YaHei, sans-serif" font-size="30" font-weight="700" fill="#191919">接受规则</text>
+<text x="826" y="1311" font-family="Microsoft YaHei, sans-serif" font-size="22" fill="#666462">冻结接受 / 复核策略</text>
+<text x="826" y="1346" font-family="Microsoft YaHei, sans-serif" font-size="22" fill="#666462">记录风险与覆盖率</text>
+<polyline points="1120,1284 1160,1284" fill="none" stroke="#191919" stroke-width="1.6" stroke-linejoin="round"/>
+<polyline points="1152.1017569429866,1288.3148298474377 1160,1284 1152.1017569429866,1279.6851701525623" fill="none" stroke="#191919" stroke-width="1.6" stroke-linejoin="round"/>
+<rect x="1160" y="1188" width="320" height="193" fill="#ffffff" stroke="#d7d4d1" stroke-width="1"/>
+<rect x="1160" y="1188" width="4" height="193" fill="#191919"/>
+<text x="1186" y="1222" font-family="Consolas, sans-serif" font-size="19" fill="#2200ff">8k FINAL TEST</text>
+<text x="1186" y="1270" font-family="Microsoft YaHei, sans-serif" font-size="30" font-weight="700" fill="#191919">最终测试</text>
+<text x="1186" y="1311" font-family="Microsoft YaHei, sans-serif" font-size="22" fill="#666462">8k 自然 + 另 3k 同族探针</text>
+<text x="1186" y="1346" font-family="Microsoft YaHei, sans-serif" font-size="22" fill="#666462">派生探针不增加独立样本</text>
+<polyline points="1480,1284 1520,1284" fill="none" stroke="#191919" stroke-width="1.6" stroke-linejoin="round"/>
+<polyline points="1512.1017569429866,1288.3148298474377 1520,1284 1512.1017569429866,1279.6851701525623" fill="none" stroke="#191919" stroke-width="1.6" stroke-linejoin="round"/>
+<rect x="1520" y="1188" width="320" height="193" fill="#ffffff" stroke="#d7d4d1" stroke-width="1"/>
+<rect x="1520" y="1188" width="4" height="193" fill="#2200ff"/>
+<text x="1546" y="1222" font-family="Consolas, sans-serif" font-size="19" fill="#2200ff">RELEASE</text>
+<text x="1546" y="1270" font-family="Microsoft YaHei, sans-serif" font-size="30" font-weight="700" fill="#191919">版本化交付</text>
+<text x="1546" y="1311" font-family="Microsoft YaHei, sans-serif" font-size="22" fill="#666462">模型 + 词表 + 规则</text>
+<text x="1546" y="1346" font-family="Microsoft YaHei, sans-serif" font-size="22" fill="#666462">校准、版本与证据绑定</text>
+<polyline points="80,1440 1840,1440" fill="none" stroke="#191919" stroke-width="1.5" stroke-linejoin="round"/>
+<text x="80" y="1485" font-family="Consolas, sans-serif" font-size="23" fill="#2200ff">TRIAL → 2.4B</text>
+<text x="440" y="1485" font-family="Microsoft YaHei, sans-serif" font-size="24" fill="#191919">复用任务协议、来源链与恢复语义；重做词表、权重、运行时与校准。</text>
+<text x="80" y="1536" font-family="Microsoft YaHei, sans-serif" font-size="21" fill="#666462">24M Trial 公开展示训练过程与工程实践；2.4B 版本面向个人金融研究使用。</text>
+</svg>

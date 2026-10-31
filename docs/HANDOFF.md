@@ -1,37 +1,40 @@
-# 开发与运行交接
+# 24M 公开 Trial：工程交接
 
-项目：130U-FinLLM｜130U 金融大语言模型。仓库：https://github.com/130U/130U-FinLLM 。
+本页用于接续公开 24M Trial 的代码与记录。项目的 2.4B 自用版本见[项目介绍](PROJECT_OVERVIEW.md)及[模型版本](MODEL_CARD.md)，其架构不能直接替换本仓库的默认配置后视为已完成迁移。
 
-## 已冻结
+Trial 已完成随机初始化预训练、金融适配、标题实体立场 SFT、平衡采样对照和校准推理导出。语言训练累计 26,115,096 有效监督 tokens；最终 SFT 训练池为 705 条独立样本，平衡运行共 4,419 标签监督位置。状态与结果分别见[实现状态](STATUS.md)、[分母账本](PROJECT_PROGRESS.md)和[实验报告](experiment-results.md)。
 
-英文、指定资产三分类、自训8K tokenizer、24,255,744参数、随机权重、全参数预训练/金融继续预训练/SFT/DPO、独立校准和测试。参数调整以真实T4测量为依据，不因显存空余直接扩大模型。
+## 工程入口
 
-## 已交付
+| 工作 | 入口 | 使用条件 |
+|---|---|---|
+| 安装与合成 smoke | [项目依赖](../pyproject.toml)、[00 Notebook](../notebooks/00_setup_and_smoke.ipynb)、[CLI](../src/finllm/cli.py) | 验证代码链路，不代表真实金融训练结果 |
+| Seed 数据和预训练 | [SEED_DATA](SEED_DATA.md)、[T4_PILOT](T4_PILOT.md) | 使用相匹配的语料、tokenizer 和排除清单 |
+| 扩充与续训 | [DATA_EXPANSION](DATA_EXPANSION.md)、[EXPANDED_CONTINUATION](EXPANDED_CONTINUATION.md) | 区分早期中间检查点与后续累计记录 |
+| 领域适配与任务衔接 | [DOMAIN_HANDOFF](DOMAIN_HANDOFF.md)、[POST_DOMAIN_NEXT](POST_DOMAIN_NEXT.md) | 核对母权重、词表、数据与阶段配置 |
+| 实体立场 SFT | [ENTITY_SFT_PILOT](ENTITY_SFT_PILOT.md)、[04e Notebook](../notebooks/04e_kaggle_lite_sft.ipynb) | 需要私有任务包及匹配的领域权重 |
+| 平衡采样对照 | [执行脚本](../scripts/kaggle_balanced_sft.py) | 依赖已准备的 04e 会话输入，训练分区内采样 |
+| 校准及推理导出 | [执行脚本](../scripts/kaggle_inference_export.py) | 使用平衡版最佳权重、原词表及两份校准子集 |
+| 人工审核和导入 | [TASK_REVIEW_NEXT](TASK_REVIEW_NEXT.md)、[REVIEW_WORKSPACE](REVIEW_WORKSPACE.md) | 核对来源版本、标签范围和人工确认状态 |
 
-原生PyTorch模型、训练/恢复/评测代码、数据格式与审核流程、分片与精确token混合、目标感知稀疏基线、分阶段 Colab Notebook、正式配置、必要测试与CPU工程小实验。实际验证见STATUS。
+仓库提供代码、默认配置和公开汇总，不包含私有标题、标签、训练权重或完整运行备份。历史真实运行的复现需要匹配的数据、检查点与运行配置；通用配置文件不是每次实验的完整清单。
 
-## 下一步
+## 三类状态承接
 
-2026-10-30最新接续：用户已提供完整03a输出，`domain_v1`完成74步／1,211,960有效tokens，金融验证loss 3.2375，seed通用保留集3.9842→4.0574，最终备份输出为7文件／615,896,468字节／`verified: true`。模型路径累计26,115,096有效tokens；本段为有界实验，并未完成原25M金融预算。见[领域记录](../reports/colab_t4_domain_20261030.json)。证据来自用户贴出日志，未独立下载Drive权重。下一步是[接收已完成的人工审核进度](POST_DOMAIN_NEXT.md)，无需重跑03a。
+**同一运行恢复。** 使用完整检查点承接模型、优化器、学习率日程、随机状态、数据位置与进度，并核对配置及来源身份。[训练器](../src/finllm/training.py)和[检查点模块](../src/finllm/checkpoint.py)包含兼容性与完整性检查。已完成运行的只读恢复检查不新增训练量。
 
-金融衔接完整274项测试通过（557.43秒），14本Notebook检查和依赖检查通过；03a在两个真实隔离内核验证过微型CPU训练、备份和新目录恢复。见[工程记录](../reports/domain_handoff_checks_20261030.json)。用户随后交付2000条CSV并明确确认1993条标题标签，7条待查；已保存独立派生记录和资产候选审核表。资产核验仍待完成，见[审核记录](../reports/human_headline_review_20261030.json)。
+**阶段切换。** 通过初始化检查点承接相兼容的模型权重，建立新阶段的优化器与数据进度。领域适配到 SFT、初版对照与平衡版从共同领域母权重开始，均应与完整 resume 区分。
 
-2026-10-11 验收：用户先完成 02a 的 61 步、999,424-token T4 试跑，再提供 02b 的连续 63–300 步日志、最终 summary 与备份输出。累计 300 步、4,914,941 有效 tokens，最后训练 loss 5.4151、限量验证 loss 5.5419；第 62→300 步耗时 1150.17 秒、约 3390.06 tokens/秒、PyTorch 分配峰值显存约 1.063 GiB。最终运行快照为 7 个文件、615,936,768 字节、`verified: true`，原始试跑报告保留。详见 `docs/T4_PILOT.md` 与 `reports/colab_t4_continuation_20261011.json`。这是用户提供的运行证据，未独立下载报告/检查点或读回 Drive 文件。首批来源、排除池、8192 词表和四份分片见 `docs/SEED_DATA.md`。
+**跨架构扩容。** 24M 与 2.4B 的词表、维度、层数和参数形状不同。可复用任务规则、数据身份与验证方法；token IDs、模型权重、优化器状态、温度和阈值不能作为同一运行直接搬入新架构。
 
-02b 的本段训练和备份已完成，无需重跑。输入位置为 4,915,200，扣除 259 个 padding 后有效训练 tokens 为 4,914,941。通用池约 4.98M tokens，已接近一遍；下一阶段先扩充语料并明确新实验版本。seed 路径独立于 `general/english/pretrain`，03 的默认配置不能直接衔接。200 条 AI 初判表已完成，人工字段仍未确认。
+轻量推理包只包含预测所需权重与元数据，不含完整 optimizer/RNG 状态，不能替代恢复检查点。完整检查点、配对元数据、完成标志及数据版本应共同保留；跨硬件恢复不等于逐位数值一致。
 
-本地扩充准备已验证：新增通用 train 26,267 篇／41,499,364 tokens，金融 train 84 篇／972,438 tokens；新增 validation 为通用 1,394 篇／2,235,968 tokens、金融 4 篇／50,999 tokens。原 seed 的 825＋32 篇已排除，10,686 条任务原文保持冻结，原 8K 词表未重训。CPU 构建耗时 544.91 秒、采样 RSS 峰值约 344.7 MiB，三类产物合计约 560.2 MiB（不含旧 seed、检查点及外部缓存）。01b／02c 初次交付时205项测试、12本Notebook检查通过；加入02d后完整232项测试通过（343.60秒），13本Notebook检查和 `pip check` 通过。见 [本地扩充报告](../reports/expansion_local_validation_20261011.json)、[02d工程检查](../reports/expanded_continuation_checks_20261011.json) 和 [运行说明](DATA_EXPANSION.md)；这些不是新阶段 Colab 运行成绩，云端仍需匹配用户自己的冻结文件。
+## 接续实验应记录的最小账本
 
-1. 保留 `seed_v1` 的原始数据、词表、300 步检查点、报告归档和已验证快照，不重做 01a/02a/02b。
-2. 保留并复用已完成 01b 的独立 `expansion_v1` 输入和三部分校验备份，不重新下载或构建。该版本已按固定来源排除原 seed／任务原文、去重、文档 train/dev 切分并用原 tokenizer 编码。来源为限量 Wikipedia 和 2011–2025 FOMC；实际新增规模见报告。不能把重复文本计为新增 100M 数据。
-3. 用户已完成01b、02c和02d，保留seed300步、原610步归档和1220步最终快照。02d执行证据固定在用户历史提交`e14b85e5660c4bce175341ee4d9da2e3984a12b5`；主分支可运行Notebook保持无输出。CI曾因保存执行输出导致生成器字节检查失败，没有训练数值失败证据。
-4. 保留已完成的[03a领域成果](DOMAIN_HANDOFF.md)：Drive`domains/domain_v1/run`、`retention`、`report_archive`和`parent`。当前最终latest SHA为`2a6585bf18ed4753330221292d89b45ab17a52388ab7a0350eaf5d0dc4255c1f`（来自用户after诊断输出）。准备SFT时需重新读回完整快照、匹配报告与诊断，再冻结选定母权重；不重新初始化原阶段或绕过检查。
-5. 用户已交付并确认[2000条标题审核结果](POST_DOMAIN_NEXT.md)：1993条已审、7条待查；确认仅覆盖标题标签。独立派生文件和740个三分类资产候选分组保存在本地忽略目录。源CSV不是工作台JSON，不调用仅支持JSON的旧导入器；SFT/DPO等待来源、资产、事件与分区验收。
+每次新实验使用独立输出目录，记录代码 revision、模型配置、tokenizer 身份、母检查点、数据及分区版本、目标语义、采样规则、输入/监督计数、尝试/成功更新、选型集与校准集。比较采样策略时，同时核对标签曝光、更新数与学习率日程，避免将更多训练归为单一方法收益。
 
-## 恢复
+后续独立评价应重新冻结样本，避免把已经查看的旧测试集当作新结果。真实 DPO 需要真实偏好监督；标题三分类标签不是天然的偏好对。已有 DPO 实现和合成 smoke 保留为工程入口。
 
-- `latest.pt`及其`.json`成对保留。参考DPO的SFT检查点必须保持不变。
-- 正式Notebook挂载Drive后，配置会将各次保存的检查点同步至`MyDrive/130U-FinLLM/live_checkpoints/<stage>`。最终数据/模型目录另做带清单的snapshot。
-- 新VM先恢复data/tokenizer/runs；必要时恢复较新的live_checkpoints；验证源码、数据、tokenizer、运行时版本后显式`--resume`。
-- 不能把CPU smoke权重移入正式训练。精确续训绑定设备类型、AMP、PyTorch/CUDA版本、调度语义和数据哈希；变更后应记录为新实验。
-- 不把运行日志、完整语料或大权重提交Git。用户凭据只通过服务正常登录流程使用。
+## 保存与发布边界
+
+保留所有历史 reports，包括失败与早期准备状态；当前状态以 [STATUS](STATUS.md) 和[实验报告](experiment-results.md)补充。公开代码许可与第三方来源说明见 [LICENSE](../LICENSE)、[THIRD_PARTY_NOTICES](../THIRD_PARTY_NOTICES.md)；数据使用按[数据指南](DATA_GUIDE.md)及各来源条件管理。

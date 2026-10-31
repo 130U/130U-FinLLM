@@ -1,6 +1,6 @@
-# Headline stance experiments
+# 24M Trial: headline stance experiments
 
-130U-FinLLM is a 24,255,744-parameter decoder trained from random initialization, then adapted to finance and supervised on target-linked English headlines. This report records the observed results rather than claiming market prediction or a validated Twitter classifier.
+This report covers the 24M Trial branch of 130U-FinLLM: a 24,255,744-parameter decoder trained from random initialization, then adapted to finance and supervised on target-linked English headlines. These observed results belong to the Trial branch; the project's 2.4B architecture and method design are presented in the [project overview](../README.md). The measurements below assess headline stance, not market prediction or a validated Twitter classifier.
 
 ## Results
 

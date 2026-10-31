@@ -26,7 +26,7 @@ def filtered_texts(inputs, exclude, smoke):
 
 
 def main(argv=None):
-    parser = argparse.ArgumentParser(description="130U-FinLLM: training from random weights")
+    parser = argparse.ArgumentParser(description="130U-FinLLM public Trial: training from random weights")
     commands = parser.add_subparsers(dest="command", required=True)
     env = commands.add_parser("environment")
     env.add_argument("--output")

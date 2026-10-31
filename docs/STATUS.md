@@ -1,62 +1,43 @@
-# 实现与验证状态
+# 24M 公开 Trial：实现与验证状态
 
-更新日期：2026-10-30。
+本页记录 24,255,744 参数 Trial 的代码和实际运行状态。130U-FinLLM 的整体定位为 **2.4B 自用模型、24M Trial 公开展示**，见[项目介绍](PROJECT_OVERVIEW.md)与[模型版本](MODEL_CARD.md)。下列训练计数和结果均属于 24M Trial。
 
-用户因1.54 GiB完整转运下载缓慢，选择保留原领域模型并使用[约100 MB轻量迁移](KAGGLE_LITE.md)：04d从Drive只提取核验过的模型权重、原词表和任务；04e在Kaggle新建SFT优化器。轻量路径保留用户已提供的04b四池覆盖报告，不在Kaggle重算未转移的原始排除池。真实Colab导出与Kaggle训练尚待执行。
+## 已完成的训练链路
 
-用户选择Kaggle迁移。已准备[04b CPU私有导出与04c Kaggle训练入口](KAGGLE_MIGRATION.md)，转运链、自动解压和中断恢复经31项本地联合测试通过；尚未执行用户实际Drive或Kaggle训练。上游04a在此前截图中于预训练排除清单校验处失败，SFT未启动；此前修复仍须以真实云端数据验证。
+随机初始化 → seed 预训练 → 扩充语料续训 → 金融领域适配 → 标题实体立场 SFT → 平衡采样 SFT → 校准与推理导出。
 
-快速推进：已准备[04a实体立场SFT试验](ENTITY_SFT_PILOT.md)及1008条私有研究数据，含705训练／101开发／101校准／101测试。新入口从领域74步模型承接，显式使用标题字面目标模式，尚未在用户T4或Drive运行。数据、SFT、断点恢复和实体预测联合23项检查通过；测试集仍为非时间、语义事件未充分审查的探索性集合。
-
-最新推进：已生成NSE资产证据与类别候选，及只读SFT母检查点预检；数据和官方快照保存在本地私有目录，资产身份仍待核验。预检通过10项小型CPU真实训练快照测试，尚未读取用户Drive。见[资产证据统计](../reports/nse_asset_evidence_20261030.json)及[项目进度](PROJECT_PROGRESS.md)。
-
-02a 的当前内核导入与依赖安装修复见 `docs/COLAB_KERNEL_FIX.md` 和 Issue #1。2026-10-11 用户提供的 Colab T4 截图显示，该入口已完成 61 次更新、999,424 tokens，Drive 备份校验通过。此前 01a 的目录复用修复记录见 `docs/COLAB_DEBUG.md`。
-
-本轮验收：用户提供的 02b 日志显示，24,255,744 参数模型已从第 62 步续训到累计 300 步、4,914,941 个有效 tokens，最后训练 loss 5.4151、限量验证 loss 5.5419。本段 238 次更新耗时 1150.17 秒、吞吐 3390.06 tokens/秒、PyTorch 分配峰值显存约 1.063 GiB。用户随后提供最终快照输出：7 个文件、615,936,768 字节、`verified: true`。续训与最终备份完成；代理未独立下载检查点或读回 Drive 清单。详见 `docs/T4_PILOT.md`、`reports/colab_t4_pilot_20261011.json` 和 `reports/colab_t4_continuation_20261011.json`。
-
-首批数据为通用训练 4,976,894 tokens、金融训练 341,309 tokens，8192-token 自训词表，完整候选任务池在训练前排除。数据证据见 `reports/seed_data_preparation.json`、`reports/seed_model_input_check.json` 与 `docs/SEED_DATA.md`。
-
-`01b_expand_data.ipynb` 和 `02c_expanded_pretrain.ipynb` 建立独立扩充版本，复用原词表、排除原 seed 与冻结任务文本，冻结母检查点并仅承接模型权重。用户已完成这两个入口：扩充阶段 610 步、9,994,240 tokens，最后训练 loss 4.1933、新通用验证子集 loss 4.1311，原 seed 保留子集训练后 loss 4.4032；1→610 段耗时 2700.80 秒、3694.41 tokens/秒、分配峰值显存约 1.063 GiB。最终 7 文件／615,996,721 字节快照输出为 `verified: true`。这是用户日志和截图证据，未独立读回 Drive；缺少 before 数值，不能量化本轮保留集变化。见 `reports/colab_t4_expansion_20261011.json`。
-
-`02d_expanded_continue.ipynb` 已由用户完成。2026-10-30 从用户保存的 GitHub 提交 `e14b85e` 独立读回输出：扩充阶段累计1220步、19,988,195个有效tokens；训练loss 3.6796、新通用验证loss 3.6929，原seed保留子集before/after为4.4032→3.9842。最终备份输出为7文件、616,109,865字节、`verified: true`。含seed的模型路径累计24,903,136个有效tokens，不是唯一语料大小；尚未独立下载Drive权重验真。原执行Notebook保留于该历史提交，并按原始字节本地归档；可运行入口恢复为无输出的生成器版本，修复Colab保存输出导致的CI格式失败。见[读回记录](../reports/colab_t4_expanded_continuation_20261030.json)。
-
-`03a_domain_pretrain.ipynb`已由用户完成。2026-10-30收到完整Colab输出：核验并冻结1220步母检查点后，独立`domain_v1`完成74步／1,211,960个有效tokens，金融验证loss为3.2375；同一seed通用保留子集为3.9842→4.0574。最终7文件／615,896,468字节备份输出为`verified: true`。含seed与扩充阶段的模型路径累计26,115,096个有效tokens，不是独立语料大小；本段没有完成原25M金融预算。见[领域记录](../reports/colab_t4_domain_20261030.json)和[下一步](POST_DOMAIN_NEXT.md)。证据来自用户粘贴日志，代理未独立下载Drive权重。
-
-本地默认来源下载及构建已完成：新增通用 train 为 26,267 篇、41,499,364 tokens，金融 train 为 84 篇、972,438 tokens；新增 validation 分别为 1,394 篇／2,235,968 tokens 和 4 篇／50,999 tokens。排除旧 seed 825＋32 篇，并检查 10,686 条冻结任务原文；原词表和 seed 清单未改变。1,215,545-token 金融混合分片是上述源的重排，不计为再次新增。详见 [本地扩充报告](../reports/expansion_local_validation_20261011.json)。
-
-## 已执行的验证
-
-| 检查 | 实际结果 | 边界 |
+| 阶段 | 已确认的运行与计量 | 证据入口 |
 |---|---|---|
-| 用户 T4 试跑与续训 | 累计 300/300 次更新、4,914,941 有效 tokens；验证 loss 7.2726→5.5419；最终快照输出校验通过 | 用户截图、日志及备份输出证据；非代理独立复跑或 Drive 读回；不能据此证明新虚拟机恢复；没有金融任务准确率 |
-| 用户 T4 扩充阶段 | 610 步／9,994,240 tokens，新验证 loss 4.1311，原保留集 after loss 4.4032；最终快照输出校验通过 | 用户日志和截图；新增验证集与原保留集不直接横比；未独立读回 Drive、未提供 before 数值，没有金融任务准确率 |
-| 用户 T4 扩充续训 | 累计1220步／19,988,195有效tokens；新验证loss 3.6929、seed保留集4.4032→3.9842；最终备份输出校验通过 | 独立读回GitHub保存输出，并非Drive权重独立下载验真；没有金融立场准确率 |
-| 用户 T4 金融领域小实验 | 74步／1,211,960有效tokens；金融验证loss 3.2375、seed保留集3.9842→4.0574；最终备份输出校验通过 | 用户粘贴完整Colab输出；金融与通用验证集不同；不是25M预算完成或金融立场准确率 |
-| 本地测试集 | 274项通过，557.43秒；本轮新增30项金融运行、2项Notebook、3项无回放和7项审核包测试 | Windows、Python3.12.14、CPU PyTorch2.14.1；包含真实持续运行Jupyter内核的安装、训练、备份、重复运行及新内核恢复 |
-| Notebook 工程检查 | 14本格式、语法与无存储输出检查通过；01b/02c/02d/03a代码单元格实际执行 | 03a在两个隔离内核完成微型CPU母检查点读取、权重承接与优化器重置、1→3步严格续训、诊断、备份及新目录恢复。Git/Drive/外部下载使用本地替代；不是新金融阶段T4训练 |
-| 扩充数据实际构建 | 544.91秒；采样RSS峰值344.7MiB；候选、清洗及token产物合计560.2MiB | 本地CPU、0.1秒采样；不含旧seed、检查点及外部缓存；不是精确分配峰值或Colab/T4显存测量 |
-| 小模型完整链 | 自训tokenizer；预训练/domain/SFT/DPO各2次更新；DPO恢复到第3次；校准/评测/预测成功 | 126,912参数、441token词表、自编合成样本；不能评价金融能力 |
-| 正式24M架构 | 24,255,744参数；CPU上一次前向、反向和AdamW更新成功 | batch1、长度16、随机token；不是正式语料预训练 |
-| 恢复一致性 | CPU/dropout场景，模型、优化器、调度器、RNG和下一批与连续运行一致 | 精确恢复绑定版本、设备类型与数据配置；没有跨硬件逐位保证 |
-| 断点/备份失败 | 损坏/不完整检查点被拒绝；模拟中途保存失败可恢复上一完整版本；训练中断前的检查点已定期备份 | 故障场景为本地目录模拟；用户另提供真实 Drive 最终备份成功输出，未独立核对云端文件 |
-| 依赖 | `pip check`通过 | 本地安装清单见reports；Colab保留其CUDA PyTorch并另记实际版本 |
+| Seed 预训练 | 300 updates；4,914,941 有效监督 tokens；验证 loss 5.5419 | [运行报告](../reports/colab_t4_continuation_20261011.json) |
+| 扩充语料续训 | 累计 1,220 updates；19,988,195 有效监督 tokens；扩充验证 loss 3.6929 | [运行报告](../reports/colab_t4_expanded_continuation_20261030.json) |
+| 金融领域适配 | 74 updates；1,211,960 有效监督 tokens；金融验证 loss 3.2375 | [运行报告](../reports/colab_t4_domain_20261030.json) |
+| 初版实体立场 SFT | 705 条训练样本、2 epochs、45 updates、1,410 标签监督位置；开发集全部预测 neutral，Macro-F1 0.2863 | [实验报告](experiment-results.md) |
+| 平衡采样 SFT | 同一训练池，3 epochs、139 updates、4,419 标签监督位置；开发集 Macro-F1 0.6549，正确 79/101 | [实验报告](experiment-results.md)、[执行脚本](../scripts/kaggle_balanced_sft.py) |
+| 校准及推理导出 | 已运行；温度约 1.50634、复核阈值约 0.57380；生成私有轻量推理包 | [导出与校准脚本](../scripts/kaggle_inference_export.py) |
 
-机器可读证据：`reports/cpu_smoke_check.json`、`reports/full_config_cpu_check.json`、`reports/environment-local-cpu.txt`、`reports/seed_continuation_checks.json` 记录工程检查；[扩充报告](../reports/expansion_local_validation_20261011.json) 记录本地实际下载、构建及资源测量；[02d续训工程检查](../reports/expanded_continuation_checks_20261011.json) 记录初次交付时232项测试、内核执行、数值一致性和恢复保护；`reports/colab_t4_continuation_20261011.json` 与 `reports/colab_t4_expansion_20261011.json` 记录用户提供的真实语料训练及备份输出。均没有金融立场测试分数。
+语言训练累计 **26,115,096 有效监督 tokens**。扩充阶段的前 610 步包含在累计 1,220 步内，不能重复相加。SFT 的标签监督位置、输入 tokens 和独立样本数分别计量。
 
-2026-10-30本轮[金融衔接工程记录](../reports/domain_handoff_checks_20261030.json)补充274项完整测试、真实内核执行、带dropout数值一致性、AMP跳步无回放保护和真实本地混合数据来源核对。历史02d执行输出保留，格式失败修复已纳入本次回归。
+初版全中性失败保留在实验报告中。平衡版在同一开发集上增加了 17 条方向类正确判断，同时减少了 14 条 neutral 正确判断。采样、训练轮数、更新预算和学习率日程一起变化，这一对照不能单独归因为采样。已查看的旧测试集结果属于初版 SFT。
 
-## 已实现的功能
+## 数据与任务范围
 
-Dense/GQA/RoPE/QK-RMSNorm模型；可逆byte-level BPE；分组切分和词法近重复过滤；训练/评测隔离；uint16分片与mmap；精确80/20 token混合；全参数AdamW训练；FP16 AMP路径；标签位置SFT与DPO；完整恢复与定期检查点备份；目标输入规则；温度校准和独立阈值选择；JSONL预测；多数类和目标感知TF-IDF基线。
+人工审核任务共 2,000 条标题：已确认 1,993 条，其中包括 114 条 exclude；7 条未解决，三分类候选为 1,879 条。Trial 按标题字面目标条件选出 1,008 条，划分为 705 train、101 development、101 calibration、101 test。校准池进一步分为 51 条温度拟合与 50 条阈值选择。见[人工确认记录](../reports/human_headline_review_20261030.json)、[审核说明](TASK_REVIEW_NEXT.md)与[实体 SFT 入口](ENTITY_SFT_PILOT.md)。
 
-CLI 的流式入口及首批来源下载脚本已执行：Wikipedia 固定版本子集、美联储原创会议纪要、作者发布的 SEntFiN 候选池。来源条款、版本和哈希已记录；没有抓取 X 或下载整个大型语料库。
+确认对象是标题范围内的原文立场，不是证券身份、全文立场或未来价格方向。现有划分按文本及已提供的关联标识分组，不是时间留出；事件层面的语义独立性仍需另行审查。当前代码支持的目标表达范围也不应反推为历史训练集的样本数量。
 
-## 尚未完成
+## 公开实现
 
-- 已完成有界金融领域阶段，长期预算所需的新语料和后续训练仍未完成。
-- 完整预算所需的更广语料、目标级人工标注与资产映射、语义/事件级重复审查。
-- 100M＋25M预算训练；首批8192词表已生成。后续语料扩充优先复用词表，需显式记录数据变更与检查点兼容策略；不能把不同数据伪装为精确恢复。
-- 真实SFT/DPO、同新增标注的SFT对照、FinBERT比较、预训练消融、重复seed与事件组bootstrap。
-- 对最终模型的独立校准、封存测试和实际使用验收。
+- [模型](../src/finllm/model.py)与[24M 配置](../configs/model_24m.json)：6 层 dense decoder、GQA、RoPE、QK normalization、SwiGLU、RMSNorm、共享词表权重。
+- [数据处理](../src/finllm/data.py)：任务分组、排除清单、token 打包及内存映射读取；[tokenizer](../src/finllm/tokenizer.py)为自训 8K byte-level BPE。
+- [训练器](../src/finllm/training.py)：语言训练、答案位置 SFT、DPO 路径、梯度累积、训练计数与检查点恢复。
+- [校准](../src/finllm/evaluation.py)与[推理](../src/finllm/inference.py)：三类概率、方向分数、输入检查及复核状态。
 
-01b／02c／02d／03a已完成。用户交付2000条CSV并明确确认其中1993条标题级标签，另7条待查；人工确认来源及完整数据身份校验见[审核记录](../reports/human_headline_review_20261030.json)。1879条三分类候选涉及740个资产候选组，资产身份仍未核验。下一步见[交接说明](POST_DOMAIN_NEXT.md)：核验资产、来源和事件分组，建立真实SFT分区。100M／25M完整预算及真实SFT/DPO、校准和封存测试均未完成。
+DPO 有实现和小型合成链路检查，尚无本页所述真实金融数据的 DPO 运行结果。[Twitter 弱监督脚本](../scripts/kaggle_twitter_weak_sft.py)也不属于上述已确认实验。后续评价应使用新的独立样本，分别报告各类别与接受样本的表现。
+
+## 证据与入口
+
+初版训练产物来自已核验的私有备份；平衡 SFT 和推理导出完成状态来自用户提供的运行输出。公开仓库提供代码、配置与汇总记录，私有标题、标签、权重和备份不随仓库发布。具体结果归属见[实验报告](experiment-results.md)。
+
+[CPU smoke](../reports/cpu_smoke_check.json)、[完整配置 CPU 检查](../reports/full_config_cpu_check.json)、[续训检查](../reports/seed_continuation_checks.json)和[领域交接检查](../reports/domain_handoff_checks_20261030.json)记录工程验证，不能替代任务能力评价。历史 reports 保留各自当时状态；其中早期“等待审核”“SFT 尚未启动”等描述已由后续实际运行补充。
+
+继续阅读：[训练与数据分母](PROJECT_PROGRESS.md) · [工程交接入口](HANDOFF.md) · [Trial 技术规范](PLAN.md)。

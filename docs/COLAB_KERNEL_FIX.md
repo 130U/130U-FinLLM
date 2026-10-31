@@ -1,4 +1,6 @@
-# Colab 内核安装与训练入口修复
+# 24M Trial｜Colab 内核安装与训练入口修复
+
+范围：24M Trial 公开工程文档，保留该次内核故障、恢复语义与工程验证；项目整体见[总览](../README.md)。
 
 问题记录：[GitHub #1](https://github.com/130U/130U-FinLLM/issues/1)。2026-10-09 用户截图显示，02a 已选择 Tesla T4，但训练单元格在导入 `finllm.runtime` 时抛出 `ModuleNotFoundError`。同一组截图的 01a 显示 CPU 运行时；它的断开连接提示无法单独证明内存不足或确定断开原因。
 

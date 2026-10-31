@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "finllm-130u"
 version = "0.1.0"
-description = "130U FinLLM: an English financial stance language model trained from scratch"
+description = "130U-FinLLM public 24M Trial: financial stance training and evaluation for the private 2.4B model project"
 requires-python = ">=3.10"
 dependencies = ["torch>=2.5,<3", "numpy>=1.26,<3", "tokenizers>=0.21,<0.24", "scikit-learn>=1.5,<2"]
 

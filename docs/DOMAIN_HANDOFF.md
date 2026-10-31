@@ -1,10 +1,12 @@
-# 03a｜从1220步通用模型进入金融领域训练
+# 24M Trial｜03a 金融领域训练与权重承接
+
+范围：24M Trial 公开工程文档，记录已完成的领域阶段及其恢复合同；后续任务训练见[Trial 实验报告](experiment-results.md)，项目整体见[总览](../README.md)。
 
 2026-10-30。入口：[03a_domain_pretrain.ipynb](https://colab.research.google.com/github/130U/130U-FinLLM/blob/main/notebooks/03a_domain_pretrain.ipynb)。
 
-**最新验收：本段已完成。**用户随后提供完整Colab输出，领域阶段74步／1,211,960有效tokens，金融验证loss 3.2375，通用保留子集3.9842→4.0574，最终备份输出为`verified: true`。详见[领域记录](../reports/colab_t4_domain_20261030.json)。下面保留入口设计与恢复说明；当前下一步是[接收人工审核进度](POST_DOMAIN_NEXT.md)，无需重做本段。
+**阶段验收：本段已完成。**用户随后提供完整Colab输出，领域阶段74步／1,211,960有效tokens，金融验证loss 3.2375，通用保留子集3.9842→4.0574，最终备份输出为`verified: true`。详见[领域记录](../reports/colab_t4_domain_20261030.json)。下面保留入口设计与恢复说明；后续已完成字面实体 SFT，现有领域成果无需重做。[审核衔接记录](POST_DOMAIN_NEXT.md)保留材料承接过程。
 
-已完成的02d输出保存在[用户历史提交](https://github.com/130U/130U-FinLLM/blob/e14b85e5660c4bce175341ee4d9da2e3984a12b5/notebooks/02d_expanded_continue.ipynb)，读回记录见[1220步报告](../reports/colab_t4_expanded_continuation_20261030.json)。扩充阶段累计19,988,195个有效tokens；含seed路径累计24,903,136，不是独立语料大小。下一段先在Colab读回Drive文件并校验母检查点，GitHub保存输出不代替这项检查。
+已完成的02d输出保存在[用户历史提交](https://github.com/130U/130U-FinLLM/blob/e14b85e5660c4bce175341ee4d9da2e3984a12b5/notebooks/02d_expanded_continue.ipynb)，读回记录见[1220步报告](../reports/colab_t4_expanded_continuation_20261030.json)。扩充阶段累计19,988,195个有效tokens；含seed路径累计24,903,136，不是独立语料大小。03a 首次运行先在Colab读回Drive文件并校验母检查点，GitHub保存输出不代替这项检查。
 
 ## 运行
 
@@ -54,7 +56,7 @@ Drive项目根目录为`MyDrive/130U-FinLLM`：
 
 ## 任务后训练的材料
 
-审核材料已扩为2000条，用户交付CSV并明确确认1993条标题标签，另7条待查。见[审核记录](../reports/human_headline_review_20261030.json)。资产映射、去重／事件分组和分区通过后，才能开展真实SFT、后续DPO偏好审核、校准和封存测试。语言建模loss不能当成资产看多／看空准确率。
+审核材料已扩为2000条，用户交付CSV并明确确认1993条标题标签，另7条待查。见[审核记录](../reports/human_headline_review_20261030.json)。后续字面实体 Trial 使用 1008 条任务分区完成 SFT，并另行进行概率校准；证券身份核验、完整事件／时间隔离、新的独立测试及 DPO 偏好审核不由此自动完成。语言建模loss不能当成资产看多／看空准确率。
 
 仓库中的可运行Notebook保持无存储输出。需要保存执行内容时保存到个人Drive副本；本次已保存的02d完整证据仍保留在上述历史提交及本地归档。
 

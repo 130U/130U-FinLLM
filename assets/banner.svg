@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="660" viewBox="0 0 1600 660" role="img" aria-labelledby="title"><title id="title">130U-FinLLM：2.4B 自用模型，24M Trial 公开展示</title><rect width="1600" height="660" fill="#f7f6f5"/>
+<text x="70" y="66" font-family="Consolas, sans-serif" font-size="24" fill="#2200ff">130U / FINANCIAL LANGUAGE MODEL</text>
+<line x1="70" y1="101" x2="1530" y2="101" stroke="#191919" stroke-width="2"/>
+<text x="66" y="247" font-family="Bahnschrift, sans-serif" font-size="105" fill="#191919">130U-FinLLM</text>
+<text x="70" y="355" font-family="Microsoft YaHei, sans-serif" font-size="56" font-weight="700" fill="#191919">把个人金融标准，</text>
+<text x="70" y="437" font-family="Microsoft YaHei, sans-serif" font-size="56" font-weight="700" fill="#191919">变成模型行为。</text>
+<line x1="1090" y1="173" x2="1090" y2="470" stroke="#d7d4d1" stroke-width="2"/>
+<text x="1165" y="321" font-family="Bahnschrift, sans-serif" font-size="120" fill="#191919">2.4B</text>
+<text x="1170" y="383" font-family="Microsoft YaHei, sans-serif" font-size="31" fill="#191919">自用金融语言模型</text>
+<text x="1170" y="443" font-family="Consolas, sans-serif" font-size="24" fill="#666462">28 L / Q20 / KV4</text>
+<line x1="70" y1="527" x2="1530" y2="527" stroke="#191919" stroke-width="2"/>
+<text x="70" y="590" font-family="Microsoft YaHei, sans-serif" font-size="30" fill="#191919">24M Trial 公开展示</text>
+<text x="725" y="590" font-family="Consolas, sans-serif" font-size="23" fill="#2200ff">DATA → SUPERVISION → TRAINING → DECISION</text>
+</svg>

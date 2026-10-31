@@ -1,4 +1,6 @@
-# 01a 重复运行与依赖冲突修复
+# 24M Trial｜01a 重复运行与依赖冲突修复
+
+范围：24M Trial 公开工程文档，保留该次故障定位、修复与验证记录；项目整体见[总览](../README.md)。
 
 后续 02a 的 `No module named 'finllm'`、旧安装信息警告及训练重复执行问题，见 [内核安装修复](COLAB_KERNEL_FIX.md)。
 

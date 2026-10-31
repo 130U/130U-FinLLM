@@ -1,48 +1,66 @@
 # 130U-FinLLM
 
-A financial sentence can express opposite views about different assets. “Long $AAPL, short $TSLA” needs one interpretation for Apple and another for Tesla. Assigning a single sentiment label to the sentence loses that distinction.
+**把个人金融标准，变成模型行为。**
 
-I built **130U-FinLLM** to train and evaluate a compact language model from random initialization. The experimental interface takes English text and a specified target and produces **bearish, neutral, or bullish** stance, class probabilities, and a direction score. The current experiment uses literal entities in financial news headlines; ticker resolution and Twitter performance have not been established.
+[项目介绍](docs/PROJECT_OVERVIEW.md) · [模型架构](docs/MODEL_CARD.md) · [训练体系](docs/TRAINING_SYSTEM.md) · [运行 Trial](docs/TRIAL_GUIDE.md)
 
-## The model and learning problem
+<img src="assets/banner.png" alt="130U-FinLLM：2.4B 自用金融语言模型，24M Trial 公开展示" width="100%">
 
-The model specification is a **24.26M-parameter decoder** implemented in native PyTorch, with a self-trained byte-level BPE tokenizer. The completed training path covers general pretraining, financial-domain pretraining, and full-parameter supervised fine-tuning. Preference-training code is implemented, but no DPO training run has been reported.
+130U-FinLLM 是面向个人金融研究的专用语言模型项目。它结合本人原创的历史金融观点与人工审核的公开文本，围绕**目标、观点持有人、证据范围和判断条件**组织学习任务，让金融判读拥有明确的依据。
 
-My task design puts the asset inside the model input and places supervision at the answer label. This keeps the learning objective focused on the text’s stance toward that asset. Preference training compares alternative stance labels against a frozen supervised reference model.
+项目包含 **2.4B 自用版本**与 **24M 公开 Trial**。这里展示项目方法、模型架构和训练流程，并提供 Trial 的代码、配置、Notebook 与实验记录。
 
-The prediction score is `100 × (P(bullish) − P(bearish))`: a measure of textual direction toward the target. The interface also returns confidence and review reasons when the asset connection or input cannot be established.
+## 两种规模，一条训练路径
 
-## What I built
+| | 2.4B 自用版本 | 24M 公开 Trial |
+|---|---|---|
+| 角色 | 个人金融研究与专用模型体系 | 公开训练实践与工程复现 |
+| 总参数 | 2,397,459,968 | 24,255,744 |
+| 主干 | 28 层 · hidden 2,560 · Q20 / KV4 | 6 层 · hidden 512 · Q8 / KV4 |
+| 词表 / 上下文 | 65,536 / 4,096 | 8,192 / 512 |
+| 阅读入口 | [架构与技术设计](docs/MODEL_CARD.md) | [配置](configs/model_24m.json) · [实验记录](docs/experiment-results.md) |
 
-The completed work is a working training and evaluation stack, together with a prepared first corpus of general English text and financial source material. The preparation pipeline separates training and validation documents, excludes candidate evaluation text before vocabulary training, and converts the remaining material into versioned token shards.
+先用 24M 打通语料、监督、训练和评价，再把任务协议与工程方法扩展到 2.4B。迁移的是判断标准、实验方法和状态语义；词表、权重、运行时与校准按各自版本管理。
 
-I designed the evaluation around questions that matter for this task: does the model distinguish the stance classes, are its probabilities calibrated, and which predictions should be reviewed? Model selection, probability calibration, review-threshold selection, and final testing use separate partitions. The implementation also includes a target-aware text baseline for comparison.
+## 两项核心设计
 
-Training recovery is part of the experiment design. A resumed run restores the optimization state, random state, and position in the corpus. Calibration files are tied to the selected checkpoint and tokenizer. These choices keep comparisons connected to the model, data, and training history that actually produced them.
+<img src="assets/features.png" alt="金融语义许可：区分立场与指标方向。训练目标完整性：连接样本家族、损失与运行时。" width="100%">
 
-This provides a concrete setup for researching financial language models from scratch: the target, learning objective, training stages, and evaluation decisions are explicit and can be changed individually.
+**金融语义许可监督。** “营收增长”与“作者看多”属于不同任务轴。对目标切换、引用、否定和条件变化分别规定哪些答案需要重标、哪些应当保持，并区分标签保持与概率保持，让监督服从金融语义。[方法说明 →](docs/TRAINING_SYSTEM.md#金融语义许可)
 
-## Read or run
+**保持训练目标的扩容工程。** 从样本家族与有效监督位置计量，到完整词表损失、分段 attention、多卡归约与恢复语义，将数据、损失和运行时连接为同一训练契约。[计算路径 →](docs/TRAINING_SYSTEM.md#训练目标与运行时)
 
-[Training code](src/finllm/training.py) · [Data preparation](docs/SEED_DATA.md) · [Evaluation](src/finllm/evaluation.py) · [Model specification](docs/MODEL_CARD.md)
+## 从语料到判读
 
-### Measured headline classification results
+1. **定义任务与数据边界**：整理来源、目标和观点持有人，先划分家族，再生成训练视图。
+2. **基础语言预训练**：从随机初始化学习语言结构与上下文关系。
+3. **金融混合适配**：联合金融原文、通用材料、阅读问答与目标任务。
+4. **任务训练与交付**：目标条件化 SFT，依次完成开发选模、概率校准、接受规则选择与独立测试。
 
-The first SFT run predicted every example as neutral: on 101 development headlines it reached 75.25% accuracy but only 0.2863 macro-F1; on 101 test headlines it reached 58.42% accuracy and 0.2458 macro-F1. Both directional-class recalls were zero.
+[查看完整训练图](assets/training_workflow.svg) · [查看核心计算图](assets/training_compute.svg) · [阅读项目介绍 PDF](docs/130U-FinLLM.pdf)
 
-A subsequent class-balanced SFT run reported **0.6549 macro-F1 on the same 101-example development set**, compared with **0.6087** for a class-weighted TF-IDF/logistic-regression baseline. Bearish recall was 50% (5/10) and bullish recall was 80% (12/15). These are model-selection results reported in user-supplied Kaggle output, not a fresh independent test of the balanced model. The [experiment report](docs/experiment-results.md) records the method, comparison, evidence, and limits.
+## 从公开 Trial 开始
 
-Start with the [small training-to-prediction notebook](https://colab.research.google.com/github/130U/130U-FinLLM/blob/main/notebooks/00_setup_and_smoke.ipynb). Continue through [seed preparation](notebooks/01a_seed_data.ipynb), the [model pilot](notebooks/02a_seed_pilot.ipynb), and [checkpoint continuation](https://colab.research.google.com/github/130U/130U-FinLLM/blob/main/notebooks/02b_seed_continue.ipynb).
+```bash
+git clone https://github.com/130U/130U-FinLLM.git
+cd 130U-FinLLM
+python -m pip install -e .
+python -m finllm smoke --device cpu --output runs/first-smoke
+```
 
-A user-run Colab T4 experiment reached 300 cumulative updates and 4,914,941 supervised tokens, with validation loss decreasing from 7.2726 at the pilot to 5.5419. The continuation took about 19 minutes, and the final Drive backup reported successful verification. The [training record](docs/T4_PILOT.md) documents the user-supplied evidence, measurement limits, and next steps.
+`smoke` 使用小型合成配置检查 tokenizer、训练、恢复、校准与预测链路。24M 配置位于 [`configs/model_24m.json`](configs/model_24m.json)；准备自己的语料并运行各阶段，请按 [Trial 使用指南](docs/TRIAL_GUIDE.md) 操作。训练数据、检查点与自用版本权重单独管理。
 
-The expanded corpus uses [01b: additional data](https://colab.research.google.com/github/130U/130U-FinLLM/blob/main/notebooks/01b_expand_data.ipynb) and [02c: expanded pretraining](https://colab.research.google.com/github/130U/130U-FinLLM/blob/main/notebooks/02c_expanded_pretrain.ipynb). It keeps the existing tokenizer, removes overlap with seed and evaluation documents, and transfers the 300-step model weights into a separately recorded training stage. User-supplied Colab logs show this stage reached 610 updates and 9,994,240 supervised tokens. Its new validation subset had loss 4.1311; a separate frozen seed validation subset had post-training loss 4.4032. The final Drive snapshot reported `verified: true`. The [expansion training record](reports/colab_t4_expansion_20261011.json) distinguishes supplied evidence from independent cloud verification.
+## 深入阅读
 
-The user completed [02d: expanded checkpoint continuation](https://colab.research.google.com/github/130U/130U-FinLLM/blob/main/notebooks/02d_expanded_continue.ipynb), reaching 1,220 cumulative expansion updates and 19,988,195 effective tokens. Saved GitHub outputs report validation loss 3.6929, frozen seed retention loss 4.4032 to 3.9842, and a verified final backup. The [read-back record](reports/colab_t4_expanded_continuation_20261030.json) distinguishes saved output verification from independent Drive checkpoint verification.
+| 内容 | 入口 |
+|---|---|
+| 项目动机、版本演进与技术特色 | [项目介绍](docs/PROJECT_OVERVIEW.md) |
+| 参数、层结构与两个版本的对应关系 | [模型说明](docs/MODEL_CARD.md) |
+| 数据、语义监督、全局目标与训练计算 | [训练体系](docs/TRAINING_SYSTEM.md) |
+| 类别学习、任务语义、实验归因与扩容 | [工程复盘](docs/ENGINEERING.md) |
+| 公开代码、数据准备与运行入口 | [Trial 指南](docs/TRIAL_GUIDE.md) |
+| 公开实验结果与逐类分析 | [Trial 实验记录](docs/experiment-results.md) |
 
-The user also completed [03a: financial-domain handoff](https://colab.research.google.com/github/130U/130U-FinLLM/blob/main/notebooks/03a_domain_pretrain.ipynb). Supplied Colab output records 74 domain updates, 1,211,960 effective tokens, finance-validation loss 3.2375, and a verified final backup. The same frozen general-retention subset changed from loss 3.9842 to 4.0574. The [domain record](reports/colab_t4_domain_20261030.json) distinguishes these supplied outputs from independent Drive verification; this bounded experiment does not complete the original 25M financial budget. The user supplied a 2,000-row headline review CSV and explicitly confirmed 1,993 labels, with seven unresolved; the [review record](reports/human_headline_review_20261030.json) preserves its provenance. [The next step](docs/POST_DOMAIN_NEXT.md) resolves asset identity and event grouping before preparing the formal SFT split.
+## 许可与来源
 
-The [local preparation report](reports/expansion_local_validation_20261011.json) records 41,499,364 additional general training tokens and 972,438 financial training tokens with the unchanged 8K tokenizer. CPU preparation took 544.91 seconds, sampled process RSS peaked at 344.7 MiB, and the candidate, prepared, and tokenized outputs occupied 560.2 MiB, excluding the earlier seed and checkpoints. These are local preparation measurements; the subsequent 01b Colab output reported the same token counts and verified data backups. Engineering verification is recorded in [status](docs/STATUS.md).
-
-The decoder architecture is adapted from [MiniMind](https://github.com/jingyaogong/minimind/tree/f659b55761b754d306bd140573493a6543cafd7f). Attribution and project-specific changes appear in [THIRD_PARTY_NOTICES](THIRD_PARTY_NOTICES.md). Code is licensed under [Apache-2.0](LICENSE).
-
+公开代码采用 [Apache-2.0](LICENSE)。Trial 主干实现参考 MiniMind，来源和修改说明见 [THIRD_PARTY_NOTICES](THIRD_PARTY_NOTICES.md)。代码许可与数据、权重许可分别管理。

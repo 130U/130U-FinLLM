@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="700" viewBox="0 0 1600 700" role="img" aria-labelledby="title"><title id="title">两项核心设计：金融语义许可与保持训练目标的扩容</title><rect width="1600" height="700" fill="#f7f6f5"/>
+<text x="70" y="66" font-family="Consolas, sans-serif" font-size="24" fill="#2200ff">TWO DESIGN PRINCIPLES</text>
+<line x1="70" y1="101" x2="1530" y2="101" stroke="#191919" stroke-width="2"/>
+<text x="70" y="185" font-family="Consolas, sans-serif" font-size="27" fill="#2200ff">01</text>
+<text x="205" y="189" font-family="Microsoft YaHei, sans-serif" font-size="53" font-weight="700" fill="#191919">逐轴金融语义许可</text>
+<text x="205" y="250" font-family="Microsoft YaHei, sans-serif" font-size="32" fill="#666462">按目标与持有人，明确应变与保持。</text>
+<text x="205" y="310" font-family="Microsoft YaHei, sans-serif" font-size="29" fill="#191919">投资立场</text>
+<text x="440" y="310" font-family="Microsoft YaHei, sans-serif" font-size="34" fill="#2200ff">≠</text>
+<text x="510" y="310" font-family="Microsoft YaHei, sans-serif" font-size="29" fill="#191919">指标方向</text>
+<text x="1110" y="189" font-family="Consolas, sans-serif" font-size="24" fill="#2200ff">SEMANTICS</text>
+<text x="1110" y="247" font-family="Consolas, sans-serif" font-size="24" fill="#666462">target / holder</text>
+<text x="1110" y="291" font-family="Consolas, sans-serif" font-size="24" fill="#666462">scope / context</text>
+<line x1="70" y1="357" x2="1530" y2="357" stroke="#d7d4d1" stroke-width="2"/>
+<text x="70" y="436" font-family="Consolas, sans-serif" font-size="27" fill="#2200ff">02</text>
+<text x="205" y="440" font-family="Microsoft YaHei, sans-serif" font-size="53" font-weight="700" fill="#191919">保持训练目标的扩容</text>
+<text x="205" y="501" font-family="Microsoft YaHei, sans-serif" font-size="32" fill="#666462">从样本家族到梯度，执行同一学习目标。</text>
+<text x="205" y="561" font-family="Microsoft YaHei, sans-serif" font-size="29" fill="#191919">家族计量  →  全局目标  →  等价计算</text>
+<text x="1110" y="440" font-family="Consolas, sans-serif" font-size="24" fill="#2200ff">EXECUTION</text>
+<text x="1110" y="498" font-family="Consolas, sans-serif" font-size="24" fill="#666462">family / loss</text>
+<text x="1110" y="542" font-family="Consolas, sans-serif" font-size="24" fill="#666462">gradient / state</text>
+<line x1="70" y1="615" x2="1530" y2="615" stroke="#191919" stroke-width="2"/>
+<text x="70" y="665" font-family="Consolas, sans-serif" font-size="23" fill="#2200ff">130U / MODELING &amp; ENGINEERING</text>
+</svg>
