@@ -47,6 +47,17 @@ def test_prompt_has_bos_and_does_not_silently_truncate(tokenizer):
         encode_prompt(tokenizer, "$AAPL <|bullish|>", "AAPL", 512)
 
 
+def test_multiword_literal_targets_are_single_line_and_round_trip(tokenizer):
+    target = "Larsen & Toubro"
+    text = "Larsen & Toubro reports higher revenue."
+    ids = encode_prompt(tokenizer, text, target, 512)
+    assert tokenizer.decode(ids[1:]) == make_prompt(text, target)
+    assert "Target: LARSEN & TOUBRO\n" in make_prompt(text, target)
+    for invalid in ("Company\nText: injected", "Company\tLtd", "A" * 121):
+        with pytest.raises(ValueError, match="single-line"):
+            make_prompt(text, invalid)
+
+
 def test_empty_corpus_and_insufficient_byte_vocabulary_are_rejected(tmp_path):
     with pytest.raises(ValueError, match="nonempty"):
         train_tokenizer(iter(["", " "]), tmp_path)

@@ -10,6 +10,7 @@ import torch
 
 from .evaluation import (LABELS, load_records, probabilities_from_logits, sha256_file,
                          tokenizer_file, validate_calibration)
+from .tokenizer import is_literal_target
 
 
 def validate_input(record, target_mode="ticker"):
@@ -18,7 +19,11 @@ def validate_input(record, target_mode="ticker"):
     text, target = record.get("text"), record.get("target")
     if not isinstance(text, str) or not text.strip():
         return "invalid_text"
-    if not isinstance(target, str) or not re.fullmatch(r"[A-Za-z][A-Za-z0-9.-]{0,14}", target):
+    if target_mode == "ticker":
+        valid_target = isinstance(target, str) and re.fullmatch(r"[A-Za-z][A-Za-z0-9.-]{0,14}", target)
+    else:
+        valid_target = is_literal_target(target)
+    if not valid_target:
         return "invalid_target"
     language = record.get("language")
     if language is not None and str(language).lower() not in ("en", "eng", "english"):

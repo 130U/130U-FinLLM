@@ -51,7 +51,12 @@ def test_explicit_literal_entity_mode_matches_complete_entity_only():
     assert validate_input(record) == "target_not_supported"
     assert validate_input(record, target_mode="literal_entity") is None
     assert validate_input({"text": "Infosys raises guidance", "target": "INFO"}, target_mode="literal_entity") == "target_not_supported"
-    assert validate_input({"text": "Reliance Industries rises", "target": "Reliance Industries"}, target_mode="literal_entity") == "invalid_target"
+    multiword = {"text": "Reliance Industries rises", "target": "Reliance Industries"}
+    assert validate_input(multiword, target_mode="literal_entity") is None
+    assert validate_input(multiword, target_mode="ticker") == "invalid_target"
+    assert validate_input({"text": "Reliance Industries rises", "target": "Reliance IndustriesX"}, target_mode="literal_entity") == "target_not_supported"
+    assert validate_input({"text": "Reliance Industries rises", "target": "Reliance\nIndustries"}, target_mode="literal_entity") == "invalid_target"
+    assert validate_input({"text": "Reliance Industries rises", "target": "A" * 121}, target_mode="literal_entity") == "invalid_target"
     with pytest.raises(ValueError, match="Unknown target mode"):
         validate_input(record, target_mode="unrecognized")
 

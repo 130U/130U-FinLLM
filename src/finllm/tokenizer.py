@@ -2,6 +2,7 @@
 
 import hashlib
 import json
+import re
 from collections.abc import Iterable
 from pathlib import Path
 
@@ -100,6 +101,17 @@ def label_token_ids(tokenizer: Tokenizer) -> dict[str, int]:
     return {label: tokenizer.token_to_id(token) for label, token in LABEL_TOKENS.items()}
 
 
+def is_literal_target(target: object) -> bool:
+    """Accept a bounded, single-line English literal entity, not an asset map.
+
+    Only ordinary spaces are accepted inside names; this prevents newlines or
+    other control characters from introducing additional prompt fields.
+    """
+    return (isinstance(target, str) and 1 <= len(target) <= 120
+            and target == target.strip() and "  " not in target
+            and re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9 .,'’&()/+-]*", target) is not None)
+
+
 def make_prompt(text: str, target: str) -> str:
     if not isinstance(text, str) or not text.strip():
         raise ValueError("text must be a nonempty string")
@@ -107,9 +119,10 @@ def make_prompt(text: str, target: str) -> str:
         raise ValueError("target must be a nonempty string")
     if any(token in text or token in target for token in SPECIAL_TOKENS):
         raise ValueError("Input contains a reserved special token")
-    target = target.strip().upper().removeprefix("$")
-    if not target or any(character.isspace() for character in target):
-        raise ValueError("target must be a single asset identifier")
+    target = target.strip().removeprefix("$")
+    if not is_literal_target(target):
+        raise ValueError("target must be a bounded single-line asset identifier or literal entity")
+    target = target.upper()
     return (
         "Classify the investment stance toward the target asset.\n"
         "Choose bearish, neutral, or bullish using only the text.\n"
