@@ -1,41 +1,41 @@
-# 24M 公开 Trial：标题审核与任务构建
+# 24M public Trial | Headline review and task construction
 
-本页说明公开 Trial 的人工标签及任务构建口径。2.4B 自用版本见[项目介绍](PROJECT_OVERVIEW.md)与[模型版本](MODEL_CARD.md)；以下数量对应 24M 标题实体试验。
+This page defines human-label and task-construction accounting for the public Trial. See the [project overview](PROJECT_OVERVIEW.md) and [model card](MODEL_CARD.md) for the private 2.4B version. All counts below refer to the 24M headline entity experiment.
 
-## 审核账本
+## Review ledger
 
-原始任务共 2,000 条标题。用户已确认逐条审核其中 1,993 条：426 bullish、234 bearish、1,219 neutral、114 exclude；7 条仍未解决。三分类候选为 1,879 条，进一步构建得到 1,008 条 Trial 任务样本。
+The original task contained 2,000 headlines. The user confirmed individual review of 1,993 records: 426 bullish, 234 bearish, 1,219 neutral, and 114 exclude. 7 remained unresolved. There were 1,879 three-class candidates, from which 1,008 Trial task examples were constructed.
 
-原始 CSV 与冻结来源的 2,000 个有序 ID、文本和目标逐一匹配，确认记录及文件身份见[人工标题审核报告](../reports/human_headline_review_20261030.json)。早期[审核包生成报告](../reports/task_review_2000_20261030.json)和[准备状态报告](../reports/task_review_readiness_20261030.json)记录的是当时 AI 预标注与尚未人工确认的状态，不是当前人工完成量。
+The original CSV was matched record by record to the frozen source's 2,000 ordered IDs, texts, and targets. Confirmation and file identity are documented in the [human headline-review report](../reports/human_headline_review_20261030.json). The earlier [review-package report](../reports/task_review_2000_20261030.json) and [readiness report](../reports/task_review_readiness_20261030.json) describe AI pre-annotations and the absence of human confirmation at that time; they are not current completion counts.
 
-## 各字段代表的判断
+## What each field establishes
 
-| 字段或记录 | 表达的内容 | 不能自动替代的判断 |
+| Field or record | What it represents | What it does not automatically establish |
 |---|---|---|
-| 来源 sentiment 标签 | 原数据集自身的情绪定义 | 本项目的明确投资立场 |
-| proposed_stance / ai_rationale | AI 预标注与理由 | 人工最终标签 |
-| human_stance / human_reviewed | 人工确认的标签及状态 | 全文、证券身份或事件归属 |
-| headline_only_stance 范围 | 仅依据标题作出判断 | 加入未见正文后的判断 |
-| context_ai_stance | 上下文 AI 对照 | 全文人工 gold |
-| 资产身份与别名核验 | 目标映射是否成立 | 文本立场正确性 |
-| 来源、事件及关联标识 | 样本间已知关系 | 所有语义重复均已发现 |
+| Source sentiment label | The original dataset's sentiment definition | This project's explicit investment stance |
+| proposed_stance / ai_rationale | AI suggestions and rationale | Final human labels |
+| human_stance / human_reviewed | Human-confirmed label and status | Full-article stance, security identity, or event identity |
+| headline_only_stance scope | Judgment based only on the headline | A judgment using unseen article text |
+| context_ai_stance | An AI comparison using context | Full-article human gold |
+| Asset-identity and alias verification | Whether the target mapping is valid | Whether the text's stance is labeled correctly |
+| Source, event, and relationship identifiers | Known relationships between examples | Discovery of all semantic duplicates |
 
-5 条标题与上下文 AI 判读分歧被保留。人工确认适用于标题标签，不能据此把上下文 AI 输出也记为已审核 gold。2,000 条审核记录的 event_id 均为空；空值表示未知，不能视为同一事件，也不能视为已经完成事件独立性审查。
+5 disagreements between headline and contextual AI judgments were retained. Human confirmation applies to headline labels; contextual AI outputs cannot also be counted as reviewed gold. All event_id fields in the 2,000 review records are empty. An empty field means unknown, not “the same event” or “event independence has been verified.”
 
-## 从候选到 Trial 任务池
+## From candidates to the Trial task pool
 
-历史构建先排除 114 条 exclude 和 7 条未解决记录，再按当时的单标识符目标及标题字面匹配条件选择样本。实际构建统计为：121 条不满足已审核三分类条件，864 条不满足单标识符目标条件，7 条没有满足字面匹配，最终保留 1,008 条。
+Historical construction first excluded 114 exclude decisions and 7 unresolved records, then applied the single-identifier target and literal-headline matching rules in effect at the time. Recorded construction counts were: 121 records failing the reviewed three-class requirement, 864 failing the single-identifier target requirement, and 7 failing literal matching, leaving 1,008 examples.
 
-该任务池划分为 705 train、101 development、101 calibration、101 test；校准再分为 51 条温度拟合和 50 条阈值选择。分组检查使用文本近重复和已提供的关联标识，但该集合不是时间留出，事件语义审查未由空字段自动完成。见[实体 SFT 说明](ENTITY_SFT_PILOT.md)及[任务构建脚本](../scripts/build_entity_pilot.py)。
+The pool was split into 705 training, 101 development, 101 calibration, and 101 test examples. Calibration was further divided into 51 temperature-fitting and 50 threshold-selection examples. Group checks used near-duplicate text and supplied relationship identifiers, but the pool was not a chronological holdout; empty event fields did not complete semantic event review. See the [entity SFT documentation](ENTITY_SFT_PILOT.md) and [task-construction script](../scripts/build_entity_pilot.py).
 
-训练与校准已经在这一路径上运行。平衡采样只重复训练池中的 705 条，不增加独立样本、不改变开发集标签。当前目标解析能力的更新也不反向改变历史 1,008 条任务池及其分母。
+Training and calibration have run on this path. Balanced sampling repeats only the 705 training examples, adds no independent examples, and does not change development labels. Updates to target parsing likewise do not retroactively change the historical 1,008-example pool or its denominators.
 
-## 新增审核与导入
+## Additional review and import
 
-继续审核时固定来源文件身份、有序样本 ID、目标与证据范围，分别保存 AI 建议、人工决定和复核原因。来源变更应建立新版本，不能修改 hash 来绕过不匹配检查。
+For further review, fix the source-file identity, ordered example IDs, targets, and evidence scopes. Store AI suggestions, human decisions, and review reasons separately. Source changes require a new version; changing a hash to bypass a mismatch is not a valid import.
 
-人工 CSV 确认和工作台进度 JSON 是两条不同导入路径；不能将一条路径的完成状态视为另一条路径已经导入。工作台及导入说明见[审核工作台](REVIEW_WORKSPACE.md)、[导入实现](../src/finllm/review_import.py)与[组装脚本](../scripts/assemble_review_annotations.py)。
+Human CSV confirmation and review-workspace progress JSON are two different import paths. Completion through one path does not mean the other was imported. See the [review workspace](REVIEW_WORKSPACE.md), [import implementation](../src/finllm/review_import.py), and [assembly script](../scripts/assemble_review_annotations.py).
 
-新增事件方向或个人判断任务时，另设任务定义、持有人、时间和证据范围等字段；原文立场标签不能直接复制为新的 gold。证券目标还需核验资产身份及适用时期，标题审核完成不代表这些条件已满足。
+New event-direction or personal-judgment tasks need their own definitions and fields for opinion holder, time, and evidence scope. Source-text stance labels cannot simply be copied as new gold. Security targets also require verification of identity and applicable time periods; completing headline review does not establish these conditions.
 
-公开仓库保留审核统计与构建方法，不发布私有原文和逐条决定。数据使用条件见[数据指南](DATA_GUIDE.md)及[来源说明](research/stance_sources_20261009.md)；仓库代码许可不代替外部数据许可。
+The public repository retains review statistics and construction methods without publishing private source text or row-level decisions. Data-use conditions are documented in the [data guide](DATA_GUIDE.md) and [source review](research/stance_sources_20261009.md). The repository's code license does not replace external data licenses.

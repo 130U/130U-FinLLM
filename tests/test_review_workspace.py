@@ -206,7 +206,7 @@ const before=storage.get('130u-finllm-review:bound-sha');
 document.getElementById('importFile').files=[{text:async()=>JSON.stringify({...saved,dataset_sha256:'wrong'})}];
 await document.getElementById('importFile').onchange();
 assert.equal(storage.get('130u-finllm-review:bound-sha'),before);
-assert.ok(document.getElementById('toast').textContent.includes('导入失败'));
+assert.ok(document.getElementById('toast').textContent.includes('Import failed'));
 global.localStorage.setItem=()=>{throw Error('storage denied');};
 label.value='neutral';label.listeners.input[0]();
 assert.equal(document.getElementById('storageWarning').style.display,'block');

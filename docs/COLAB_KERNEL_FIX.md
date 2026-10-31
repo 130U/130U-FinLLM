@@ -1,34 +1,34 @@
-# 24M Trial｜Colab 内核安装与训练入口修复
+# 24M Trial | Colab Kernel Installation and Training Entry-Point Fixes
 
-范围：24M Trial 公开工程文档，保留该次内核故障、恢复语义与工程验证；项目整体见[总览](../README.md)。
+Scope: public engineering documentation for the 24M Trial, preserving this kernel failure, recovery semantics, and engineering validation. See the [project overview](../README.md) for the broader project.
 
-问题记录：[GitHub #1](https://github.com/130U/130U-FinLLM/issues/1)。2026-10-09 用户截图显示，02a 已选择 Tesla T4，但训练单元格在导入 `finllm.runtime` 时抛出 `ModuleNotFoundError`。同一组截图的 01a 显示 CPU 运行时；它的断开连接提示无法单独证明内存不足或确定断开原因。
+Issue record: [GitHub #1](https://github.com/130U/130U-FinLLM/issues/1). On 2026-10-09, user screenshots showed that 02a had a Tesla T4 selected, but its training cell raised `ModuleNotFoundError` while importing `finllm.runtime`. In the same screenshot set, 01a used a CPU runtime. Its disconnection message alone cannot establish an out-of-memory failure or identify the cause of the disconnect.
 
-2026-10-11 更新：用户提供的 T4 截图显示 02a 已完成 61 次更新、999,424 tokens，并成功备份到 Drive；随后 02b 日志及备份输出显示累计 300 步、4,914,941 有效 tokens，最终快照校验通过。此前的导入故障已在用户运行中越过。实际报告数字及证据边界见 [T4 训练记录](T4_PILOT.md)；这是用户提供的运行证据，未独立读取云端检查点。
+2026-10-11 update: user-supplied T4 screenshots showed that 02a completed 61 updates and 999,424 tokens, with a successful Drive backup. Subsequent 02b logs and backup output showed 300 cumulative steps and 4,914,941 effective tokens, with the final snapshot verified. The user's run had passed the earlier import failure. See the [T4 training record](T4_PILOT.md) for reported figures and the scope of the evidence. These are user-supplied execution records; the cloud checkpoint was not independently read.
 
-## 根因与修复
+## Root Cause and Fix
 
-项目采用 `src` 布局。Notebook 的 Python 内核早于 `pip install -e .` 启动；editable 安装产生的 `.pth` 会被后续新 Python 进程读取，已运行内核不会自动重新读取。因此原先 `python -m finllm environment` 成功，不能证明后面的内核内 `from finllm.runtime import ...` 会成功。
+The project uses a `src` layout. The notebook's Python kernel starts before `pip install -e .`. The `.pth` file created by an editable installation is read by subsequent Python processes, but an already-running kernel does not automatically reread it. Consequently, a successful `python -m finllm environment` did not establish that a later in-kernel `from finllm.runtime import ...` would succeed.
 
-公共安装单元格现在显式激活当前仓库的 `src`，刷新仅属于 `finllm` 的缓存模块，并分别检查当前内核、新 Python 进程的实际导入路径和检查点恢复接口。Torch 不会被重新加载。
+The shared installation cell now explicitly activates the current repository's `src` directory, refreshes only cached `finllm` modules, and checks the actual import paths and checkpoint recovery interface in both the current kernel and a new Python process. Torch is not reloaded.
 
-旧项目安装信息仍限制 `tokenizers<0.23` 时，先升级 tokenizers、后更新项目会产生中间依赖冲突。现在把 editable 项目和兼容的 tokenizer 放进同一次 pip 事务，约束为当前已安装的完整 Torch 版本；完成后检查项目基础依赖及 Transformers 的 tokenizer 约束。
+When stale project metadata still required `tokenizers<0.23`, upgrading tokenizers before updating the project created a temporary dependency conflict. The editable project and compatible tokenizer are now installed in a single pip transaction, constrained to the full version of the currently installed Torch. Project base dependencies and the Transformers tokenizer constraint are checked afterward.
 
-同时修复两处训练流程问题：
+Two training workflow issues were also corrected:
 
-- 达到训练预算后重复运行会只读复用原结果，保留 checkpoint、备份和原始吞吐／显存记录。仅从检查点恢复且缺少原汇总时，不编造新的吞吐或显存成绩。
-- 训练失败后，02a 的最终备份单元格明确停止，避免继续显示完成；训练正常进行时逐次显示更新步数和 loss。
+- Rerunning after the training budget has been reached reuses the original results read-only, preserving the checkpoint, backup, and original throughput and GPU-memory measurements. If only a checkpoint is restored and the original summary is missing, no new throughput or memory result is invented.
+- After a training failure, 02a's final backup cell explicitly stops instead of continuing to display completion. During normal training, update counts and loss are reported as training progresses.
 
-## 验证方式与边界
+## Validation Method and Scope
 
-新增 `tests/test_notebook_execution.py`，使用真正持续运行的 Jupyter 内核，先启动内核再实际执行 editable 安装。测试重现旧导入失败，并执行生成 Notebook 中的安装、01a 配置恢复、02a 恢复、配置、训练、备份及重复运行单元格。另启一个独立 Python 环境和内核，在不同目录恢复数据及 checkpoint，验证从 2 次更新继续到 3 次更新，且持久目录与工作目录的 checkpoint 哈希一致。
+The new `tests/test_notebook_execution.py` uses a real, persistent Jupyter kernel, starting it before performing the editable installation. The test reproduces the old import failure and executes the generated notebook's installation, 01a configuration restoration, and 02a restoration, configuration, training, backup, and rerun cells. A separate Python environment and kernel then restore the data and checkpoint into a different directory, verify continuation from two updates to three, and confirm matching checkpoint hashes in the persistent and working directories.
 
-测试中的外部 Git 和 Drive 使用本地目录，依赖安装离线复用已有库，GPU 预算明确替换为微型 CPU 测试配置。Python 包安装、内核导入、模型参数更新和 checkpoint 恢复实际执行。这是 Notebook 运行链路验证，不是云端 Google Drive 服务或 T4 性能验收。此前的测试只验证了子进程和语法，没有覆盖这个内核生命周期差异。
+External Git and Drive services are represented by local directories in these tests. Dependency installation reuses existing libraries offline, and the GPU budget is explicitly replaced with a tiny CPU test configuration. Package installation, kernel imports, parameter updates, and checkpoint restoration execute for real. This validates the notebook execution chain; it is not an acceptance test of the cloud Google Drive service or T4 performance. Earlier tests covered subprocesses and syntax but missed this kernel-lifecycle distinction.
 
-本地完整测试 120 项通过（73.26 秒），9 本 Notebook 格式／语法通过，`pip check` 通过。机器记录见 [colab_kernel_fix.json](../reports/colab_kernel_fix.json)。CI 在 Python 3.12、3.13 下执行同一完整测试集，结果以该修复提交的 Actions 为准。
+All 120 local tests passed in 73.26 seconds, along with format and syntax checks for nine notebooks and `pip check`. The machine-readable record is [colab_kernel_fix.json](../reports/colab_kernel_fix.json). CI runs the same full suite on Python 3.12 and 3.13; consult the Actions run for the fix commit for its result.
 
-## 用户继续入口
+## Continuing from an Existing Backup
 
-已有 01a 的 `seed_v1` Drive 备份时，直接从 [最新版 02a](https://colab.research.google.com/github/130U/130U-FinLLM/blob/main/notebooks/02a_seed_pilot.ipynb) 重新打开并保存副本。保持 T4、`SEED_VERSION = "seed_v1"`，从第一格顺序运行。安装格应显示“当前 Notebook 内核导入检查通过”和“新 Python 进程导入检查通过”；后续恢复已有数据、词表及进度。
+If the 01a `seed_v1` backup is already on Drive, reopen the [latest 02a](https://colab.research.google.com/github/130U/130U-FinLLM/blob/main/notebooks/02a_seed_pilot.ipynb) and save a copy. Keep the T4 runtime and `SEED_VERSION = "seed_v1"`, then run from the first cell in order. The installation cell should report successful import checks for both the current notebook kernel and a new Python process. Subsequent cells restore the existing data, tokenizer, and progress.
 
-无需删除 Drive 中的文件或重做 01a。旧版已经打开或保存在 Drive 的 Notebook 不会自动更新单元格代码，应使用上面的新版入口。若训练完成后再次运行，返回 `resumed_no_training: true`；原 `run_summary.json` 保留该次真正训练的测量结果。
+There is no need to delete Drive files or repeat 01a. A notebook already open or saved in Drive does not update its cell code automatically; use the updated entry point above. Rerunning after training completes returns `resumed_no_training: true`, and the original `run_summary.json` retains the measurements from the actual training run.

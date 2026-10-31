@@ -1,32 +1,32 @@
-# 24M Trial｜公开运行指南
+# 24M Trial | Public run guide
 
-Trial 是 130U-FinLLM 的公开工程版本。代码、默认训练配置和 Notebook 均对应此路径；2.4B 自用版本的架构和方法见 [模型说明](MODEL_CARD.md) 与 [项目介绍](PROJECT_OVERVIEW.md)。
+The Trial is the public engineering version of 130U-FinLLM. The code, default training configurations, and notebooks follow this path. See the [model card](MODEL_CARD.md) and [project overview](PROJECT_OVERVIEW.md) for the architecture and methods of the private 2.4B version.
 
-## 快速检查完整链路
+## Check the complete pipeline
 
-要求 Python 3.10 或更高版本。
+Python 3.10 or later is required.
 
 ```bash
 python -m pip install -e .
 python -m finllm smoke --device cpu --output runs/first-smoke
 ```
 
-该命令使用项目生成的小型合成样本，训练小配置并检查 tokenizer、预训练、领域训练、SFT、偏好训练接口、恢复、校准和预测。输出保存在指定目录；再次运行请换一个新目录。此入口用于工程检查，24M 配置单独位于 [`model_24m.json`](../configs/model_24m.json)。
+This command trains a small configuration on project-generated synthetic examples and checks tokenizer handling, pretraining, domain training, SFT, the preference-training interface, restoration, calibration, and prediction. Outputs are saved to the specified directory; use a new directory for another run. This is an engineering check. The separate 24M configuration is [`model_24m.json`](../configs/model_24m.json).
 
-## 24M 训练路径
+## The 24M training path
 
-| 阶段 | 代码与文档 |
+| Stage | Code and documentation |
 |---|---|
-| 数据字段、资格与分区 | [DATA_GUIDE](DATA_GUIDE.md) · [标注模板](../data/examples/annotation_template.jsonl) |
-| 首批原文、词表与分片 | [SEED_DATA](SEED_DATA.md) · [数据准备 Notebook](../notebooks/01a_seed_data.ipynb) |
-| 基础训练与扩充 | [模型 pilot](../notebooks/02a_seed_pilot.ipynb) · [扩充训练](../notebooks/02c_expanded_pretrain.ipynb) |
-| 金融领域适配 | [领域衔接](DOMAIN_HANDOFF.md) · [领域 Notebook](../notebooks/03a_domain_pretrain.ipynb) |
-| 目标立场 SFT | [实体任务](ENTITY_SFT_PILOT.md) · [平衡曝光脚本](../scripts/kaggle_balanced_sft.py) |
-| 校准与预测 | [推理导出脚本](../scripts/kaggle_inference_export.py) · [CLI](../src/finllm/cli.py) |
+| Data fields, eligibility, and partitions | [Data guide](DATA_GUIDE.md) · [Annotation template](../data/examples/annotation_template.jsonl) |
+| Initial source text, tokenizer, and shards | [Seed data](SEED_DATA.md) · [Preparation notebook](../notebooks/01a_seed_data.ipynb) |
+| Foundation training and expansion | [Model pilot](../notebooks/02a_seed_pilot.ipynb) · [Expanded training](../notebooks/02c_expanded_pretrain.ipynb) |
+| Financial-domain adaptation | [Domain handoff](DOMAIN_HANDOFF.md) · [Domain notebook](../notebooks/03a_domain_pretrain.ipynb) |
+| Target-stance SFT | [Entity task](ENTITY_SFT_PILOT.md) · [Balanced-exposure script](../scripts/kaggle_balanced_sft.py) |
+| Calibration and prediction | [Inference-export script](../scripts/kaggle_inference_export.py) · [CLI](../src/finllm/cli.py) |
 
-正式任务需要自行准备符合字段与来源要求的数据。现有 headline 实验使用私有材料及领域检查点；公开仓库提供代码和记录，数据与权重由各自工作流管理。
+Real task runs require data that meets the schema and provenance requirements. The existing headline experiments use private material and a financial-domain checkpoint. The public repository supplies code and records; data and weights remain in their respective workflows.
 
-## 命令与配置
+## Commands and configuration
 
 ```bash
 python -m finllm --help
@@ -34,13 +34,13 @@ python -m finllm train --help
 python -m finllm predict --help
 ```
 
-[`pretrain.json`](../configs/pretrain.json)、[`domain.json`](../configs/domain.json) 与 [`sft.json`](../configs/sft.json) 展示各阶段配置。运行前按数据指南准备 tokenizer、训练／验证材料及输出路径。阶段承接使用 `init_checkpoint`；同阶段继续训练使用 `resume`，同时恢复优化与数据状态。
+[`pretrain.json`](../configs/pretrain.json), [`domain.json`](../configs/domain.json), and [`sft.json`](../configs/sft.json) show stage configurations. Before running, follow the data guide to prepare a tokenizer, training and validation material, and output paths. Use `init_checkpoint` to initialize a new stage. Use `resume` to continue the same stage with optimization and data state restored.
 
-## 结果与工程记录
+## Results and engineering records
 
-[Trial 实验结果](experiment-results.md) 保留样本分母、逐类指标与运行条件；[工程复盘](ENGINEERING.md) 解释类别学习、语义边界与扩容取舍；[Trial 状态](STATUS.md) 汇总公开路径。`reports/` 的机器可读记录与原实验对应。
+The [Trial experiment results](experiment-results.md) retain sample counts, per-class metrics, and run conditions. The [engineering retrospective](ENGINEERING.md) explains class learning, semantic boundaries, and scaling choices. [Trial status](STATUS.md) summarizes the public path. Machine-readable files in `reports/` correspond to their original experiments.
 
-## 开发检查
+## Development checks
 
 ```bash
 python -m pip install -e ".[test]"
@@ -48,4 +48,4 @@ python -m pytest
 python scripts/validate_notebooks.py
 ```
 
-模型输出包括标签、三类概率、方向分数和复核信息。文本的目标立场与后续资产回报属于不同对象，调用方应按任务定义使用输出。
+Eligible model inputs produce a label, three-class probabilities, a direction score, and review information. A text's expressed stance and an asset's subsequent return are different quantities; callers should use outputs according to the task definition.

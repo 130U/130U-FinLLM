@@ -1,31 +1,31 @@
-# 24M Trial｜本地资产立场审核工作台
+# 24M Trial | Local Asset-Stance Review Workspace
 
-范围：24M Trial 公开工程文档，说明首轮人工审核工具与导入合同；后续任务分区及训练结果见[Trial 实验报告](experiment-results.md)，项目整体见[总览](../README.md)。
+Scope: public engineering documentation for the 24M Trial, describing the first-round human-review tool and import contract. See the [Trial experiment report](experiment-results.md) for subsequent task partitions and training results, and the [project overview](../README.md).
 
-使用自包含HTML审核AI初判，不需要服务器、账号或外部脚本。原文、建议和人工操作都留在本机；页面不发送网络请求。生成的HTML和逐行数据放在`runs/`等Git忽略目录。
+Review AI-proposed labels in a self-contained HTML file without a server, account, or external scripts. Source text, suggestions, and human actions stay on the local computer; the page sends no network requests. Generated HTML and row-level data live in Git-ignored directories such as `runs/`.
 
-## 推荐审核顺序
+## Recommended Review Order
 
-1. 先勾选「规则校准40条」。它按AI类别分层、简单项优先，组内尽量只抽一条，并默认开启盲审。先按自己的理解判断，再取消盲审与AI建议比较；它是规则校准样本，不是最终测试集。
-2. 规则稳定后按100条一个批次推进；先筛「优先复核／边界高难」处理容易误解的例子，也可先完成简单批次熟悉操作。每条只看原文、指定目标和必要的判断依据。
-3. `A`确认当前立场并到下一条；`1/2/3`选择看空／中性／看多，然后`A`；`X`明确排除并确认；`U`转入待查。`J/K`前后移动，`Z`撤回上一确认／待查并返回该条。正在输入备注或资产字段时不会触发快捷键。
-4. 资产身份与立场分别确认。AI给出的候选保留为草稿；人工核实后填写标识并勾选核实框。可以先确认立场、稍后用「立场已审／资产待核实」筛选补资产。没有人工核实的资产不会作为已核实`asset_identifier`导出。
-5. 每完成一批，导出「进度JSON」保存到自己的项目目录；浏览器缓存不能代替备份。下次打开同一数据版本的HTML，通常自动恢复；换浏览器时导入JSON。
+1. First select the 40-record rubric-calibration option. It stratifies by AI class, prioritizes simple cases, tries to sample only one record per group, and enables blind review by default. Make your own judgment first, then disable blind review to compare it with the AI suggestion. These are rubric-calibration samples, not a final test set.
+2. Once the rubric is stable, proceed in batches of 100. Use the priority-review / difficult-boundary filter to address easily misunderstood examples, or start with an easy batch to learn the interface. For each record, inspect the original text, specified target, and necessary reasoning evidence.
+3. `A` confirms the current stance and advances; `1/2/3` selects bearish/neutral/bullish, followed by `A`; `X` explicitly excludes and confirms; `U` marks a record unresolved. `J/K` moves between records. `Z` undoes the last confirmation or unresolved action and returns to that record. Shortcuts do not fire while typing in notes or asset fields.
+4. Confirm asset identity and stance separately. AI-proposed asset candidates remain drafts. Enter an identifier and select its verification checkbox after human verification. Stance can be confirmed first, with assets completed later using the stance-reviewed / asset-unverified filter. An asset without human verification is not exported as a verified `asset_identifier`.
+5. After each batch, export progress JSON to your project directory; browser storage is not a backup. Reopening the HTML for the same data version usually restores progress automatically. Import the JSON when switching browsers.
 
-只有明确确认操作才写入`human_reviewed=true`。本工作台中该标志表示立场已人工确认，**不自动证明资产映射、来源权限、事件去重或数据切分已经验收**。资产另有`asset_verified`，所有合并行保留`formal_training_ready=false`。正式数据导入还需独立关卡。
+Only an explicit confirmation sets `human_reviewed=true`. In this workspace, the flag means that a human has confirmed the stance. It **does not automatically establish acceptance of asset mapping, source rights, event deduplication, or data splits**. Assets have a separate `asset_verified` flag, and every merged row retains `formal_training_ready=false`. Formal data import requires independent gates.
 
-若某些条目有第二次AI复核，页面会显示第二次建议及理由，并提供「两次AI建议不同」筛选。该提示只帮助你优先审核分歧；二次AI复核不等于人工复核，也不能据此声称人工准确率或置信概率。
+If a record has a second AI review, the page shows the second suggestion and rationale and offers a filter for disagreement between the two AI suggestions. This only helps prioritize disagreements. A second AI pass is not human review and cannot establish human accuracy or a calibrated confidence probability.
 
-## 文件与恢复
+## Files and Recovery
 
-- **进度JSON**：仅保存人工操作、数据SHA和精确行号列表；可恢复草稿、存疑、已确认状态。导入不同数据版本、未知／重复行号、非法状态或与已有本地操作冲突时明确停止，保留当前进度。
-- **已确认CSV**：仅含立场已确认行的人工字段。为Excel转义公式前缀；未核实的资产字段仅放在`asset_identifier_draft`。
-- **已确认JSONL**：原文、AI初判及人工决定合并，保留原始文本。用于之后的来源、分组、映射与标签校验，不是可直接开训的最终数据集。
-- **全部行JSONL**：还包含未审核和待查条目，状态不变。不能把导出或打开文件当成批准。
+- **Progress JSON:** stores only human actions, the data SHA, and the exact row-number list. It restores draft, unresolved, and confirmed states. Import stops explicitly on a different data version, unknown or duplicate row numbers, invalid states, or conflicts with existing local actions, preserving current progress.
+- **Confirmed CSV:** contains human fields only for stance-confirmed rows. Formula prefixes are escaped for Excel. Unverified asset fields appear only in `asset_identifier_draft`.
+- **Confirmed JSONL:** merges original text, the initial AI proposal, and human decisions while preserving the original text. It supports later source, grouping, mapping, and label checks; it is not a final dataset ready for immediate training.
+- **All-row JSONL:** also includes unreviewed and unresolved records without changing their state. Exporting or opening a file does not constitute approval.
 
-`human_reviewed=false`的行、`exclude`行、未核实资产身份以及后续隔离检查未通过的行，不能仅凭AI初判进入正式训练。浏览器已确认立场的比例也不是AI模型准确率或双人一致性分数。
+Rows with `human_reviewed=false`, `exclude` rows, unverified asset identities, and rows that fail subsequent isolation checks cannot enter formal training solely on the strength of an AI proposal. The proportion of stances confirmed in the browser is neither AI-model accuracy nor an inter-annotator agreement score.
 
-## 生成
+## Generation
 
 ```powershell
 .\.venv\Scripts\python.exe -X utf8 scripts/build_review_workspace.py `
@@ -33,12 +33,12 @@
   --output runs/review_packages/review_2000_20261030/review_workspace.html
 ```
 
-每行JSON必须包含非空`id`、英文`text`、`source_entity`和`ai_stance`（或`proposed_stance`）；建议字段为`ai_rationale`、逐字原文`evidence_quotes`、`ai_asset_candidate`、`mapping_status`、`priority`、`difficulty`、`batch_id`和分组／来源字段。输入只接受AI待审核状态，不能夹带人工批准。
+Each JSON line must contain nonempty `id`, English `text`, `source_entity`, and `ai_stance` (or `proposed_stance`). Recommended fields include `ai_rationale`, verbatim `evidence_quotes`, `ai_asset_candidate`, `mapping_status`, `priority`, `difficulty`, `batch_id`, and grouping/source fields. Input accepts only AI records pending review; it must not carry preinserted human approval.
 
-页面数据与进度以输入文件SHA256绑定。生成器不会覆盖不同内容的已有HTML；需要新版本界面或新数据时指定新文件名，并保留已导出的进度JSON。同一输入的界面升级可通过进度文件恢复；改变输入字节后的进度不能无校验地直接导入。
+Page data and progress are bound to the input file's SHA256. The generator does not overwrite an existing HTML file with different content. Use a new filename when a new interface version or new data is needed, and retain exported progress JSON. An interface upgrade using the same input can restore progress from the progress file. Progress from input with changed bytes cannot be imported without verification.
 
-## 交给训练流水线之前
+## Before Handoff to Training
 
-优先交接「备份进度 JSON」下载的`review_progress_*.json`；它包含草稿、待查、排除和明确确认，便于保留完整操作。项目新增`scripts/import_review_progress.py`，核对精确源文件SHA和全部有序ID后，生成进度、标签候选、资产待核表及清单。缺少决定的行保留为未审，立场已审但资产未核实的行仍单独列出，所有产物继续禁止正式训练。
+Prefer the `review_progress_*.json` downloaded through the progress-JSON backup action. It includes drafts, unresolved cases, exclusions, and explicit confirmations, preserving the full action record. The project's `scripts/import_review_progress.py` checks the exact source-file SHA and all ordered IDs before producing progress, label candidates, an asset-verification queue, and a manifest. Rows without decisions remain unreviewed; stance-reviewed rows with unverified assets are listed separately. All outputs remain barred from formal training.
 
-完整命令与下一步见[03a之后的交接](POST_DOMAIN_NEXT.md)。该导入器只接受实际进度JSON，不接受把AI初稿改名为人工结果。当前工作台数据的SHA为`becc92113c191f807c8a4d73fe8e792cfc7d0ea193f2b2627c4e66f80ac4070c`；其他版本须使用匹配的原始数据。
+See the [handoff after 03a](POST_DOMAIN_NEXT.md) for the complete command and next steps. The importer accepts actual progress JSON, not AI drafts renamed as human results. The current workspace data SHA is `becc92113c191f807c8a4d73fe8e792cfc7d0ea193f2b2627c4e66f80ac4070c`; other versions require their matching original data.

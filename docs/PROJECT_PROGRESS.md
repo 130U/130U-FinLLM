@@ -1,56 +1,56 @@
-# 24M 公开 Trial：训练与数据分母
+# 24M public Trial | Training and data ledger
 
-本页汇总公开 Trial 的实际投入与产出，不以旧预算完成率代表整个项目。2.4B 自用版本见[项目介绍](PROJECT_OVERVIEW.md)与[模型版本](MODEL_CARD.md)；下列运行计数均属于 24M。
+This page summarizes actual inputs and outputs of the public Trial. Completion against an old budget does not describe the project as a whole. See the [project overview](PROJECT_OVERVIEW.md) and [model card](MODEL_CARD.md) for the private 2.4B version. All run counts below belong to 24M.
 
-## 语言训练
+## Language training
 
-| 阶段 | 累计 updates | 本阶段有效监督 tokens | 验证观察 |
+| Stage | Cumulative updates within stage | Valid supervised tokens in stage | Validation observations |
 |---|---:|---:|---|
-| Seed 预训练 | 300 | 4,914,941 | Seed 验证 loss 5.5419 |
-| 扩充语料续训 | 1,220 | 19,988,195 | 扩充验证 loss 3.6929；seed 保留集 loss 4.4032 → 3.9842 |
-| 金融领域适配 | 74 | 1,211,960 | 金融验证 loss 3.2375；通用保留集 loss 3.9842 → 4.0574 |
-| 合计 | 各阶段分别计数 | **26,115,096** | 不同验证集的 loss 不直接横向比较 |
+| Seed pretraining | 300 | 4,914,941 | Seed validation loss 5.5419 |
+| Expanded-corpus continuation | 1,220 | 19,988,195 | Expanded validation loss 3.6929; seed-retention loss 4.4032 → 3.9842 |
+| Financial-domain adaptation | 74 | 1,211,960 | Financial validation loss 3.2375; general-retention loss 3.9842 → 4.0574 |
+| Total | Counted separately by stage | **26,115,096** | Losses from different validation sets are not directly comparable |
 
-来源：[seed 运行](../reports/colab_t4_continuation_20261011.json)、[扩充运行](../reports/colab_t4_expanded_continuation_20261030.json)、[领域运行](../reports/colab_t4_domain_20261030.json)。
+Sources: [seed run](../reports/colab_t4_continuation_20261011.json), [expanded run](../reports/colab_t4_expanded_continuation_20261030.json), and [domain run](../reports/colab_t4_domain_20261030.json).
 
-扩充阶段的 1,220 步包含早期 610 步，不能将两份报告中的累计数相加。有效监督 tokens 是参与语言损失的位置数量，不是唯一文本量。早期 100M 基础训练加 25M 领域训练是 Trial 的历史预算，不是 2.4B 的训练完成量。
+The expanded stage's 1,220 updates include the earlier 610 updates. Cumulative values from those reports must not be added together. Valid supervised tokens count positions contributing to language loss, not unique text. The earlier 100M foundation plus 25M domain tokens were historical Trial budgets, not completed 2.4B training volume.
 
-## 审核与任务划分
+## Review and task partitions
 
-| 口径 | 数量 | 含义 |
+| Quantity | Count | Meaning |
 |---|---:|---|
-| 标题审核任务 | 2,000 | 原始任务规模 |
-| 已确认审核 | 1,993 | 包含 114 条排除判断 |
-| 未解决 | 7 | 未进入已确认标签 |
-| 三分类候选 | 1,879 | 426 bullish、234 bearish、1,219 neutral |
-| Trial 实际任务池 | 1,008 | 进一步满足标题字面目标等构建条件 |
-| 训练／开发／校准／测试 | 705／101／101／101 | 同一固定任务池的四个分区 |
-| 温度／阈值校准子集 | 51／50 | 分别拟合温度和选择复核阈值 |
+| Headline review task | 2,000 | Original review workload |
+| Confirmed review decisions | 1,993 | Includes 114 exclusions |
+| Unresolved records | 7 | Not counted as confirmed labels |
+| Three-class candidates | 1,879 | 426 bullish, 234 bearish, 1,219 neutral |
+| Actual Trial task pool | 1,008 | Also satisfies the headline literal-target construction rules |
+| Training / development / calibration / test | 705 / 101 / 101 / 101 | Four partitions of the same fixed task pool |
+| Temperature / threshold subsets | 51 / 50 | Fit temperature and select the review threshold separately |
 
-来源：[人工确认记录](../reports/human_headline_review_20261030.json)、[审核口径](TASK_REVIEW_NEXT.md)、[实体任务说明](ENTITY_SFT_PILOT.md)。
+Sources: [human-confirmation record](../reports/human_headline_review_20261030.json), [review definitions](TASK_REVIEW_NEXT.md), and [entity-task documentation](ENTITY_SFT_PILOT.md).
 
-“完成审核”不同时表示全文标签、证券映射或事件归属均已核验。1,008 条也不等于训练池；实际训练独立样本为 705 条。
+A completed label review does not simultaneously validate full-article labels, security mappings, or event identity. The 1,008-example task pool is not the training set; there are 705 independent training examples.
 
-## SFT 对照
+## SFT comparison
 
-| 口径 | 初版 SFT | 平衡采样 SFT |
+| Quantity | Initial SFT | Balanced-sampling SFT |
 |---|---:|---:|
-| 独立训练样本 | 705 | 705 |
+| Independent training examples | 705 | 705 |
 | Epochs | 2 | 3 |
-| 每轮标签曝光 | 705 | 1,473 |
-| 总标签监督位置 | 1,410 | 4,419 |
+| Label exposures per epoch | 705 | 1,473 |
+| Total supervised label positions | 1,410 | 4,419 |
 | Optimizer updates | 45 | 139 |
-| 开发集 Macro-F1 | 0.2863 | 0.6549 |
-| 开发集正确样本 | 76/101 | 79/101 |
+| Development macro-F1 | 0.2863 | 0.6549 |
+| Correct development predictions | 76/101 | 79/101 |
 
-原训练池为 491 neutral、140 bullish、74 bearish。平衡版仅在训练分区内重复采样，使每类每轮曝光 491 次，没有增加独立标注样本；它从领域母模型权重开始，重新建立优化器。总标签曝光约为初版的 3.13 倍，更新数约为 3.09 倍，学习率日程也随预算变化。
+The original training pool contained 491 neutral, 140 bullish, and 74 bearish examples. The balanced run sampled only within that partition, bringing each class to 491 exposures per epoch without adding independent labeled examples. It initialized from the domain parent weights with a new optimizer. Total label exposure was approximately 3.13 times the initial run, and the update count was approximately 3.09 times larger; the learning-rate schedule also changed with the budget.
 
-初版开发集和旧测试集均全部预测 neutral。平衡版开发集方向类正确数增加 17，中性类正确数减少 14。词级 TF-IDF 与带类别权重的逻辑回归开发集 Macro-F1 为 0.6087。这些是同一开发集上的探索性对照，不是独立最终测试。见[实验报告](experiment-results.md)及[平衡脚本](../scripts/kaggle_balanced_sft.py)。
+The initial run predicted neutral for every development and original test example. On the development set, the balanced model correctly classified 17 more directional examples and 14 fewer neutral examples. Word-level TF-IDF with class-weighted logistic regression achieved development macro-F1 of 0.6087. These are exploratory comparisons on the same development set, not independent final tests. See the [experiment report](experiment-results.md) and [balanced-SFT script](../scripts/kaggle_balanced_sft.py).
 
-## 校准与交付
+## Calibration and delivery
 
-已在平衡版最佳权重上运行温度拟合、阈值选择与轻量推理导出，温度约 1.50634、复核阈值约 0.57380。导出包含权重、tokenizer、校准配置及结构化预测入口，训练恢复仍依赖完整检查点。见[导出脚本](../scripts/kaggle_inference_export.py)。
+Temperature fitting, threshold selection, and lightweight inference export were run on the best balanced-model weights. The fitted temperature was approximately 1.50634, and the review threshold was approximately 0.57380. The export contains weights, tokenizer, calibration configuration, and a structured prediction entry point. Training restoration still requires the full checkpoint. See the [export script](../scripts/kaggle_inference_export.py).
 
-这些校准数值只对应所绑定的 Trial 权重、目标模式和小样本校准池。新的模型版本与任务分布需要重新校准并评价风险与覆盖率。真实金融 DPO、Twitter 弱监督训练和新的独立最终测试不计入本页已完成运行。
+These calibration values belong only to the bound Trial weights, target mode, and small calibration pool. New model versions and task distributions require recalibration and risk-and-coverage evaluation. Real financial DPO, Twitter weak-supervision training, and a new independent final test are not included among the completed runs on this page.
 
-计量时始终区分：准备量与实际消耗量、输入位置与监督位置、重复曝光与独立信息、尝试更新与成功更新、开发集选型与最终评价。训练器的具体计数见[实现](../src/finllm/training.py)。
+Accounting consistently distinguishes prepared quantities from consumed quantities, input positions from supervised positions, repeated exposures from independent information, attempted updates from successful updates, and development-set selection from final evaluation. See the [trainer implementation](../src/finllm/training.py) for the exact counters.

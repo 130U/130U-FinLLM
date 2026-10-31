@@ -27,20 +27,20 @@ SEED, EPOCHS, MAX_PER_CLASS = 130, 2, 500
 LABELS = ('bearish', 'neutral', 'bullish')
 LABEL_MAP = {'0': 'bearish', '1': 'bullish', '2': 'neutral'}
 if not torch.cuda.is_available():
-    raise RuntimeError('请连接 GPU；本实验不在 CPU 上正式训练。')
+    raise RuntimeError('Connect a GPU; this experiment does not run formal training on CPU.')
 required = [BEST, Path(str(BEST) + '.json'), BASE / 'balanced_best_development.json',
             LITE / 'lite_manifest.json', LITE / 'tokenizer/tokenizer.json',
             PROJECT / 'runtime_revision.txt']
 required += [LITE / 'task' / (x + '.jsonl') for x in ('train','development','calibration_temperature','calibration_threshold','test')]
 missing = [str(p) for p in required if not p.is_file()]
 if missing:
-    raise FileNotFoundError('当前会话缺少 06 检查点或输入；请保留成果，不要重训：\n' + '\n'.join(missing))
+    raise FileNotFoundError('This session is missing the stage 06 checkpoint or inputs. Preserve existing outputs; do not retrain: \n' + '\n'.join(missing))
 parent = load_checkpoint(BEST, allow_previous=False)
 parent_report = json.loads((BASE / 'balanced_best_development.json').read_text(encoding='utf-8'))
 if parent['config']['stage'] != 'sft' or parent_report['bindings']['checkpoint_sha256'] != sha256_file(BEST):
-    raise ValueError('06 模型与开发集报告不匹配。')
+    raise ValueError('The stage 06 model does not match the development report.')
 if parent_report['bindings']['tokenizer_sha256'] != sha256_file(LITE / 'tokenizer/tokenizer.json'):
-    raise ValueError('06 模型和词表不匹配。')
+    raise ValueError('The stage 06 model does not match the tokenizer.')
 
 def rows(path):
     return [json.loads(x) for x in path.read_text(encoding='utf-8').splitlines() if x.strip()]
@@ -66,16 +66,16 @@ for name in ('development','calibration_temperature','calibration_threshold','te
 held_keys = {canonical(r['text']) for r in heldout}
 held_grams = set().union(*(grams(r['text']) for r in heldout))
 existing_keys = {canonical(r['text']) for r in original}
-print('下载固定版本公开 Twitter 金融数据；不上传私有标题。', flush=True)
+print('Downloading a pinned version of public Twitter financial data; private headlines are not uploaded.', flush=True)
 request = urllib.request.Request(URL, headers={'User-Agent': '130U-FinLLM-research/1.0'})
 with urllib.request.urlopen(request, timeout=90) as response:
     raw = response.read(5_000_001)
 if len(raw) > 5_000_000:
-    raise ValueError('下载大小超出预期，已停止。')
+    raise ValueError('Download size exceeded the expected limit. Stopping.')
 source_sha = hashlib.sha256(raw).hexdigest()
 reader = csv.DictReader(io.StringIO(raw.decode('utf-8-sig'), newline=''))
 if not {'text', 'label'}.issubset(reader.fieldnames or []):
-    raise ValueError(f'来源 CSV 的列不符合预期：{reader.fieldnames}')
+    raise ValueError(f'Unexpected source CSV columns: {reader.fieldnames}')
 tokenizer = load_tokenizer(LITE / 'tokenizer')
 groups = {k: [] for k in LABELS}
 seen = {}
@@ -121,7 +121,7 @@ for source in reader:
 groups = {label: [r for r in candidates if r['id'] not in conflicting_ids]
           for label, candidates in groups.items()}
 if any(len(v) < 50 for v in groups.values()):
-    raise ValueError('筛选后某一类别少于 50 条，避免开始偏斜训练：' + str({k: len(v) for k,v in groups.items()}))
+    raise ValueError('A filtered class has fewer than 50 examples; training will not start with this imbalance: ' + str({k: len(v) for k,v in groups.items()}))
 rng = random.Random(SEED)
 take = min(MAX_PER_CLASS, *(len(groups[k]) for k in LABELS))
 weak = []
@@ -130,7 +130,7 @@ for label in LABELS:
 # Mix explicitly reviewed headlines with weak Twitter labels in equal class groups.
 original_groups = {k: [r for r in original if r['label'] == k] for k in LABELS}
 if any(not v for v in original_groups.values()):
-    raise ValueError('原训练数据缺少类别。')
+    raise ValueError('The original training data is missing a class.')
 largest = max(map(len, original_groups.values()))
 mixed = list(weak)
 for label in LABELS:
@@ -152,19 +152,19 @@ updates = math.ceil(len(mixed) * EPOCHS / (cfg['train']['batch_size'] * cfg['tra
 cfg['train'].update(max_updates=updates, schedule_updates=updates, max_epochs=EPOCHS, learning_rate=1e-5)
 config_path = OUT / 'experiment_config.json'
 if OUT_LIVE.exists() and not OUT.exists():
-    raise RuntimeError('只找到备份目录，工作目录缺失；保留备份并停止。')
+    raise RuntimeError('A backup exists but the working directory is missing. Preserve the backup and stop.')
 if OUT.exists():
     if not config_path.is_file() or not (OUT / 'mixed_train.jsonl').is_file():
-        raise RuntimeError('已有输出不完整，请保留并检查。')
+        raise RuntimeError('Existing outputs are incomplete. Preserve and inspect them.')
     if json.loads(config_path.read_text(encoding='utf-8')) != cfg or sha256_file(OUT / 'mixed_train.jsonl') != mixed_sha:
-        raise RuntimeError('已有配置或数据不一致，未覆盖。')
+        raise RuntimeError('Existing configuration or data differs. Nothing was overwritten.')
     latest = OUT / 'latest.pt'
     if latest.exists():
         load_checkpoint(latest, allow_previous=False)
         cfg.pop('init_checkpoint')
         cfg['resume'] = str(latest)
     elif any(OUT.glob('*.pt*')) or OUT_LIVE.exists():
-        raise RuntimeError('已有检查点不完整，保留原文件。')
+        raise RuntimeError('The existing checkpoint is incomplete. Preserve the original files.')
 else:
     OUT.mkdir()
     (OUT / 'mixed_train.jsonl').write_bytes(mixed_text.encode('utf-8'))
@@ -182,8 +182,8 @@ manifest = {'dataset': URL, 'dataset_revision': REVISION, 'source_sha256': sourc
                        'Twitter validation split not read; development is reused and is not a final test',
                        'Not evaluated for real trading or price prediction']}
 (OUT / 'data_manifest.json').write_text(json.dumps(manifest, indent=2, ensure_ascii=False), encoding='utf-8')
-print('训练准备:', json.dumps(manifest, indent=2, ensure_ascii=False), flush=True)
-print('训练从 06 best 权重开始；弱标签是实验材料，保留原模型。', flush=True)
+print('Training setup:', json.dumps(manifest, indent=2, ensure_ascii=False), flush=True)
+print('Training starts from stage 06 best weights. Weak labels are experimental; retain the original model.', flush=True)
 training = run_training(cfg)
 comparison = run_evaluation(OUT / 'best.pt', cfg['tokenizer'], cfg['validation_data'],
                             OUT / 'twitter_best_development.json', target_mode='literal_entity')
@@ -191,9 +191,9 @@ summary = {'training': training, 'baseline_06_development': parent_report['metri
            'twitter_weak_development': comparison['metrics'], 'manifest': manifest,
            'scope': 'Exploratory reused development comparison only; no independent test claim'}
 (OUT / 'experiment_summary.json').write_text(json.dumps(summary, indent=2, ensure_ascii=False), encoding='utf-8')
-print('06 开发集 macro-F1:', parent_report['metrics']['macro_f1'], flush=True)
-print('Twitter 弱监督开发集 macro-F1:', comparison['metrics']['macro_f1'], flush=True)
-print('各类结果:', json.dumps(comparison['metrics']['per_class'], ensure_ascii=False), flush=True)
+print('Stage 06 development macro-F1:', parent_report['metrics']['macro_f1'], flush=True)
+print('Twitter weak-supervision development macro-F1:', comparison['metrics']['macro_f1'], flush=True)
+print('Per-class results:', json.dumps(comparison['metrics']['per_class'], ensure_ascii=False), flush=True)
 stamp = datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S%fZ')
 archive = WORK / ('130u_twitter_weak_private_' + stamp + '.zip')
 checks = {}
@@ -204,4 +204,4 @@ with zipfile.ZipFile(archive, 'x', compression=zipfile.ZIP_STORED, allowZip64=Tr
             checks[name] = {'sha256': sha256_file(path), 'bytes': path.stat().st_size}
             z.write(path, name)
     z.writestr('CHECKSUMS.json', json.dumps(checks, indent=2, sort_keys=True))
-print('私有训练包:', archive, '大小:', archive.stat().st_size, 'SHA256:', sha256_file(archive), flush=True)
+print('Private training package:', archive, 'size:', archive.stat().st_size, 'SHA256:', sha256_file(archive), flush=True)

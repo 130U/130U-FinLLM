@@ -23,22 +23,22 @@ EXTRA_FIELDS = ("source_symbol_candidates", "source_symbol_match", "source_headl
                 "text_group_id", "event_group_id")
 STANCES = {"bullish", "bearish", "neutral", "exclude"}
 REVIEW_NOTE = (
-    "# 200条资产立场审核包\n\n"
-    "本目录是待审核材料，不是正式训练集。source_symbol_candidates 仅来自原作者历史实体表，"
-    "不是已核实的当前证券代码，也不默认属于美股。source_sentiment 与 proposed_stance 均不是本项目人工真值。\n\n"
-    "逐行读 text 和 source_entity：确认指定目标确为本项目支持的资产，核对证券身份、市场及代码，"
-    "再填 asset_identifier；不能确认的行填 human_stance=exclude 并在 notes 解释。"
-    "对指定目标判断 bullish、bearish、neutral 或 exclude，填写 human_stance；"
-    "只有实际核对完成后才把 human_reviewed 改为 true。不要批量复制 AI 初判或把来源代码直接视为已核实资产。\n\n"
-    "只报告已发生的价格或业绩变化通常不自动表示投资方向。标题提出问题但没有结论、目标含糊、"
-    "监管机构或不支持的资产应审核或排除；条件性看多/看空保留其条件与目标。\n\n"
-    "source_headline_id 和 text_group_id 是来源/相同文本分组草稿。审核同一事件的多条新闻并填写共同"
-    "event_group_id（未知则留空待查）。后续切分还必须联合来源ID、文本近重复簇、事件组和多目标关系，"
-    "不能逐行随机拆分。本包没有生成 train/dev/calibration/test 或 DPO 偏好对。\n\n"
-    "这是首批规则审核样本，存在抽样和类别偏差；不等于原计划规模的标签集。"
-    "完成单人审核也不等于双人独立一致性验证。\n\n"
-    "保留本表和原包的 manifest.json。脚本只复用未经更改的完整初始包；有人编辑后不会覆盖。"
-    "请直接继续编辑当前表，后续由明确的审核导入步骤接收。\n"
+    "# 200-example asset-stance review package\n\n"
+    "This directory contains material for review, not a formal training set. source_symbol_candidates comes only from the original historical entity table; "
+    "it is not a verified current security identifier or necessarily a US equity. Neither source_sentiment nor proposed_stance is project human ground truth.\n\n"
+    "Read text and source_entity for each row. Confirm that the target is a supported asset and verify its identity, market, and symbol, "
+    "then fill asset_identifier. If it cannot be verified, set human_stance=exclude and explain in notes. "
+    "Classify the specified target as bullish, bearish, neutral, or exclude in human_stance. "
+    "Set human_reviewed=true only after completing review. Do not bulk-copy AI suggestions or treat source symbols as verified assets.\n\n"
+    "A historical price or earnings change alone does not establish investment direction. Questions without conclusions, ambiguous targets, "
+    "regulators, and unsupported assets require review or exclusion. Retain the conditions and targets of conditional bullish or bearish views.\n\n"
+    "source_headline_id and text_group_id are draft source/exact-text groups. Review related news and assign a shared "
+    "event_group_id (leave blank for investigation if unknown). Subsequent splitting must jointly consider source IDs, near-duplicate clusters, event groups, and multiple targets; "
+    "do not split randomly by row. This package does not generate train/dev/calibration/test partitions or DPO pairs.\n\n"
+    "This initial rule-review sample has sampling and class biases; it is not the full planned label set. "
+    "Single-reviewer completion is not independent agreement between two reviewers.\n\n"
+    "Retain this table and the original manifest.json. The script reuses only intact, unmodified initial packages; it will not overwrite edited ones. "
+    "Continue editing the current table and use the explicit review-import step afterward.\n"
 )
 
 

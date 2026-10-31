@@ -27,13 +27,13 @@ EPOCHS = 3
 LABELS = ('bearish', 'neutral', 'bullish')
 
 if not torch.cuda.is_available():
-    raise RuntimeError('需要先连接 GPU；为节约时间，本实验不会在 CPU 上训练。')
+    raise RuntimeError('Connect a GPU first; this experiment does not train on CPU.')
 if OUT_LIVE.exists() and not OUT.exists():
-    raise FileExistsError('只找到 live 备份，工作目录缺失。请保留备份并检查后再恢复。')
+    raise FileExistsError('Only the live backup exists; the working directory is missing. Preserve and inspect the backup before resuming.')
 for path in [LITE / 'task/train.jsonl', LITE / 'task/development.jsonl',
              OLD_RUN / 'sft_best_development.json', PROJECT / 'runtime_revision.txt']:
     if not path.is_file():
-        raise FileNotFoundError(f'会话缺少输入：{path}。请保留现有成果，不要重复训练。')
+        raise FileNotFoundError(f'Missing session input: {path}. Preserve existing outputs; do not repeat training.')
 
 # prepare_lite_sft validates the entire immutable input and fixed parent hash.
 pilot = prepare_lite_sft(PROJECT, LITE, OUT, expected_manifest_sha256=MANIFEST_SHA, epochs=EPOCHS)
@@ -42,7 +42,7 @@ train = [json.loads(x) for x in (LITE / 'task/train.jsonl').read_text(encoding='
 dev = [json.loads(x) for x in (LITE / 'task/development.jsonl').read_text(encoding='utf-8').splitlines() if x.strip()]
 groups = {label: [row for row in train if row['label'] == label] for label in LABELS}
 if any(not groups[k] for k in LABELS) or sum(map(len, groups.values())) != len(train):
-    raise ValueError('训练集的三类标签无效或缺失。')
+    raise ValueError('The training set has invalid or missing three-class labels.')
 
 # Oversampling is restricted to the train partition.  Duplicated rows are
 # explicitly recorded as repeated exposures, not additional unique examples.
@@ -73,24 +73,24 @@ resume_path = OUT / 'latest.pt'
 if OUT.exists():
     # Only continue the exact experiment. Never overwrite mismatched or partial input.
     if not config_path.is_file() or not balanced_path.is_file():
-        raise RuntimeError('已有输出不完整，保留原文件并停止；不要删除或重新初始化。')
+        raise RuntimeError('Existing outputs are incomplete. Preserve the files and stop; do not delete or reinitialize them.')
     if json.loads(config_path.read_text(encoding='utf-8')) != cfg or sha256_file(balanced_path) != counts['resampled_data_sha256']:
-        raise RuntimeError('已有配置或均衡样本不匹配，保留原文件并停止。')
+        raise RuntimeError('Existing configuration or balanced examples do not match. Preserve the files and stop.')
     if resume_path.exists():
         load_checkpoint(resume_path, allow_previous=False)
         cfg.pop('init_checkpoint')
         cfg['resume'] = str(resume_path)
-        print('验证已有检查点后恢复，训练器还将核验数据、优化器、调度和运行环境。', flush=True)
+        print('Resuming after checkpoint verification. The trainer will also verify data, optimizer, scheduler, and runtime state.', flush=True)
     elif any(OUT.glob('*.pt*')) or OUT_LIVE.exists():
-        raise RuntimeError('已有模型文件但缺少可恢复的 latest.pt；保留原文件并停止。')
+        raise RuntimeError('Model files exist but a resumable latest.pt is missing. Preserve the files and stop.')
     else:
-        print('已核验预备配置；尚无训练检查点，从原母模型开始。', flush=True)
+        print('Prepared configuration verified. No training checkpoint exists; starting from the original parent model.', flush=True)
 else:
     OUT.mkdir()
     balanced_path.write_bytes(balanced_text.encode('utf-8'))
     config_path.write_text(json.dumps(cfg, indent=2, ensure_ascii=False), encoding='utf-8')
     (OUT / 'resampling.json').write_text(json.dumps(counts, indent=2), encoding='utf-8')
-print('GPU:', torch.cuda.get_device_name(0), '训练集类别:', counts, flush=True)
+print('GPU:', torch.cuda.get_device_name(0), 'Training class counts:', counts, flush=True)
 
 # Reference baselines see only original training labels and development labels.
 def feature(row):
@@ -111,12 +111,12 @@ baseline_dev = {'scope': 'development-only', 'majority_label': majority,
                 'majority': scores(y_dev, [majority] * len(dev)),
                 'tfidf_logistic_balanced': scores(y_dev, baseline.predict([feature(row) for row in dev]))}
 (OUT / 'development_baselines.json').write_text(json.dumps(baseline_dev, indent=2), encoding='utf-8')
-print('development 多数类 macro-F1:', baseline_dev['majority']['macro_f1'],
+print('Development majority-class macro-F1:', baseline_dev['majority']['macro_f1'],
       'TF-IDF baseline macro-F1:', baseline_dev['tfidf_logistic_balanced']['macro_f1'], flush=True)
 
 failed = False
 try:
-    print('开始或恢复类别均衡实验；首次从原领域模型权重初始化。', flush=True)
+    print('Starting or resuming the class-balanced experiment; the first run initializes from the original domain weights.', flush=True)
     training_report = run_training(cfg)
     result = run_evaluation(OUT / 'best.pt', cfg['tokenizer'], cfg['validation_data'],
                             OUT / 'balanced_best_development.json', target_mode='literal_entity')
@@ -129,14 +129,14 @@ try:
                           'Literal entity news headlines, not verified ticker or X/Twitter data',
                           'No proof of event independence or chronological generalization']}
     (OUT / 'experiment_summary.json').write_text(json.dumps(summary, indent=2, ensure_ascii=False), encoding='utf-8')
-    print('新模型 development macro-F1:', result['metrics']['macro_f1'],
-          '旧模型:', old['metrics']['macro_f1'], flush=True)
-    print('每类结果:', result['metrics']['per_class'], flush=True)
+    print('New model development macro-F1:', result['metrics']['macro_f1'],
+          'Previous model:', old['metrics']['macro_f1'], flush=True)
+    print('Per-class results:', result['metrics']['per_class'], flush=True)
 except Exception:
     failed = True
     error_stamp = datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S%fZ')
     (OUT / ('experiment_error_' + error_stamp + '.txt')).write_text(traceback.format_exc(), encoding='utf-8')
-    print('实验遇到错误；将先打包已产生的结果。', flush=True)
+    print('The experiment encountered an error. Packaging existing outputs before stopping.', flush=True)
 
 # Keep this ZIP private. Source examples in the balanced training file are included.
 stamp = datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S%fZ')
@@ -149,6 +149,6 @@ with zipfile.ZipFile(archive, 'x', compression=zipfile.ZIP_STORED, allowZip64=Tr
             checksums[name] = {'sha256': sha256_file(path), 'bytes': path.stat().st_size}
             z.write(path, name)
     z.writestr('CHECKSUMS.json', json.dumps(checksums, indent=2))
-print('实验备份包:', archive, '大小:', archive.stat().st_size, 'SHA256:', sha256_file(archive), flush=True)
+print('Experiment backup:', archive, 'size:', archive.stat().st_size, 'SHA256:', sha256_file(archive), flush=True)
 if failed:
-    raise RuntimeError('实验未完成，请保留 ZIP 和上方完整报错。')
+    raise RuntimeError('The experiment did not complete. Preserve the ZIP and the full error above.')

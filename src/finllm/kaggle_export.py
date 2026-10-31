@@ -32,7 +32,7 @@ def _verified_members(root):
     """Read existing snapshot inventories; exclude unrecorded files."""
     files = {}
     for snapshot in SNAPSHOTS:
-        print(f"正在核验快照：{snapshot}", flush=True)
+        print(f"Verifying snapshot: {snapshot}", flush=True)
         folder = root / snapshot
         entries = _inventory(folder)
         marker = folder / "SNAPSHOT_COMPLETE.json"
@@ -78,7 +78,7 @@ def export_kaggle_bundle(drive_root, output, *, expected_domain_sha256=EXPECTED_
     expansion = root / "expansions/expansion_v1"
     domain = root / "domains/domain_v1"
     tokenizer = seed / "tokenizer"
-    print("正在核验领域母模型、训练资料和词表；读取 Drive 可能需要数分钟。", flush=True)
+    print("Verifying the domain parent model, training data, and tokenizer; reading Drive may take several minutes.", flush=True)
     parent_audit = audit_domain_parent(
         domain, tokenizer, expansion / "processed/domain_mix/manifest.json",
         expansion / "processed/finance_validation/manifest.json",
@@ -87,14 +87,14 @@ def export_kaggle_bundle(drive_root, output, *, expected_domain_sha256=EXPECTED_
     counts = audit_task_inputs(task, tokenizer)
     paths = {"seed_drive": seed, "drive": expansion,
              "seed_processed": seed / "processed", "processed": expansion / "processed"}
-    print("正在检查实际预训练排除池是否覆盖所有任务标题。", flush=True)
+    print("Checking whether the actual pretraining exclusion pool covers every task headline.", flush=True)
     exclusion_audit = _audit_training_exclusions(paths, task, domain)
     files = _verified_members(root)
     total = sum(item["bytes"] for item in files.values())
     output.parent.mkdir(parents=True, exist_ok=True)
     if shutil.disk_usage(output.parent).free < total + 128 * 1024 * 1024:
         raise OSError("Not enough local disk space for the uncompressed transfer archive")
-    print(f"快照大小合计约 {total / 1024 ** 3:.2f} GiB，开始写入临时转运包。", flush=True)
+    print(f"Snapshots total approximately {total / 1024 ** 3:.2f} GiB. Writing the temporary transfer package.", flush=True)
     manifest = {"format": "130u-kaggle-transfer-v1", "snapshots": list(SNAPSHOTS), "files": files}
     manifest_bytes = json.dumps(manifest, ensure_ascii=False, sort_keys=True).encode("utf-8")
     with zipfile.ZipFile(partial, mode="x", compression=zipfile.ZIP_STORED, allowZip64=True) as archive:
@@ -108,7 +108,7 @@ def export_kaggle_bundle(drive_root, output, *, expected_domain_sha256=EXPECTED_
             if size != item["bytes"] or digest.hexdigest() != item["sha256"]:
                 raise ValueError(f"Snapshot changed during export; partial ZIP preserved: {name}")
         archive.writestr("transfer_manifest.json", manifest_bytes)
-    print("正在重新读取转运包并核验每个文件。", flush=True)
+    print("Reading back the transfer package and verifying every file.", flush=True)
     with zipfile.ZipFile(partial) as archive:
         if set(archive.namelist()) != set(files) | {"transfer_manifest.json"}:
             raise ValueError("Transfer ZIP entries do not match manifest")

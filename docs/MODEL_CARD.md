@@ -1,49 +1,49 @@
-# 130U-FinLLM｜模型与版本
+# 130U-FinLLM | Models and versions
 
-130U-FinLLM 由 2.4B 自用模型与 24M 公开 Trial 组成。两种规模共享项目的任务设计和训练工程思路：从明确的目标、观点持有人和证据范围出发，学习金融文本中的立场与关系。
+130U-FinLLM comprises a private 2.4B model and a public 24M Trial. Both scales follow the project's task design and training principles: learning stance and relationships in financial text through explicit targets, opinion holders, and evidence scopes.
 
-本仓库的可执行代码、默认配置、Notebook 和运行记录对应 **24M Trial**；本页同时介绍 **2.4B 自用版本**的架构。私有语料和权重在自用工作流中管理。
+The executable code, default configurations, notebooks, and run records in this repository belong to the **24M Trial**. This page also presents the architecture of the **2.4B private version**. Private data and weights are managed within the personal research workflow.
 
-## 架构
+## Architecture
 
-| 项目 | 2.4B 自用模型 | 24M 公开 Trial |
+| Component | 2.4B private model | 24M public Trial |
 |---|---:|---:|
-| 总参数 | 2,397,459,968 | 24,255,744 |
-| Transformer 层数 | 28 | 6 |
-| hidden size | 2,560 | 512 |
+| Total parameters | 2,397,459,968 | 24,255,744 |
+| Transformer layers | 28 | 6 |
+| Hidden size | 2,560 | 512 |
 | FFN intermediate size | 8,320 | 1,664 |
-| 每层 query heads | 20 | 8 |
-| 每层 key/value heads | 4 | 4 |
-| head dimension | 128 | 64 |
-| 词表 | 65,536 | 8,192 |
-| 上下文上限 | 4,096 | 512 |
+| Query heads per layer | 20 | 8 |
+| Key/value heads per layer | 4 | 4 |
+| Head dimension | 128 | 64 |
+| Vocabulary size | 65,536 | 8,192 |
+| Context limit | 4,096 | 512 |
 | RoPE theta | 1,000,000 | 1,000,000 |
-| 输入 embedding / 输出投影 | 共享权重 | 共享权重 |
+| Input embeddings / output projection | Tied weights | Tied weights |
 
-主干采用 dense autoregressive decoder、GQA、SwiGLU、RMSNorm 和 QK normalization。2.4B 的每组 KV heads 服务 5 个 query heads。每层包含一个 attention 模块与一个前馈模块。2.4B 的立场与指标方向任务通过条件化输入共享主干及词表输出头；公开 Trial 的执行接口对应单一立场任务。
+The backbone uses a dense autoregressive decoder, GQA, SwiGLU, RMSNorm, and QK normalization. In the 2.4B architecture, each KV group serves 5 query heads. Each layer contains one attention module and one feed-forward module. The 2.4B stance and metric-direction tasks share the backbone and vocabulary head through conditioned inputs; the executable public Trial interface implements the stance task only.
 
-### 参数组成
+### Parameter breakdown
 
-2.4B 每层参数为 79,631,616；28 层共 2,229,685,248。共享词表矩阵包含 167,772,160 参数，最终 RMSNorm 包含 2,560 参数，合计 **2,397,459,968**。此处统计总参数，不是 adapter 参数或 MoE 激活参数。
+Each 2.4B layer contains 79,631,616 parameters; 28 layers contain 2,229,685,248. The shared vocabulary matrix contributes 167,772,160 parameters, and the final RMSNorm contributes 2,560, totaling **2,397,459,968**. These are total parameters, not adapter parameters or activated MoE parameters.
 
-## 任务接口
+## Task interface
 
-投资立场、财务指标方向与个人判断分别定义。原文立场回答指定持有人表达了什么；指标任务回答相对明确比较基准的变化；个人判断关联当时的信息和约束。
+Investment stance, financial metric direction, and personal judgment have separate definitions. Source-text stance identifies what a specified opinion holder expresses. The metric task identifies a change relative to an explicit comparator. Personal judgment incorporates the information and constraints available at the time.
 
-公开 Trial 接收英文文本与指定目标，输出 `bearish / neutral / bullish`、三类归一化概率、方向分数及复核状态。方向分数为 `100 × (P(bullish) − P(bearish))`，表达文本立场的相对方向。通过输入资格检查后，低置信样本仍保留概率并进入复核；资格检查失败时，标签、概率和分数返回 `null`。
+The public Trial accepts English text and a specified target. It returns `bearish / neutral / bullish`, normalized probabilities over the three classes, a direction score, and review status. The direction score is `100 × (P(bullish) − P(bearish))`, representing the relative direction of the expressed stance. Valid inputs with low confidence retain their probabilities and are flagged for review. If input eligibility checks fail, the label, probabilities, and score are `null`.
 
-Trial 的 headline 实验使用字面实体目标模式；默认上下文为 512 tokens。输入检查覆盖格式、长度及目标字面／审定别名匹配。多目标由调用者展开为多个请求；超长或未通过匹配检查的输入进入复核流程。运行配置见 [`model_24m.json`](../configs/model_24m.json)。
+The Trial headline experiments use literal-entity target mode with a default context limit of 512 tokens. Input checks cover format, length, and literal-target or audited-alias matching, depending on the target mode. Callers expand multiple targets into separate requests. Overlength inputs and those that fail matching are flagged for review. See [`model_24m.json`](../configs/model_24m.json).
 
-## 训练体系
+## Training system
 
-2.4B 的体系由基础语言预训练、金融混合适配、目标条件化 SFT 与概率使用构成。语义许可控制编辑监督，全局目标计量管理样本家族、任务权重和有效监督位置，运行时优化保持完整词表损失及样本信息边界。32k 人工金标准与 55B 输入 tokens 按训练配方配置计量；实际样本库存、消费量和效果由运行记录分别管理。详见 [训练体系](TRAINING_SYSTEM.md)。
+The 2.4B system combines foundational language pretraining, financial mixed adaptation, target-conditioned SFT, and calibrated probability use. Semantic permissions control edit supervision. Global objective accounting manages sample families, task weights, and supervised positions. Runtime optimizations preserve full-vocabulary loss and sample information boundaries. The 32k human-gold allocation and 55B input tokens are recipe quantities; actual inventories, consumption, and performance are tracked separately in run records. See the [training system](TRAINING_SYSTEM.md).
 
-公开 Trial 展示语料准备、基础与金融领域训练、立场 SFT、校准及推理导出。其观测结果、样本分母与实验条件独立记录在 [Trial 实验报告](experiment-results.md) 中；这些表格对应公开版本。
+The public Trial demonstrates data preparation, foundational and financial-domain training, stance SFT, calibration, and inference export. Its observations, sample counts, and experimental conditions are recorded separately in the [Trial experiment report](experiment-results.md); those tables describe the public version.
 
-## 版本化交付
+## Versioned delivery
 
-模型、tokenizer、任务协议、校准参数与训练状态按版本绑定。精确恢复承接同一运行的优化器、随机状态和数据位置；阶段切换承接权重并建立新的优化状态。24M 到 2.4B 迁移任务与工程方法，各版本使用自身的词表、参数和校准配置。
+Model weights, tokenizer, task protocol, calibration parameters, and training state are bound to a version. Resuming the same run restores its optimizer, random state, and data position. A stage transition transfers compatible weights and creates new optimization state. Moving from 24M to 2.4B carries forward task and engineering methods; each version uses its own vocabulary, parameters, and calibration configuration.
 
-## 代码来源与许可
+## Code provenance and licensing
 
-公开 Trial 主干参考 MiniMind 固定版本，具体修改见 [第三方来源说明](../THIRD_PARTY_NOTICES.md)。代码采用 [Apache-2.0](../LICENSE)。各类语料、衍生数据与模型权重分别管理其来源和许可。
+The public Trial backbone references a fixed MiniMind revision; modifications are documented in the [third-party notices](../THIRD_PARTY_NOTICES.md). Code is licensed under [Apache-2.0](../LICENSE). Corpora, derived data, and model weights have separately tracked provenance and usage conditions.

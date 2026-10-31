@@ -5,23 +5,23 @@ from build_expansion_notebooks import DRIVE
 
 def build():
     cells = [markdown('''
-        # 02d｜从扩充预训练 610 步严格续训到 1220 步
+        # 02d | Strictly resume expanded pretraining from 610 to 1,220 updates
 
-        130U-FinLLM｜130U 金融大语言模型
+        130U-FinLLM | 130U Financial Language Model
 
-        先完成 02c，确认训练达到扩充阶段累计 610 步，并得到 retention before/after
-        与最终 `verified: true` 备份。本页使用相同的扩充通用训练数据与原 8K 词表，
-        恢复现有权重、优化器、学习率调度、随机数状态和数据游标；不会重新初始化模型。
-        不需要重做 01b 或 02c。
+        Complete 02c, confirming 610 cumulative expansion updates, retention before/after
+        and a final `verified: true` backup. This notebook uses the same expanded general-training data and original 8K vocabulary,
+        restoring weights, optimizer, learning-rate schedule, RNG state and data cursor without reinitializing the model.
+        There is no need to repeat 01b or 02c.
 
-        默认先验证累计 610→611 步，再续训到累计 1220 步。本段共新增 610 步，
-        名义约 9,994,240 token 位置；扩充阶段累计约 19,988,480 个位置，实际有效 tokens
-        由检查点和报告计算。原 seed 的约 4.91M tokens 单独保留，不混入本阶段计数。
-        本页延长停止预算，保持原 6104 步学习率调度跨度，不表示 100M 预算已完成。
+        By default verify cumulative update 610 to 611, then resume to 1,220. This adds 610 updates,
+        nominally about 9,994,240 token positions, bringing the expansion stage to about 19,988,480 positions. Actual effective tokens
+        are calculated from checkpoints and reports. Keep the original seed's approximately 4.91M tokens separate from this stage.
+        This extends the stopping budget while retaining the original 6,104-update learning-rate schedule; it does not complete the 100M-token budget.
 
-        选择「运行时 → 更改运行时类型 → T4 GPU」，逐格执行。不要并行启动第二个训练进程。
-        连接断开时先等重新连接、确认原进程状态；需要恢复时从第一格重新执行，
-        不要删除检查点、取消身份校验或换成随机初始化来绕过报错。
+        Select Runtime > Change runtime type > T4 GPU and run cells in order. Do not launch a second training process concurrently.
+        After disconnection, reconnect and check the original process status. To recover, rerun from the first cell,
+        without deleting checkpoints, disabling identity checks or switching to random initialization to bypass errors.
         '''), code(BOOTSTRAP), code(DRIVE), code('''
         CONTINUATION_RETENTION_BEFORE_SUCCEEDED = False
         CONTINUATION_PROBE_SUCCEEDED = False
@@ -34,7 +34,7 @@ def build():
         PROBE_UPDATES = 611
         TARGET_UPDATES = 1220
         if not torch.cuda.is_available():
-            raise RuntimeError("请选择 T4 GPU 运行时；正式续训不在 CPU 上启动。")
+            raise RuntimeError("Select a T4 GPU runtime; continued training does not start on CPU.")
         from finllm.expansion_continuation import (
             prepare_expansion_continuation, run_expansion_continuation,
             retention_continuation_check, backup_expansion_continuation)
@@ -42,14 +42,14 @@ def build():
             PROJECT, DRIVE_ROOT, EXPANSION_VERSION, SEED_VERSION,
             completed_updates=COMPLETED_UPDATES, probe_updates=PROBE_UPDATES,
             target_updates=TARGET_UPDATES)
-        print("已恢复扩充阶段累计步数：", continuation["restored_updates"])
-        print("已保留 610 步原始成果：", continuation["predecessor_archive"])
-        print("本次严格续训配置：", json.dumps(continuation["config"], indent=2, ensure_ascii=False))
+        print("Restored cumulative expansion updates:", continuation["restored_updates"])
+        print("Original 610-update artifacts preserved:", continuation["predecessor_archive"])
+        print("Strict-resume configuration:", json.dumps(continuation["config"], indent=2, ensure_ascii=False))
         print("GPU:", torch.cuda.get_device_name(0))
         '''), markdown('''
-        先读取已冻结 610 步检查点在原 seed 通用验证位置上的训练前诊断，再于累计 1220 步
-        使用相同 tokenizer、数据及位置测量。另行保留扩充验证集 loss。两者均衡量文本预测，
-        不能当作看多／看空准确率。已有输入身份完全一致的测量时复用原始报告。
+        Read the frozen 610-update checkpoint diagnostics on original seed general-validation positions, then at 1,220 cumulative updates
+        measure with the same tokenizer, data and positions. Retain expansion-validation loss separately. Both measure text prediction,
+        not bullish/bearish accuracy. Reuse original reports when all input identities match.
         '''), code('''
         CONTINUATION_RETENTION_BEFORE_SUCCEEDED = False
         CONTINUATION_PROBE_SUCCEEDED = False
@@ -65,21 +65,21 @@ def build():
         CONTINUATION_RETENTION_AFTER_SUCCEEDED = False
         CONTINUATION_BACKED_UP = False
         if not globals().get("CONTINUATION_RETENTION_BEFORE_SUCCEEDED", False):
-            raise RuntimeError("请先成功完成 610 步检查点的原验证集诊断。")
+            raise RuntimeError("Complete original-validation diagnostics for the 610-update checkpoint first.")
         continuation_probe = run_expansion_continuation(continuation, "probe", finllm)
         print(json.dumps(continuation_probe, indent=2, ensure_ascii=False))
         CONTINUATION_PROBE_SUCCEEDED = True
         '''), markdown('''
-        单步恢复成功后才运行到扩充阶段累计 1220 步。已有目标范围内更靠后的同版本检查点时按实际游标
-        恢复，不回退到 610 步。每 10 步保存并同步 Drive；原 610 步成果、检查点身份和
-        retention 报告保存在独立归档。各次调用耗时与吞吐单独记录，重复完成阶段保留原测量。
-        数据／tokenizer／配置／运行时不兼容会明确停止；停止预算可以增加，调度语义保持不变。
+        Continue to 1,220 expansion updates only after one-step recovery succeeds. For later same-version checkpoints within the target range, resume from the actual cursor
+        rather than rolling back to update 610. Save and sync every 10 updates; retain original 610-update artifacts, checkpoint identity and
+        retention reports in a separate archive. Record elapsed time and throughput per call; rerunning a completed stage preserves original measurements.
+        Incompatible data/tokenizer/configuration/runtime stops execution. The stopping budget may increase while schedule semantics remain unchanged.
         '''), code('''
         CONTINUATION_TRAIN_SUCCEEDED = False
         CONTINUATION_RETENTION_AFTER_SUCCEEDED = False
         CONTINUATION_BACKED_UP = False
         if not globals().get("CONTINUATION_RETENTION_BEFORE_SUCCEEDED", False) or not globals().get("CONTINUATION_PROBE_SUCCEEDED", False):
-            raise RuntimeError("请先完成原验证集诊断和单步严格恢复验证。")
+            raise RuntimeError("Complete original-validation diagnostics and one-step strict-recovery verification first.")
         continuation_result = run_expansion_continuation(continuation, "continue", finllm)
         print(json.dumps(continuation_result, indent=2, ensure_ascii=False))
         CONTINUATION_TRAIN_SUCCEEDED = True
@@ -87,7 +87,7 @@ def build():
         CONTINUATION_RETENTION_AFTER_SUCCEEDED = False
         CONTINUATION_BACKED_UP = False
         if not globals().get("CONTINUATION_TRAIN_SUCCEEDED", False):
-            raise RuntimeError("本段续训尚未成功结束；保留已有备份。")
+            raise RuntimeError("This continuation segment has not completed successfully; keep existing backups.")
         continuation_retention_after = retention_continuation_check(continuation, "after")
         print(json.dumps(continuation_retention_after, indent=2, ensure_ascii=False))
         CONTINUATION_RETENTION_AFTER_SUCCEEDED = True
@@ -96,20 +96,20 @@ def build():
         if not all(globals().get(flag, False) for flag in (
             "CONTINUATION_RETENTION_BEFORE_SUCCEEDED", "CONTINUATION_PROBE_SUCCEEDED",
             "CONTINUATION_TRAIN_SUCCEEDED", "CONTINUATION_RETENTION_AFTER_SUCCEEDED")):
-            raise RuntimeError("诊断／单步验证／续训尚未全部成功；不得显示完整阶段备份。")
+            raise RuntimeError("Diagnostics, one-step verification and continued training have not all succeeded; do not report a complete stage backup.")
         continuation_backup = backup_expansion_continuation(continuation)
         print(json.dumps(continuation_backup, indent=2, ensure_ascii=False))
         shutil.copy2(PROJECT / "runtime_revision.txt", continuation["continuation_drive"] / "runtime_revision.txt")
         CONTINUATION_BACKED_UP = True
-        print("扩充通用续训与校验备份完成：", continuation["paths"]["drive"] / "run")
-        print("本段报告与诊断目录：", continuation["continuation_drive"])
-        print("610 步原始成果归档：", continuation["predecessor_archive"])
-        print("原 seed 数据与 300 步成果保留：", continuation["paths"]["seed_drive"])
+        print("Expanded general continuation and verified backup complete:", continuation["paths"]["drive"] / "run")
+        print("Segment reports and diagnostics directory:", continuation["continuation_drive"])
+        print("Original 610-update artifact archive:", continuation["predecessor_archive"])
+        print("Original seed data and 300-update artifacts preserved:", continuation["paths"]["seed_drive"])
         '''), markdown('''
-        完成标准：新单步与正式段报告、累计 1220 步、实际新增／累计 tokens、
-        retention before/after，以及 `verified: true` 最终备份。保留这些输出用于下一阶段判断。
-        进入本段后使用 02d 恢复进度；原 02c 的 610 步报告及测量作为独立归档保留。
-        本页继续通用预训练，未启动金融领域训练、SFT 或 DPO；资产立场与评分能力尚未评估。
+        Completion criteria: new one-step and training-segment reports, 1,220 cumulative updates, actual new/cumulative tokens,
+        retention before/after and a final `verified: true` backup. Keep these outputs to inform the next stage.
+        After entering this segment, use 02d to resume. Preserve the original 02c 610-update report and measurements in a separate archive.
+        This notebook continues general pretraining without starting financial-domain training, SFT or DPO; it does not evaluate asset stance or scoring ability.
         ''')]
     write("02d_expanded_continue.ipynb", cells)
 

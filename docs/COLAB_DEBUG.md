@@ -1,30 +1,30 @@
-# 24M Trial｜01a 重复运行与依赖冲突修复
+# 24M Trial | Fixing 01a Reruns and Dependency Conflicts
 
-范围：24M Trial 公开工程文档，保留该次故障定位、修复与验证记录；项目整体见[总览](../README.md)。
+Scope: public engineering documentation for the 24M Trial, preserving the diagnosis, fix, and validation of this incident. See the [project overview](../README.md) for the broader project.
 
-后续 02a 的 `No module named 'finllm'`、旧安装信息警告及训练重复执行问题，见 [内核安装修复](COLAB_KERNEL_FIX.md)。
+For the subsequent 02a `No module named 'finllm'` error, stale installation metadata warnings, and repeated training execution, see the [kernel installation fix](COLAB_KERNEL_FIX.md).
 
-2026-10-09。用户提供的 Colab PDF 显示代码版本 `1c265b3`，在再次执行构建单元格时抛出 `FileExistsError: Use a new version: data/raw/seed_v1/prepared`。下载和 Drive 备份在此前已显示成功。目录存在本身不能判定成果损坏，旧入口把完成后的重复运行也拒绝了。
+2026-10-09. The Colab PDF supplied by the user showed code version `1c265b3` raising `FileExistsError: Use a new version: data/raw/seed_v1/prepared` when the build cell was rerun. Downloads and Drive backups had already reported success. An existing directory does not by itself indicate corrupted artifacts: the old entry point also rejected reruns of a completed build.
 
-另一个独立问题是依赖约束：该 Colab 自带 Transformers 5.18.0，要求 tokenizers >=0.23.1,<0.24，旧入口却安装 <0.23。项目现在支持 <0.24，安装时同时遵守现有 Transformers 的约束，安装后再检查；保留 Colab 的 PyTorch。Hugging Face 未登录提示不是此次中断原因，日志已经显示下载成功。
+A separate issue involved dependency constraints. This Colab environment included Transformers 5.18.0, which requires tokenizers >=0.23.1,<0.24, while the old entry point installed <0.23. The project now supports <0.24, respects the installed Transformers constraints during installation, and checks them afterward. Colab's PyTorch installation is retained. The Hugging Face login warning did not cause this interruption; the log already showed a successful download.
 
-## 已修复行为
+## Corrected Behavior
 
-- 已完成的下载、任务排除池、词表和分片通过清单、来源、配置及哈希校验后只读复用，兼容旧版生成的成果。
-- 不完整、损坏或参数变化时保留旧文件，明确提示恢复完整备份或选择新版本；不自动删除或覆盖。
-- 新运行时可从 `MyDrive/130U-FinLLM/seeds/seed_v1/` 恢复原始数据、分片和词表。人工审核 CSV 的编辑不会被重新导出覆盖。
-- 01a 备份前重新验证全部训练输入，避免把中断产物当成完成结果。
-- 01a 可用 CPU；02a 才要求 GPU。用户本次日志是 `torch=2.11.0+cpu`、`cuda_available=false`，不能作为 T4 运行记录。
+- Completed downloads, task exclusion pools, tokenizers, and shards are reused read-only after their manifests, sources, configurations, and hashes are verified. Artifacts produced by earlier versions remain compatible.
+- Incomplete or corrupted artifacts, or changed parameters, leave the existing files intact and produce an explicit instruction to restore a complete backup or choose a new version. Files are not automatically deleted or overwritten.
+- A new runtime can restore raw data, shards, and the tokenizer from `MyDrive/130U-FinLLM/seeds/seed_v1/`. Edits to the human-review CSV are not overwritten by a fresh export.
+- 01a revalidates every training input before backup so that interrupted builds are not recorded as complete.
+- 01a can run on CPU; 02a requires a GPU. The supplied log reported `torch=2.11.0+cpu` and `cuda_available=false`, so it is not a T4 execution record.
 
-## 接着运行
+## Continuing the Run
 
-1. 从 [GitHub 最新 01a](https://colab.research.google.com/github/130U/130U-FinLLM/blob/main/notebooks/01a_seed_data.ipynb) 重新打开并保存一份 Notebook。旧 Drive 副本中的安装单元格不会随 GitHub 自动更新。
-2. 保留 `SEED_VERSION = "seed_v1"`，从上到下运行。新运行时会恢复既有 Drive 快照；同一运行时会校验并复用本地成果。无需主动删除目录或重新训练词表。
-3. 查看 `Existing seed verified`、真实 `seed_summary.json` 和备份完成信息；若完整性校验失败，按具体缺失文件定位，不强行跳过。
-4. 完成后打开 [02a](https://colab.research.google.com/github/130U/130U-FinLLM/blob/main/notebooks/02a_seed_pilot.ipynb)，选择 T4 GPU，确认 `cuda_available=true` 后再运行训练。
+1. Reopen the [latest 01a from GitHub](https://colab.research.google.com/github/130U/130U-FinLLM/blob/main/notebooks/01a_seed_data.ipynb) and save a notebook copy. Installation cells in an old Drive copy do not update automatically when GitHub changes.
+2. Keep `SEED_VERSION = "seed_v1"` and run the cells from top to bottom. A new runtime restores the existing Drive snapshot; the same runtime verifies and reuses local artifacts. There is no need to delete directories or retrain the tokenizer manually.
+3. Check for `Existing seed verified`, the actual `seed_summary.json`, and the backup completion message. If integrity verification fails, investigate the specific missing files instead of bypassing the check.
+4. Open [02a](https://colab.research.google.com/github/130U/130U-FinLLM/blob/main/notebooks/02a_seed_pilot.ipynb), select a T4 GPU, and confirm `cuda_available=true` before training.
 
-## 实际验证
+## Validation Performed
 
-旧代码在本地真实 seed 数据上复现同样的目录存在错误；修复后构建和只读校验均成功，69 个既有文件的 SHA256 和修改时间不变。机器记录见 [colab_rerun_fix.json](../reports/colab_rerun_fix.json)。
+The old code reproduced the same existing-directory error on the actual local seed data. After the fix, the build and read-only verification succeeded; SHA256 hashes and modification times for all 69 existing files were unchanged. The machine-readable record is [colab_rerun_fix.json](../reports/colab_rerun_fix.json).
 
-本地完整测试 112 项通过；9 本 Notebook 的格式与语法检查通过。隔离安装 tokenizers 0.23.1 后，词表、数据和训练相关 25 项测试通过，旧 8K 词表成功读取。新增 CI 覆盖 Python 3.12 和 3.13；CI 结果以对应提交的 Actions 为准。这些检查没有代替用户 Colab 的重新执行，也没有启动新的 GPU 预训练。
+All 112 local tests passed, as did format and syntax checks for nine notebooks. After tokenizers 0.23.1 was installed in isolation, 25 tokenizer, data, and training tests passed, and the existing 8K tokenizer loaded successfully. CI coverage was added for Python 3.12 and 3.13; the Actions run for the corresponding commit is the authoritative CI result. These checks did not replace a rerun in the user's Colab environment or start new GPU pretraining.

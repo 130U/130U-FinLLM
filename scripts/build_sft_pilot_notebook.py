@@ -5,16 +5,16 @@ from build_expansion_notebooks import DRIVE
 
 def build():
     cells = [markdown('''
-        # 04a｜从金融领域模型开始实体立场 SFT 试验
+        # 04a | Entity-stance SFT pilot from the financial-domain model
 
-        本页承接 Drive 中 `domain_v1` 的74步检查点和原8K词表，首次迁移权重并新建优化器。
-        它训练人工确认的新闻标题对原文字面实体的立场，属于本地研究试验；目标不是已核验的证券代码。
-        本数据未完成语义事件审查或历史时点核验，开发集指标不代表真实推特或未来市场准确率。
-        原报道可能存在第三方权利，当前只用于本人的研究试验；请保留来源说明。
+        Use the 74-update `domain_v1` checkpoint and original 8K tokenizer from Drive; the first handoff imports weights and creates a new optimizer.
+        Train on human-confirmed headline stance toward literal entities in the text. This is a private research pilot; targets are not verified security identifiers.
+        Semantic-event and historical-time audits are incomplete; development metrics do not measure real Twitter or future-market accuracy.
+        Source articles may carry third-party rights. Keep this material within personal research and preserve source notices.
 
-        选择T4，从第一格依次运行。首次需要上传本机 `entity_v1_upload.zip`；之后复用Drive备份。
-        断线后确认旧进程已停止，从头运行恢复。记录首格显示的40位代码提交；若仓库main后来更新，
-        将首格的REF改为首次使用的完整提交后恢复。不要同时启动两份训练。
+        Select T4 and run cells in order. Upload local `entity_v1_upload.zip` initially; subsequent runs reuse the Drive backup.
+        After disconnection, confirm the previous process has stopped before rerunning from the beginning. Record the 40-character commit shown in the first cell; if main changes,
+        set REF to that original full commit before resuming. Do not start two training processes concurrently.
         '''), code(BOOTSTRAP), code(DRIVE), code('''
         from finllm.sft_pilot_runtime import install_task_zip, prepare_sft_pilot, run_sft_pilot, backup_sft_pilot
         from finllm.expansion_runtime import _inventory
@@ -29,27 +29,27 @@ def build():
                 original_cwd = Path.cwd()
                 try:
                     os.chdir(folder)
-                    print("请选择本机 entity_v1_upload.zip，上传后会校验并备份到 Drive。")
+                    print("Select local entity_v1_upload.zip; it will be verified and backed up to Drive.")
                     uploaded = files.upload()
                     if len(uploaded) != 1:
-                        raise ValueError("请选择且只选择一个任务 ZIP。")
+                        raise ValueError("Select exactly one task ZIP.")
                     name = next(iter(uploaded))
                     if Path(name).name != name:
-                        raise ValueError("上传文件名无效。")
+                        raise ValueError("Invalid upload filename.")
                     result = install_task_zip(Path(folder) / name, DRIVE_ROOT, TASK_ZIP_SHA256, TASK_VERSION)
                 finally:
                     os.chdir(original_cwd)
-            print("任务数据备份：", json.dumps(result, indent=2, ensure_ascii=False))
+            print("Task-data backup:", json.dumps(result, indent=2, ensure_ascii=False))
         else:
             _inventory(TASK_DRIVE)
-            print("已复用并校验任务数据快照：", TASK_DRIVE)
+            print("Task-data snapshot reused and verified:", TASK_DRIVE)
         '''), code('''
         if not torch.cuda.is_available():
-            raise RuntimeError("请选择 T4 GPU 后从第一格重新运行。")
+            raise RuntimeError("Select T4 GPU, then rerun from the first cell.")
         pilot = prepare_sft_pilot(PROJECT, DRIVE_ROOT, task_version=TASK_VERSION, run_version=RUN_VERSION)
-        print("已核验领域母模型：", json.dumps(pilot["parent_audit"], indent=2, ensure_ascii=False))
-        print("任务分区条数：", json.dumps(pilot["counts"], indent=2, ensure_ascii=False))
-        print("当前 GPU：", torch.cuda.get_device_name(0))
+        print("Verified domain parent model:", json.dumps(pilot["parent_audit"], indent=2, ensure_ascii=False))
+        print("Task partition counts:", json.dumps(pilot["counts"], indent=2, ensure_ascii=False))
+        print("Current GPU:", torch.cuda.get_device_name(0))
         '''), code('''
         SFT_PROBE_SUCCEEDED = False
         SFT_TRAIN_SUCCEEDED = False
@@ -61,14 +61,14 @@ def build():
         SFT_TRAIN_SUCCEEDED = False
         SFT_BACKED_UP = False
         if not globals().get("SFT_PROBE_SUCCEEDED", False):
-            raise RuntimeError("请先完成 SFT 单步验证。")
+            raise RuntimeError("Complete the one-step SFT verification first.")
         result = run_sft_pilot(pilot, "continue", finllm)
         print(json.dumps(result, indent=2, ensure_ascii=False))
         SFT_TRAIN_SUCCEEDED = True
         '''), code('''
         SFT_EVAL_SUCCEEDED = False
         if not globals().get("SFT_TRAIN_SUCCEEDED", False):
-            raise RuntimeError("请先完成SFT训练。")
+            raise RuntimeError("Complete SFT training first.")
         SFT_OUTPUT = Path(pilot["config"]["output_dir"])
         SFT_DEV = pilot["task_local"] / "development.jsonl"
         for name, checkpoint in (("domain_before", Path(pilot["config"]["init_checkpoint"])),
@@ -77,18 +77,18 @@ def build():
                    "--input", SFT_DEV, "--output", SFT_OUTPUT / (name + "_development.json"),
                    "--target-mode", "literal_entity")
         SFT_EVAL_SUCCEEDED = True
-        print("已保存同一开发集的领域模型与SFT最佳检查点评估。")
+        print("Saved evaluations of the domain model and best SFT checkpoint on the same development set.")
         '''), code('''
         SFT_BACKED_UP = False
         if not globals().get("SFT_TRAIN_SUCCEEDED", False) or not globals().get("SFT_EVAL_SUCCEEDED", False):
-            raise RuntimeError("SFT训练或开发集比较尚未完成，保留现有检查点。")
+            raise RuntimeError("SFT training or the development comparison is incomplete; preserve existing checkpoints.")
         backup = backup_sft_pilot(pilot)
         print(json.dumps(backup, indent=2, ensure_ascii=False))
         SFT_BACKED_UP = True
-        print("实体试验完成并备份：", pilot["stage_drive"] / "run")
+        print("Entity pilot complete and backed up:", pilot["stage_drive"] / "run")
         '''), markdown('''
-        保留训练报告、development macro-F1 和 `verified: true` 备份输出；
-        单次小样本数字可能波动。最终测试、资产标识映射、DPO偏好审核、校准和实际X场景评测尚待完成。
+        Keep training reports, development macro-F1 and `verified: true` backup output.
+        Small-sample results may vary. This notebook does not complete final testing, asset-identifier mapping, DPO preference review, calibration or real X evaluation.
         ''')]
     write("04a_entity_sft_pilot.ipynb", cells)
 

@@ -5,21 +5,21 @@ from build_expansion_notebooks import DRIVE
 
 def build():
     cells = [markdown('''
-        # 03a｜承接已完成预训练的金融领域训练
+        # 03a | Financial-domain training from completed pretraining
 
-        130U-FinLLM｜130U 金融大语言模型
+        130U-FinLLM | 130U Financial Language Model
 
-        本页先读取并校验 Drive 中至少完成扩充阶段 1220 步的检查点、数据和原 8K 词表，
-        将母检查点冻结后才允许训练。默认复用 `expansion_v1/domain_mix`，
-        其 1,215,545 tokens 包含约 80% 金融／20% 通用内容。
+        Read and verify the Drive checkpoint with at least 1,220 expansion updates, its data and the original 8K tokenizer,
+        and freeze the parent checkpoint before training. By default reuse `expansion_v1/domain_mix`,
+        whose 1,215,545 tokens contain approximately 80% financial and 20% general content.
 
-        这是新的 `domain_v1` 阶段：首次只承接母模型权重，建立新的优化器和学习率调度，
-        阶段更新从 0 开始。已有本阶段检查点时严格恢复完整状态，不重新初始化。
-        选择「运行时 → 更改运行时类型 → T4 GPU」，从第一格顺序运行。
+        This is a new `domain_v1` stage: initially import only parent weights and create a new optimizer and learning-rate schedule,
+        starting stage updates at zero. Existing checkpoints for this stage restore complete state strictly, without reinitialization.
+        Select Runtime > Change runtime type > T4 GPU and run in order from the first cell.
 
-        默认先验证第 1 步，再训练到本阶段累计 74 步，名义约 1,212,416 个 token 位置。
-        这是现有语料的一次有界小实验；不是 25M 领域预算已经完成，也不代表资产立场准确率。
-        不需要重做 01b、02c 或 02d，不要同时启动另一个训练进程。
+        By default verify update 1, then train to 74 cumulative stage updates, nominally about 1,212,416 token positions.
+        This is a bounded experiment on existing corpora; it neither completes the 25M domain budget nor measures asset-stance accuracy.
+        Do not repeat 01b, 02c or 02d, or start another training process concurrently.
         '''), code(BOOTSTRAP), code(DRIVE), code('''
         DOMAIN_INPUTS_VERIFIED = False
         DOMAIN_RETENTION_BEFORE_SUCCEEDED = False
@@ -34,7 +34,7 @@ def build():
         PROBE_UPDATES = 1
         TARGET_UPDATES = 74
         if not torch.cuda.is_available():
-            raise RuntimeError("请选择 T4 GPU 运行时；正式领域训练需要 GPU。")
+            raise RuntimeError("Select a T4 GPU runtime; domain training requires a GPU.")
         from finllm.domain_runtime import (
             prepare_domain_training, run_domain_segment,
             retention_domain_check, backup_domain_training)
@@ -43,7 +43,7 @@ def build():
             PROJECT, DRIVE_ROOT, DOMAIN_VERSION, EXPANSION_VERSION, SEED_VERSION,
             min_parent_updates=MIN_PARENT_UPDATES, probe_updates=PROBE_UPDATES,
             target_updates=TARGET_UPDATES)
-        # 直接读已校验并冻结的母检查点，不把旧截图当成当前 Drive 读取结果。
+        # Read the verified frozen parent checkpoint directly; an old screenshot is not a current Drive read.
         parent_checkpoint = Path(domain["config"]["init_checkpoint"])
         parent_payload = load_checkpoint(parent_checkpoint, allow_previous=False)
         parent_audit = {
@@ -57,17 +57,17 @@ def build():
             "validation_sha256": parent_payload["provenance"]["validation_sha256"],
         }
         if parent_audit["stage"] != "pretrain" or parent_audit["updates"] < MIN_PARENT_UPDATES:
-            raise ValueError("母检查点不是要求的已完成预训练成果；保留已有文件并停止。")
-        print("当前已校验的 Drive 母检查点：", json.dumps(parent_audit, indent=2, ensure_ascii=False))
-        print("当前领域阶段累计步数：", domain["restored_updates"])
-        print("本阶段配置：", json.dumps(domain["config"], indent=2, ensure_ascii=False))
+            raise ValueError("The parent checkpoint is not the required completed pretraining artifact; preserve existing files and stop.")
+        print("Currently verified Drive parent checkpoint:", json.dumps(parent_audit, indent=2, ensure_ascii=False))
+        print("Current cumulative domain updates:", domain["restored_updates"])
+        print("Stage configuration:", json.dumps(domain["config"], indent=2, ensure_ascii=False))
         print("GPU:", torch.cuda.get_device_name(0))
         DOMAIN_INPUTS_VERIFIED = True
         '''), markdown('''
-        上一格只检查输入、冻结母成果并准备配置，尚未启动优化器更新。
-        保留其实际母检查点 SHA256、步数和 tokens，作为本次云端读取证据。
-        下方诊断使用冻结的验证文本；诊断和训练 loss 衡量下一 token 预测，
-        不应解释为看多／看空分数。验证失败时后续训练和完整备份会停止。
+        The previous cell only validates inputs, freezes parent artifacts and prepares configuration; optimizer updates have not started.
+        Keep the actual parent SHA256, update count and tokens as evidence of this cloud read.
+        The diagnostics below use frozen validation texts. Diagnostic and training loss measure next-token prediction,
+        not bullish/bearish scores. Validation failure prevents subsequent training and complete backups.
         '''), code('''
         DOMAIN_RETENTION_BEFORE_SUCCEEDED = False
         DOMAIN_PROBE_SUCCEEDED = False
@@ -75,7 +75,7 @@ def build():
         DOMAIN_RETENTION_AFTER_SUCCEEDED = False
         DOMAIN_BACKED_UP = False
         if not globals().get("DOMAIN_INPUTS_VERIFIED", False):
-            raise RuntimeError("请先完成当前 Drive 输入校验和母检查点冻结。")
+            raise RuntimeError("Validate current Drive inputs and freeze the parent checkpoint first.")
         domain_retention_before = retention_domain_check(domain, "before")
         print(json.dumps(domain_retention_before, indent=2, ensure_ascii=False))
         DOMAIN_RETENTION_BEFORE_SUCCEEDED = True
@@ -85,21 +85,21 @@ def build():
         DOMAIN_RETENTION_AFTER_SUCCEEDED = False
         DOMAIN_BACKED_UP = False
         if not globals().get("DOMAIN_INPUTS_VERIFIED", False) or not globals().get("DOMAIN_RETENTION_BEFORE_SUCCEEDED", False):
-            raise RuntimeError("请先完成母检查点校验和训练前诊断。")
+            raise RuntimeError("Validate the parent checkpoint and complete pretraining diagnostics first.")
         domain_probe = run_domain_segment(domain, "probe", finllm)
         print(json.dumps(domain_probe, indent=2, ensure_ascii=False))
         DOMAIN_PROBE_SUCCEEDED = True
         '''), markdown('''
-        单步成功后继续到本阶段累计 74 步。母预训练与领域阶段的 tokens 分别记录，
-        沿模型路径的累计量另列。原 seed、扩充训练、1220 步母检查点及其报告保持原样。
-        首次领域权重承接与后续严格恢复分别处理；数据、词表、配置或本阶段运行时不兼容会停止。
-        连接断开后先确认旧执行状态，再从本页第一格恢复，保留已有检查点和报告。
+        After one-step verification, continue to 74 cumulative stage updates. Record parent pretraining and domain tokens separately,
+        with a separate total along the model lineage. Preserve original seed and expansion artifacts, the 1,220-update parent checkpoint and its reports.
+        Handle initial domain weight transfer separately from strict recovery. Incompatible data, tokenizer, configuration or stage runtime stops execution.
+        After disconnection, check prior execution status before recovering from the first cell; preserve existing checkpoints and reports.
         '''), code('''
         DOMAIN_TRAIN_SUCCEEDED = False
         DOMAIN_RETENTION_AFTER_SUCCEEDED = False
         DOMAIN_BACKED_UP = False
         if not globals().get("DOMAIN_PROBE_SUCCEEDED", False):
-            raise RuntimeError("请先成功完成领域阶段单步验证。")
+            raise RuntimeError("Complete the domain-stage one-step check successfully first.")
         domain_result = run_domain_segment(domain, "continue", finllm)
         print(json.dumps(domain_result, indent=2, ensure_ascii=False))
         DOMAIN_TRAIN_SUCCEEDED = True
@@ -107,7 +107,7 @@ def build():
         DOMAIN_RETENTION_AFTER_SUCCEEDED = False
         DOMAIN_BACKED_UP = False
         if not globals().get("DOMAIN_TRAIN_SUCCEEDED", False):
-            raise RuntimeError("本阶段训练尚未成功结束；保留已有备份。")
+            raise RuntimeError("Stage training has not completed successfully; keep existing backups.")
         domain_retention_after = retention_domain_check(domain, "after")
         print(json.dumps(domain_retention_after, indent=2, ensure_ascii=False))
         DOMAIN_RETENTION_AFTER_SUCCEEDED = True
@@ -116,20 +116,20 @@ def build():
         if not all(globals().get(flag, False) for flag in (
             "DOMAIN_INPUTS_VERIFIED", "DOMAIN_RETENTION_BEFORE_SUCCEEDED",
             "DOMAIN_PROBE_SUCCEEDED", "DOMAIN_TRAIN_SUCCEEDED", "DOMAIN_RETENTION_AFTER_SUCCEEDED")):
-            raise RuntimeError("输入／诊断／训练尚未全部成功；不得显示完整阶段备份。")
+            raise RuntimeError("Input checks, diagnostics and training have not all succeeded; do not report a complete stage backup.")
         domain_backup = backup_domain_training(domain)
         print(json.dumps(domain_backup, indent=2, ensure_ascii=False))
         shutil.copy2(PROJECT / "runtime_revision.txt", domain["paths"]["drive"] / "runtime_revision.txt")
         DOMAIN_BACKED_UP = True
-        print("金融领域训练与校验备份完成：", domain["paths"]["drive"] / "run")
-        print("领域阶段报告与诊断：", domain["paths"]["drive"])
-        print("完整母检查点已冻结：", parent_checkpoint)
+        print("Financial-domain training and verified backup complete:", domain["paths"]["drive"] / "run")
+        print("Domain-stage reports and diagnostics:", domain["paths"]["drive"])
+        print("Complete parent checkpoint frozen:", parent_checkpoint)
         '''), markdown('''
-        完成标准：实际母检查点身份已读取；领域单步与累计 74 步报告可核验；
-        训练前后诊断保留；最后备份为 `verified: true`。
-        已完成阶段重复运行会复用原检查点与真实测量，不重新计时或覆盖原报告。
-        本页完成有限金融语料实验，原 100M／25M 计算预算仍单独记录。
-        正式 SFT、DPO、校准和资产立场评测继续需要符合本项目定义的目标级标签与审核记录。
+        Completion criteria: actual parent identity has been read; domain one-step and cumulative 74-update reports are verifiable;
+        before/after diagnostics are retained; the final backup reports `verified: true`.
+        Rerunning a completed stage reuses original checkpoints and measurements without timing it again or overwriting reports.
+        This notebook completes a bounded financial-corpus experiment; the original 100M/25M compute budgets remain separate.
+        SFT, DPO, calibration and asset-stance evaluation require target-level labels and review records consistent with the project task definition.
         ''')]
     write("03a_domain_pretrain.ipynb", cells)
 

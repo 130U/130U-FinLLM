@@ -1,46 +1,46 @@
-# 24M Trial｜首批数据决策记录
+# 24M Trial | Initial Data Decision Record
 
-范围：24M Trial 历史工程研究，保留首批数据准备时的发现及决策；后续已完成 GPU 预训练、领域训练和字面实体 SFT，见[Trial 实验报告](../experiment-results.md)。项目整体见[总览](../../README.md)。
+Scope: historical engineering research for the 24M Trial, preserving findings and decisions from initial data preparation. GPU pretraining, domain training, and literal-entity SFT were completed subsequently; see the [Trial experiment report](../experiment-results.md) and [project overview](../../README.md).
 
 ## Charter
 
-目标：在现有 T4、24M、英文资产立场任务下，实际取得有来源依据的起步语料并生成可验证输入。范围／对象／研究单元：模型数据准备／有限资源首批真实材料／固定 Wikipedia 子集、FOMC 原创纪要、SEntFiN 候选任务池。知识深度 working；类型 descriptive。问题：Q1 使用条件；Q2 标签是否对应目标任务；Q3 规模与内存；Q4 实际执行状态。
+Objective: obtain a traceable starter corpus and produce verifiable inputs for the existing T4, 24M, English asset-stance task. Scope / object / unit of research: model-data preparation / the first real materials under limited resources / a fixed Wikipedia subset, original FOMC minutes, and the SEntFiN candidate task pool. Knowledge depth: working. Type: descriptive. Questions: Q1: Conditions of use; Q2: label fit to the target task; Q3: scale and memory; Q4: actual execution status.
 
-## Canonical sources
+## Canonical Sources
 
-1. 数据作者的固定仓库及数据卡：Wikimedia、SEntFiN。
-2. Wikimedia 官方许可条款、Federal Reserve Board 官方再使用说明及 FOMC 日历。
-3. 固定文件的大小、哈希、实际内容与本地处理结果。
+1. Fixed author repositories and data cards: Wikimedia and SEntFiN.
+2. Official Wikimedia licensing terms, the Federal Reserve Board's official reuse notice, and FOMC calendars.
+3. Fixed-file sizes, hashes, actual content, and local processing results.
 
-精确 URL、版本及读取结果保存在 [corpus_sources_20261009.md](corpus_sources_20261009.md) 和 [stance_sources_20261009.md](stance_sources_20261009.md)。
+Exact URLs, versions, and read-back findings are preserved in [corpus_sources_20261009.md](corpus_sources_20261009.md) and [stance_sources_20261009.md](stance_sources_20261009.md).
 
-## Findings ledger
+## Findings Ledger
 
-| ID | 发现 | 证据 | 回答 |
+| ID | Finding | Evidence | Answers |
 |---|---|---|---|
-| F1 | Wikipedia 固定快照包含英语文本及文章 URL，并给出 CC-BY-SA/GFDL 数据许可记录；保留与当前条款的版本差异 | 来源核查 F1–F3；原始行的 rights_note/source_url | Q1 |
-| F2 | Board 原创材料除明确例外外可复制，第三方材料不自动纳入 | 官方 disclaimer、来源核查 F5–F6 | Q1 |
-| F3 | SEntFiN 作者仓库声明 MIT，但实体情绪与本项目投资立场不同；原文不提供经过验证的证券代码映射 | 作者 LICENSE、论文及实际 CSV；任务来源核查 | Q1/Q2 |
-| F4 | 实际取得 825 篇通用文本和 32 篇金融文本；拆分后编码并训练到 8192 词表 | reports/seed_data_preparation.json、源及预处理 manifest | Q3/Q4 |
-| F5 | 首批准备时，200 条逐条 AI 初判有 40 条建议排除，且中性占多数；该批人工标签当时均未确认 | 私有候选目录 ai_review_manifest.json；非真值标签 | Q2 |
-| F6 | CPU 真 token 前向反向通过；该次浏览器不能加载 Colab Monaco 编辑器，该研究阶段未执行新 GPU 训练 | reports/seed_model_input_check.json；原会话实际浏览器返回 | Q4 |
+| F1 | The fixed Wikipedia snapshot contains English text and article URLs, with CC-BY-SA/GFDL licensing records. Differences from the current terms are preserved. | Source review F1–F3; `rights_note/source_url` in source rows | Q1 |
+| F2 | Original Board material may be copied unless explicitly excepted. Third-party material is not automatically included. | Official disclaimer; source review F5–F6 | Q1 |
+| F3 | The SEntFiN author repository declares MIT, but entity sentiment differs from this project's investment stance. The original text provides no verified security-code mapping. | Author LICENSE, paper, and actual CSV; task-source review | Q1/Q2 |
+| F4 | 825 general and 32 financial documents were actually obtained, split, and encoded, and the tokenizer was trained to 8192 tokens. | `reports/seed_data_preparation.json`, source and preprocessing manifests | Q3/Q4 |
+| F5 | During initial preparation, record-level AI proposals for 200 samples included 40 exclusions and a neutral majority. No human labels for this batch had been confirmed at that time. | `ai_review_manifest.json` in the private candidate directory; not ground-truth labels | Q2 |
+| F6 | A real-token CPU forward/backward check passed. The browser could not load the Colab Monaco editor during that session, and this research stage did not execute new GPU training. | `reports/seed_model_input_check.json`; actual browser responses from the original session | Q4 |
 
-## Scope filter
+## Scope Filter
 
-排除付费新闻、X 抓取、未知上游训练条件的镜像、整库下载及收益回测。保留可追溯的限量语料；数据库许可不自动代表原网页许可。
+Excluded: paid news, X scraping, mirrors with unknown upstream training terms, whole-corpus downloads, and return backtests. The retained corpus is bounded and traceable. A database license does not automatically cover the original web pages.
 
-## Object filter
+## Object Filter
 
-Wikipedia 前缀与 FOMC 宏观文体不能泛化成推特分布；FOMC 保留抓取快照而非宣称不可变远程版本；SEntFiN 情绪必须另做资产立场审核。词法近重复检查不能证明没有语义重复。
+A Wikipedia prefix and the macroeconomic register of FOMC minutes do not generalize to the Twitter distribution. FOMC pages are retained as fetched snapshots, not claimed to be immutable remote revisions. SEntFiN sentiment requires a separate asset-stance review. Lexical near-duplicate checks do not establish the absence of semantic duplicates.
 
 ## Conclusions
 
-- 在本次数据准备验收时，首批下载、冻结排除池、词表及分片已完成，满足进入 24M GPU 短段试跑的条件。[F1–F4]
-- 当时 SFT/DPO 尚缺人工确认的立场与资产映射；AI 初判不能替换这项证据。后续标签审核与 SFT 结果另行记录，不将来源情绪追溯当作项目人工真值。[F3/F5]
-- 本次研究记录本地准备和 CPU 接口验证；随后 T4 阶段的实测结果见[训练记录](../T4_PILOT.md)。[F6]
+- At this data-preparation acceptance point, the initial downloads, frozen exclusion pool, tokenizer, and shards were complete, meeting the conditions for a short 24M GPU pilot. [F1–F4]
+- At that time, SFT/DPO still lacked human-confirmed stance and asset mapping. AI proposals could not substitute for that evidence. Subsequent label review and SFT results are recorded separately; source sentiment is not retroactively treated as the project's human ground truth. [F3/F5]
+- This research records local preparation and CPU interface validation. See the [training record](../T4_PILOT.md) for subsequent T4 measurements. [F6]
 
-## 当时的执行安排与风险
+## Execution Plan and Risks at the Time
 
-01a 将已验证的数据准备过程复现在 Colab 并备份，02a 训练约 1M tokens 后记录真实资源。人工审核200条，再依据可用规模扩充。金融验证只有1篇纪要、源选择有偏、语料分布窄，因此本轮不作金融效果结论，也不启动100M/25M长预算。
+01a would reproduce the verified preparation process in Colab and back it up; 02a would train approximately 1M tokens and record actual resource use. The plan was to review 200 records manually, then expand according to available scale. With only one financial validation document, biased source selection, and a narrow corpus distribution, this round would make no financial-performance claim or launch the long 100M/25M budget.
 
-研究进度：1 来源排序完成；2 范围完成；3 描述性核查与证据表完成；4 范围筛选完成；5 对象筛选完成；6 结论、执行证据及未决项完成。终审为本团队的来源及一致性检查，不声称外部独立复现。
+Research status: 1. Source ranking complete; 2. scope complete; 3. descriptive review and evidence table complete; 4. scope filtering complete; 5. object filtering complete; 6. conclusions, execution evidence, and open items complete. Final review was this team's source and consistency check, not external independent reproduction.

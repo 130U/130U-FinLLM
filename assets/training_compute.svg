@@ -1,29 +1,28 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1510" viewBox="0 0 1920 1510" role="img" aria-labelledby="title desc">
-<title id="title">130U-FinLLM 2.4B 核心训练计算图</title><desc id="desc">130U-FinLLM. 2.4B private-use financial language model and public 24M Trial. Editable vector system architecture.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1510" viewBox="0 0 1920 1510" role="img" aria-labelledby="title"><title id="title">Core training computation</title>
 <rect x="0" y="0" width="1920" height="1510" fill="#f7f6f5"/>
 <text x="80" y="63" font-family="Consolas, sans-serif" font-size="19" fill="#2200ff">130U / COMPUTE SYSTEM / OBJECTIVE INTEGRITY</text>
-<text x="80" y="144" font-family="Microsoft YaHei, sans-serif" font-size="58" font-weight="700" fill="#191919">同一训练目标，贯穿数据与运行时</text>
-<text x="82" y="195" font-family="Microsoft YaHei, sans-serif" font-size="24" fill="#666462">语义许可监督 × 样本家族计量 × 保持目标的运行时</text>
+<text x="80" y="144" font-family="Arial, sans-serif" font-size="58" font-weight="700" fill="#191919">One objective, from data to runtime</text>
+<text x="82" y="195" font-family="Arial, sans-serif" font-size="24" fill="#666462">Semantic permissions | Family accounting | Objective-preserving execution</text>
 <text x="1480" y="164" font-family="Bahnschrift, sans-serif" font-size="106" fill="#191919">28 L</text>
 <text x="1484" y="209" font-family="Consolas, sans-serif" font-size="19" fill="#666462">130U / FINANCIAL LLM</text>
-<polyline points="80,252 1840,252" fill="none" stroke="#191919" stroke-width="1.5" stroke-linejoin="round"/>
+<polyline points="80,252 1840,252" fill="none" stroke="#191919" stroke-width="1.5"/>
 <text x="80" y="307" font-family="Consolas, sans-serif" font-size="19" fill="#2200ff">01 / INPUTS &amp; ISOLATION</text>
-<text x="1240" y="307" font-family="Microsoft YaHei, sans-serif" font-size="19" fill="#666462">实线：计算结果    虚线：监督与边界控制</text>
+<text x="1240" y="307" font-family="Arial, sans-serif" font-size="19" fill="#666462">Solid: computed values    Dashed: supervision and boundaries</text>
 <rect x="80" y="350" width="400" height="218" fill="#ffffff" stroke="#d7d4d1" stroke-width="1"/>
 <rect x="80" y="350" width="4" height="218" fill="#191919"/>
 <text x="106" y="384" font-family="Consolas, sans-serif" font-size="19" fill="#2200ff">MODEL INPUT</text>
-<text x="106" y="432" font-family="Microsoft YaHei, sans-serif" font-size="30" font-weight="700" fill="#191919">按数据流构造输入</text>
-<text x="106" y="473" font-family="Microsoft YaHei, sans-serif" font-size="22" fill="#666462">raw：原文；QA：问答 prompt</text>
-<text x="106" y="508" font-family="Microsoft YaHei, sans-serif" font-size="22" fill="#666462">S/E：目标 / 持有人 / 证据范围</text>
-<text x="106" y="543" font-family="Microsoft YaHei, sans-serif" font-size="22" fill="#666462">个人判断输入隔离待预测结论</text>
+<text x="106" y="432" font-family="Arial, sans-serif" font-size="26" font-weight="700" fill="#191919">Build stream-specific inputs</text>
+<text x="106" y="473" font-family="Arial, sans-serif" font-size="20" fill="#666462">raw: source text / QA: question prompt</text>
+<text x="106" y="508" font-family="Arial, sans-serif" font-size="22" fill="#666462">S/E: target / holder / evidence scope</text>
+<text x="106" y="543" font-family="Arial, sans-serif" font-size="19" fill="#666462">Keep the predicted judgment out of input</text>
 <rect x="80" y="646" width="400" height="244" fill="#ffffff" stroke="#d7d4d1" stroke-width="1"/>
 <rect x="80" y="646" width="4" height="244" fill="#2200ff"/>
 <text x="106" y="680" font-family="Consolas, sans-serif" font-size="19" fill="#2200ff">AUDIT SIDE CHANNEL</text>
-<text x="106" y="728" font-family="Microsoft YaHei, sans-serif" font-size="30" font-weight="700" fill="#191919">监督与边界控制</text>
-<text x="106" y="769" font-family="Microsoft YaHei, sans-serif" font-size="22" fill="#666462">gold / family / stream / pair IDs</text>
-<text x="106" y="804" font-family="Microsoft YaHei, sans-serif" font-size="22" fill="#666462">loss mask / pair gate / weights</text>
-<text x="106" y="839" font-family="Microsoft YaHei, sans-serif" font-size="22" fill="#666462">segment IDs 控制 attention</text>
-<text x="106" y="874" font-family="Microsoft YaHei, sans-serif" font-size="22" fill="#666462">审核标签不写入模型 prompt</text>
+<text x="106" y="728" font-family="Arial, sans-serif" font-size="26" font-weight="700" fill="#191919">Supervision and boundaries</text>
+<text x="106" y="769" font-family="Arial, sans-serif" font-size="22" fill="#666462">gold / family / stream / pair IDs</text>
+<text x="106" y="804" font-family="Arial, sans-serif" font-size="22" fill="#666462">loss mask / pair gate / weights</text>
+<text x="106" y="839" font-family="Arial, sans-serif" font-size="22" fill="#666462">Segment IDs control attention</text>
+<text x="106" y="874" font-family="Arial, sans-serif" font-size="18" fill="#666462">Keep audited labels out of model prompts</text>
 <rect x="620" y="350" width="490" height="340" fill="#ffffff" stroke="#d7d4d1" stroke-width="1"/>
 <rect x="653" y="393" width="374" height="104" fill="#ffffff" stroke="#d7d4d1" stroke-width="1"/>
 <rect x="658" y="407" width="374" height="104" fill="#ffffff" stroke="#d7d4d1" stroke-width="1"/>
@@ -31,72 +30,72 @@
 <rect x="668" y="435" width="374" height="104" fill="#ffffff" stroke="#d7d4d1" stroke-width="1"/>
 <rect x="673" y="449" width="374" height="104" fill="#ffffff" stroke="#d7d4d1" stroke-width="1"/>
 <text x="650" y="384" font-family="Consolas, sans-serif" font-size="19" fill="#2200ff">SHARED DECODER / 28 LAYERS</text>
-<text x="685" y="499" font-family="Bahnschrift, sans-serif" font-size="27" fill="#191919">Transformer block × 28</text>
+<text x="685" y="499" font-family="Bahnschrift, sans-serif" font-size="27" fill="#191919">Transformer block x 28</text>
 <text x="650" y="608" font-family="Consolas, sans-serif" font-size="31" fill="#2200ff">H [B, S, 2560]</text>
-<text x="650" y="651" font-family="Microsoft YaHei, sans-serif" font-size="23" fill="#666462">分段因果 attention / position IDs</text>
-<polyline points="480,454 620,454" fill="none" stroke="#2200ff" stroke-width="2" stroke-linejoin="round"/>
-<polyline points="612.1017569429866,458.3148298474378 620,454 612.1017569429866,449.6851701525622" fill="none" stroke="#2200ff" stroke-width="2" stroke-linejoin="round"/>
+<text x="650" y="651" font-family="Arial, sans-serif" font-size="23" fill="#666462">Segmented causal attention / position IDs</text>
+<polyline points="480,454 620,454" fill="none" stroke="#2200ff" stroke-width="2"/>
+<polyline points="612.1017569429866,458.3148298474378 620,454 612.1017569429866,449.6851701525622" fill="none" stroke="#2200ff" stroke-width="2"/>
 <rect x="1240" y="350" width="600" height="218" fill="#ffffff" stroke="#d7d4d1" stroke-width="1"/>
 <rect x="1240" y="350" width="4" height="218" fill="#2200ff"/>
 <text x="1266" y="384" font-family="Consolas, sans-serif" font-size="19" fill="#2200ff">VALID POSITIONS</text>
-<text x="1266" y="432" font-family="Microsoft YaHei, sans-serif" font-size="30" font-weight="700" fill="#191919">先选择有效监督位置</text>
-<text x="1266" y="473" font-family="Microsoft YaHei, sans-serif" font-size="22" fill="#666462">H_valid [M, 2560]</text>
-<text x="1266" y="508" font-family="Microsoft YaHei, sans-serif" font-size="22" fill="#666462">单标签：每任务视图 1 个位置</text>
-<text x="1266" y="543" font-family="Microsoft YaHei, sans-serif" font-size="22" fill="#666462">QA / LM：保留各自全部有效位置</text>
-<polyline points="1110,454 1240,454" fill="none" stroke="#2200ff" stroke-width="2" stroke-linejoin="round"/>
-<polyline points="1232.1017569429866,458.3148298474378 1240,454 1232.1017569429866,449.6851701525622" fill="none" stroke="#2200ff" stroke-width="2" stroke-linejoin="round"/>
+<text x="1266" y="432" font-family="Arial, sans-serif" font-size="30" font-weight="700" fill="#191919">Select supervised positions</text>
+<text x="1266" y="473" font-family="Arial, sans-serif" font-size="22" fill="#666462">H_valid [M, 2560]</text>
+<text x="1266" y="508" font-family="Arial, sans-serif" font-size="22" fill="#666462">Single label: one position per task view</text>
+<text x="1266" y="543" font-family="Arial, sans-serif" font-size="22" fill="#666462">QA / LM: retain all valid target positions</text>
+<polyline points="1110,454 1240,454" fill="none" stroke="#2200ff" stroke-width="2"/>
+<polyline points="1232.1017569429866,458.3148298474378 1240,454 1232.1017569429866,449.6851701525622" fill="none" stroke="#2200ff" stroke-width="2"/>
 <rect x="1240" y="650" width="600" height="240" fill="#ffffff" stroke="#d7d4d1" stroke-width="1"/>
 <rect x="1240" y="650" width="4" height="240" fill="#2200ff"/>
 <text x="1266" y="684" font-family="Consolas, sans-serif" font-size="19" fill="#2200ff">FULL VOCABULARY</text>
-<text x="1266" y="732" font-family="Microsoft YaHei, sans-serif" font-size="30" font-weight="700" fill="#191919">共享权重投影 + 精确 CE</text>
-<text x="1266" y="773" font-family="Microsoft YaHei, sans-serif" font-size="22" fill="#666462">logits [M, 65536]</text>
-<text x="1266" y="808" font-family="Microsoft YaHei, sans-serif" font-size="22" fill="#666462">完整词表归一化，保持原监督目标</text>
-<text x="1266" y="843" font-family="Microsoft YaHei, sans-serif" font-size="22" fill="#666462">可分块 / 融合；不改成仅三标签 CE</text>
-<text x="1266" y="878" font-family="Microsoft YaHei, sans-serif" font-size="22" fill="#666462">gold IDs ← 监督旁路</text>
-<polyline points="1540,568 1540,650" fill="none" stroke="#2200ff" stroke-width="2" stroke-linejoin="round"/>
-<polyline points="1535.6851701525623,642.1017569429866 1540,650 1544.3148298474377,642.1017569429866" fill="none" stroke="#2200ff" stroke-width="2" stroke-linejoin="round"/>
-<polyline points="480,746 570,746 570,724 1170,724 1170,530 1240,530" fill="none" stroke="#2200ff" stroke-width="1.7" stroke-linejoin="round" stroke-dasharray="6 7"/>
-<polyline points="1232.1017569429866,534.3148298474379 1240,530 1232.1017569429866,525.6851701525621" fill="none" stroke="#2200ff" stroke-width="1.7" stroke-linejoin="round"/>
+<text x="1266" y="732" font-family="Arial, sans-serif" font-size="30" font-weight="700" fill="#191919">Tied projection + exact CE</text>
+<text x="1266" y="773" font-family="Arial, sans-serif" font-size="22" fill="#666462">logits [M, 65536]</text>
+<text x="1266" y="808" font-family="Arial, sans-serif" font-size="22" fill="#666462">Full-vocabulary normalization</text>
+<text x="1266" y="843" font-family="Arial, sans-serif" font-size="22" fill="#666462">Chunk or fuse; do not replace with 3-class CE</text>
+<text x="1266" y="878" font-family="Arial, sans-serif" font-size="22" fill="#666462">gold IDs &lt; supervision side channel</text>
+<polyline points="1540,568 1540,650" fill="none" stroke="#2200ff" stroke-width="2"/>
+<polyline points="1535.6851701525623,642.1017569429866 1540,650 1544.3148298474377,642.1017569429866" fill="none" stroke="#2200ff" stroke-width="2"/>
+<polyline points="480,746 570,746 570,724 1170,724 1170,530 1240,530" fill="none" stroke="#2200ff" stroke-width="1.7" stroke-dasharray="6 7"/>
+<polyline points="1232.1017569429866,534.3148298474379 1240,530 1232.1017569429866,525.6851701525621" fill="none" stroke="#2200ff" stroke-width="1.7"/>
 <text x="645" y="714" font-family="Consolas, sans-serif" font-size="22" fill="#2200ff">mask / answer indices</text>
-<polyline points="480,690 535,690 535,625 620,625" fill="none" stroke="#2200ff" stroke-width="1.7" stroke-linejoin="round" stroke-dasharray="6 7"/>
-<polyline points="612.1017569429866,629.3148298474379 620,625 612.1017569429866,620.6851701525621" fill="none" stroke="#2200ff" stroke-width="1.7" stroke-linejoin="round"/>
+<polyline points="480,690 535,690 535,625 620,625" fill="none" stroke="#2200ff" stroke-width="1.7" stroke-dasharray="6 7"/>
+<polyline points="612.1017569429866,629.3148298474379 620,625 612.1017569429866,620.6851701525621" fill="none" stroke="#2200ff" stroke-width="1.7"/>
 <text x="545" y="611" font-family="Consolas, sans-serif" font-size="17" fill="#2200ff">segments</text>
-<polyline points="480,802 565,802 565,930 380,930 380,1030" fill="none" stroke="#2200ff" stroke-width="1.7" stroke-linejoin="round" stroke-dasharray="6 7"/>
-<polyline points="375.6851701525622,1022.1017569429866 380,1030 384.3148298474378,1022.1017569429866" fill="none" stroke="#2200ff" stroke-width="1.7" stroke-linejoin="round"/>
+<polyline points="480,802 565,802 565,930 380,930 380,1030" fill="none" stroke="#2200ff" stroke-width="1.7" stroke-dasharray="6 7"/>
+<polyline points="375.6851701525622,1022.1017569429866 380,1030 384.3148298474378,1022.1017569429866" fill="none" stroke="#2200ff" stroke-width="1.7"/>
 <text x="80" y="970" font-family="Consolas, sans-serif" font-size="19" fill="#2200ff">02 / LOSS &amp; OPTIMIZATION</text>
-<polyline points="1540,890 1540,980 960,980 960,1030" fill="none" stroke="#2200ff" stroke-width="2" stroke-linejoin="round"/>
-<polyline points="955.6851701525621,1022.1017569429866 960,1030 964.3148298474379,1022.1017569429866" fill="none" stroke="#2200ff" stroke-width="2" stroke-linejoin="round"/>
-<polyline points="1240,853 1160,853 1160,908 600,908 600,1003 460,1003 460,1030" fill="none" stroke="#2200ff" stroke-width="1.7" stroke-linejoin="round"/>
-<polyline points="455.6851701525622,1022.1017569429866 460,1030 464.3148298474378,1022.1017569429866" fill="none" stroke="#2200ff" stroke-width="1.7" stroke-linejoin="round"/>
+<polyline points="1540,890 1540,980 960,980 960,1030" fill="none" stroke="#2200ff" stroke-width="2"/>
+<polyline points="955.6851701525621,1022.1017569429866 960,1030 964.3148298474379,1022.1017569429866" fill="none" stroke="#2200ff" stroke-width="2"/>
+<polyline points="1240,853 1160,853 1160,908 600,908 600,1003 460,1003 460,1030" fill="none" stroke="#2200ff" stroke-width="1.7"/>
+<polyline points="455.6851701525622,1022.1017569429866 460,1030 464.3148298474378,1022.1017569429866" fill="none" stroke="#2200ff" stroke-width="1.7"/>
 <text x="660" y="895" font-family="Consolas, sans-serif" font-size="20" fill="#2200ff">S/E: q = softmax(label logits)</text>
 <rect x="80" y="1030" width="500" height="220" fill="#ffffff" stroke="#d7d4d1" stroke-width="1"/>
 <rect x="80" y="1030" width="4" height="220" fill="#2200ff"/>
 <text x="106" y="1064" font-family="Consolas, sans-serif" font-size="19" fill="#2200ff">PERMITTED PAIRS</text>
-<text x="106" y="1112" font-family="Microsoft YaHei, sans-serif" font-size="30" font-weight="700" fill="#191919">受控约束：按许可生效</text>
-<text x="106" y="1153" font-family="Microsoft YaHei, sans-serif" font-size="22" fill="#666462">三标签分布 + 两端索引 + 逐轴许可</text>
-<text x="106" y="1188" font-family="Microsoft YaHei, sans-serif" font-size="22" fill="#666462">有效 pair 进入约束；同源内计量</text>
-<text x="106" y="1223" font-family="Microsoft YaHei, sans-serif" font-size="22" fill="#666462">正确标签锚定两端的监督目标</text>
+<text x="106" y="1112" font-family="Arial, sans-serif" font-size="28" font-weight="700" fill="#191919">Apply only permitted constraints</text>
+<text x="106" y="1153" font-family="Arial, sans-serif" font-size="22" fill="#666462">Three-label distributions / ends / permissions</text>
+<text x="106" y="1188" font-family="Arial, sans-serif" font-size="22" fill="#666462">Gate valid pairs; account within family</text>
+<text x="106" y="1223" font-family="Arial, sans-serif" font-size="22" fill="#666462">Correct labels anchor both endpoints</text>
 <rect x="710" y="1030" width="500" height="220" fill="#ffffff" stroke="#d7d4d1" stroke-width="1"/>
 <rect x="710" y="1030" width="4" height="220" fill="#2200ff"/>
 <text x="736" y="1064" font-family="Consolas, sans-serif" font-size="19" fill="#2200ff">GLOBAL OBJECTIVE</text>
-<text x="736" y="1112" font-family="Microsoft YaHei, sans-serif" font-size="30" font-weight="700" fill="#191919">各项分母，分别全局聚合</text>
-<text x="736" y="1153" font-family="Microsoft YaHei, sans-serif" font-size="22" fill="#666462">raw / QA：各自声明的监督单位</text>
-<text x="736" y="1188" font-family="Microsoft YaHei, sans-serif" font-size="22" fill="#666462">S/E 与 pair：族内平均后聚合</text>
-<text x="736" y="1223" font-family="Microsoft YaHei, sans-serif" font-size="22" fill="#666462">family / stream / λ ← 监督旁路</text>
+<text x="736" y="1112" font-family="Arial, sans-serif" font-size="30" font-weight="700" fill="#191919">Global denominators per term</text>
+<text x="736" y="1153" font-family="Arial, sans-serif" font-size="22" fill="#666462">raw / QA: declared supervision units</text>
+<text x="736" y="1188" font-family="Arial, sans-serif" font-size="22" fill="#666462">S/E and pairs: average within each family</text>
+<text x="736" y="1223" font-family="Arial, sans-serif" font-size="22" fill="#666462">family / stream / lambda &lt; side channel</text>
 <rect x="1340" y="1030" width="500" height="220" fill="#ffffff" stroke="#d7d4d1" stroke-width="1"/>
 <rect x="1340" y="1030" width="4" height="220" fill="#191919"/>
 <text x="1366" y="1064" font-family="Consolas, sans-serif" font-size="19" fill="#2200ff">OPTIMIZER STEP</text>
-<text x="1366" y="1112" font-family="Microsoft YaHei, sans-serif" font-size="30" font-weight="700" fill="#191919">反向传播与参数更新</text>
-<text x="1366" y="1153" font-family="Microsoft YaHei, sans-serif" font-size="22" fill="#666462">各流 CE + 许可约束完成归一化</text>
-<text x="1366" y="1188" font-family="Microsoft YaHei, sans-serif" font-size="22" fill="#666462">更新、跳步与曝光分别计数</text>
-<text x="1366" y="1223" font-family="Microsoft YaHei, sans-serif" font-size="22" fill="#666462">精度 / 分片 / 恢复共用验收基准</text>
-<polyline points="580,1140 710,1140" fill="none" stroke="#2200ff" stroke-width="1.7" stroke-linejoin="round"/>
-<polyline points="702.1017569429866,1144.3148298474377 710,1140 702.1017569429866,1135.6851701525623" fill="none" stroke="#2200ff" stroke-width="1.7" stroke-linejoin="round"/>
-<polyline points="1210,1140 1340,1140" fill="none" stroke="#2200ff" stroke-width="2" stroke-linejoin="round"/>
-<polyline points="1332.1017569429866,1144.3148298474377 1340,1140 1332.1017569429866,1135.6851701525623" fill="none" stroke="#2200ff" stroke-width="2" stroke-linejoin="round"/>
-<text x="1360" y="1297" font-family="Microsoft YaHei, sans-serif" font-size="21" fill="#666462">一次 optimizer 尝试；成功更新另计</text>
-<polyline points="80,1350 1840,1350" fill="none" stroke="#191919" stroke-width="1.5" stroke-linejoin="round"/>
+<text x="1366" y="1112" font-family="Arial, sans-serif" font-size="30" font-weight="700" fill="#191919">Backpropagation and update</text>
+<text x="1366" y="1153" font-family="Arial, sans-serif" font-size="22" fill="#666462">Normalize stream CE and permitted losses</text>
+<text x="1366" y="1188" font-family="Arial, sans-serif" font-size="22" fill="#666462">Count updates, skipped steps, and exposure</text>
+<text x="1366" y="1223" font-family="Arial, sans-serif" font-size="22" fill="#666462">Shared checks for precision, sharding, resume</text>
+<polyline points="580,1140 710,1140" fill="none" stroke="#2200ff" stroke-width="1.7"/>
+<polyline points="702.1017569429866,1144.3148298474377 710,1140 702.1017569429866,1135.6851701525623" fill="none" stroke="#2200ff" stroke-width="1.7"/>
+<polyline points="1210,1140 1340,1140" fill="none" stroke="#2200ff" stroke-width="2"/>
+<polyline points="1332.1017569429866,1144.3148298474377 1340,1140 1332.1017569429866,1135.6851701525623" fill="none" stroke="#2200ff" stroke-width="2"/>
+<text x="1360" y="1297" font-family="Arial, sans-serif" font-size="18" fill="#666462">One optimizer attempt; successful updates counted separately</text>
+<polyline points="80,1350 1840,1350" fill="none" stroke="#191919" stroke-width="1.5"/>
 <text x="80" y="1397" font-family="Consolas, sans-serif" font-size="24" fill="#2200ff">EQUIVALENCE FIRST</text>
-<text x="535" y="1397" font-family="Microsoft YaHei, sans-serif" font-size="23" fill="#191919">同 batch 对照 logits / loss / gradients / optimizer delta，再比较显存与吞吐。</text>
-<text x="80" y="1455" font-family="Microsoft YaHei, sans-serif" font-size="21" fill="#666462">从数据语义到参数更新：每项性能优化都保持监督目标、样本边界与状态语义。</text>
+<text x="535" y="1397" font-family="Arial, sans-serif" font-size="23" fill="#191919">Same batch: compare logits, loss, gradients, and parameter deltas before memory or throughput.</text>
+<text x="80" y="1455" font-family="Arial, sans-serif" font-size="21" fill="#666462">Every runtime optimization preserves supervision, sample boundaries, and training-state semantics.</text>
 </svg>

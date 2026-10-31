@@ -5,34 +5,34 @@ from build_notebooks import BOOTSTRAP, code, markdown, write
 def build():
     bootstrap = BOOTSTRAP.replace('/content', '/kaggle/working')
     cells = [markdown('''
-        # 04c｜Kaggle 单卡实体立场 SFT 试验
+        # 04c | Single-GPU entity-stance SFT pilot on Kaggle
 
-        使用 04b 导出的**本人私有**转运包及其 SHA256，承接 domain_v1 的 74 步权重。
-        首次跨平台仅导入模型权重并建立新的优化器；不是恢复 Colab 的优化器。
-        在 Kaggle 的 Add Input 添加**私有**数据集，包含 `130u_kaggle_transfer.zip`。
-        Session options 选择 GPU T4 x2 和 Internet on。本试验只使用第一块 GPU。
+        Use the **private** transfer package and SHA256 from 04b to initialize from the 74-update domain_v1 weights.
+        The first cross-platform handoff imports model weights and creates a new optimizer; it does not restore the Colab optimizer.
+        Use Kaggle Add Input to attach a **private** dataset containing `130u_kaggle_transfer.zip`.
+        In Session options, select GPU T4 x2 and Internet on. This pilot uses only the first GPU.
 
-        依次运行，记录第一格实际代码提交 SHA。以后跨会话恢复时若 main 已更新，
-        请将第一格的 `REF = "main"` 改为首次运行时的完整 40 位代码 SHA，再依次运行。
-        恢复只支持与原训练一致的代码、数据、路径、PyTorch/CUDA、设备和AMP配置。
-        训练结果及暂存文件在
-        `/kaggle/working`；它不是 Google Drive，运行时结束后不能保证保留。
-        按输出提示下载恢复 ZIP 或保存私有 Notebook 版本与输出后，再结束会话。
-        不要公开包含模型或原始标题的上传数据和输出。
+        Run cells in order and record the actual commit SHA from the first cell. If main changes before cross-session recovery,
+        replace `REF = "main"` in the first cell with the original full 40-character SHA, then run cells in order.
+        Recovery requires code, data, paths, PyTorch/CUDA, device and AMP settings that match the original run.
+        Training results and temporary files are in
+        `/kaggle/working`, not Google Drive; persistence after runtime termination is not guaranteed.
+        Before ending the session, follow the output instructions to download the recovery ZIP or save a private notebook version with outputs.
+        Do not publish uploaded data or outputs containing model weights or source headlines.
 
-        模型任务是标题内实体的看多／中性／看空研究试验，资产身份、语义事件
-        和时序隔离尚未完成，开发集指标不代表证券预测或真实 X 效果。
+        This research pilot predicts bullish/neutral/bearish stance toward headline entities. Asset identity, semantic events
+        and chronological isolation remain unaudited; development metrics do not measure security prediction or real X performance.
         '''), code(bootstrap), code('''
         from finllm.kaggle_sft_runtime import (install_transfer_archive, install_transfer_directory,
             install_recovery_archive, install_recovery_directory)
         from finllm.sft_pilot_runtime import prepare_sft_pilot, run_sft_pilot, backup_sft_pilot
         from pathlib import Path
 
-        # 分别复制 04b 输出的转运清单 SHA256 与转运 ZIP SHA256。
-        TRANSFER_MANIFEST_SHA256 = "请粘贴04b输出的转运清单SHA256".strip().lower()
-        TRANSFER_ZIP_SHA256 = "请粘贴04b输出的转运ZIP的SHA256".strip().lower()
-        # 跨会话恢复时，把之前的恢复 ZIP 作为私有 Input 挂载并填写其 SHA。
-        # 首次运行保持空字符串；同一会话从本页重跑也不需要填写。
+        # Copy the transfer manifest SHA256 and ZIP SHA256 separately from 04b output.
+        TRANSFER_MANIFEST_SHA256 = "PASTE_TRANSFER_MANIFEST_SHA256_FROM_04B".strip().lower()
+        TRANSFER_ZIP_SHA256 = "PASTE_TRANSFER_ZIP_SHA256_FROM_04B".strip().lower()
+        # For cross-session recovery, attach the prior recovery ZIP as private Input and enter its SHA.
+        # Leave empty on the first run or when rerunning this notebook within the same session.
         RECOVERY_MANIFEST_SHA256 = "".strip().lower()
         RECOVERY_ZIP_SHA256 = "".strip().lower()
         INPUT_ROOT = Path("/kaggle/input")
@@ -45,8 +45,8 @@ def build():
         elif not manifests and len(archives) == 1:
             transfer = install_transfer_archive(archives[0], HANDOFF, expected_zip_sha256=TRANSFER_ZIP_SHA256)
         else:
-            raise RuntimeError("请通过 Add Input 挂载唯一的私有转运数据集。")
-        print("原成果校验完成：", json.dumps(transfer, indent=2, ensure_ascii=False))
+            raise RuntimeError("Use Add Input to attach exactly one private transfer dataset.")
+        print("Original artifacts verified:", json.dumps(transfer, indent=2, ensure_ascii=False))
         if RECOVERY_MANIFEST_SHA256 or RECOVERY_ZIP_SHA256:
             manifests = sorted(INPUT_ROOT.rglob("recovery_manifest.json"))
             candidates = sorted(INPUT_ROOT.rglob("130u_sft_recovery_*.zip"))
@@ -57,15 +57,15 @@ def build():
                 restored = install_recovery_archive(candidates[0], HANDOFF,
                                          expected_zip_sha256=RECOVERY_ZIP_SHA256)
             else:
-                raise RuntimeError("请挂载唯一的私有恢复数据集。")
-            print("已恢复私有SFT进度：", json.dumps(restored, indent=2, ensure_ascii=False))
+                raise RuntimeError("Attach exactly one private recovery dataset.")
+            print("Private SFT progress restored:", json.dumps(restored, indent=2, ensure_ascii=False))
         '''), code('''
         if not torch.cuda.is_available():
-            raise RuntimeError("请在 Session options 选择 GPU T4，并从第一格重新运行。")
-        print("GPU数量：", torch.cuda.device_count(), "本次使用：", torch.cuda.get_device_name(0))
+            raise RuntimeError("Select GPU T4 in Session options and rerun from the first cell.")
+        print("GPU count:", torch.cuda.device_count(), "Using:", torch.cuda.get_device_name(0))
         pilot = prepare_sft_pilot(PROJECT, HANDOFF, run_version="sft_kaggle_v1")
-        print("已核验领域母模型和实际排除池：", json.dumps(pilot["parent_audit"], indent=2, ensure_ascii=False))
-        print("任务分区：", json.dumps(pilot["counts"], indent=2, ensure_ascii=False))
+        print("Verified domain parent model and actual exclusion pools:", json.dumps(pilot["parent_audit"], indent=2, ensure_ascii=False))
+        print("Task partitions:", json.dumps(pilot["counts"], indent=2, ensure_ascii=False))
         '''), code('''
         from finllm.kaggle_sft_runtime import export_recovery
         from datetime import datetime, timezone
@@ -76,19 +76,19 @@ def build():
         print(json.dumps(probe, indent=2, ensure_ascii=False))
         SFT_PROBE_SUCCEEDED = True
         recovery_file = Path("/kaggle/working") / ("130u_sft_recovery_probe_" + datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ") + ".zip")
-        print("单步恢复包（须下载或保存版本才持久）：", json.dumps(export_recovery(HANDOFF, recovery_file), indent=2, ensure_ascii=False))
+        print("One-step recovery package (download or save a version for persistence):", json.dumps(export_recovery(HANDOFF, recovery_file), indent=2, ensure_ascii=False))
         '''), code('''
         SFT_TRAIN_SUCCEEDED = False
         SFT_EVAL_SUCCEEDED = False
         if not globals().get("SFT_PROBE_SUCCEEDED", False):
-            raise RuntimeError("请先完成单步检查。")
+            raise RuntimeError("Complete the one-step check first.")
         result = run_sft_pilot(pilot, "continue", finllm)
         print(json.dumps(result, indent=2, ensure_ascii=False))
         SFT_TRAIN_SUCCEEDED = True
         '''), code('''
         SFT_EVAL_SUCCEEDED = False
         if not globals().get("SFT_TRAIN_SUCCEEDED", False):
-            raise RuntimeError("请先完成训练。")
+            raise RuntimeError("Complete training first.")
         output = Path(pilot["config"]["output_dir"])
         development = pilot["task_local"] / "development.jsonl"
         for name, checkpoint in (("domain_before", Path(pilot["config"]["init_checkpoint"])),
@@ -100,15 +100,15 @@ def build():
         SFT_EVAL_SUCCEEDED = True
         '''), code('''
         if not globals().get("SFT_TRAIN_SUCCEEDED", False) or not globals().get("SFT_EVAL_SUCCEEDED", False):
-            raise RuntimeError("请先完成训练与开发集比较。")
+            raise RuntimeError("Complete training and the development-set comparison first.")
         backup = backup_sft_pilot(pilot)
-        print("运行结果本地备份：", json.dumps(backup, indent=2, ensure_ascii=False))
+        print("Local run-result backup:", json.dumps(backup, indent=2, ensure_ascii=False))
         recovery_file = Path("/kaggle/working") / ("130u_sft_recovery_final_" + datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ") + ".zip")
-        print("最终恢复包（请下载或保存私有版本输出）：", json.dumps(export_recovery(HANDOFF, recovery_file), indent=2, ensure_ascii=False))
+        print("Final recovery package (download or save private version outputs):", json.dumps(export_recovery(HANDOFF, recovery_file), indent=2, ensure_ascii=False))
         '''), markdown('''
-        恢复包与转运包均含私有数据，只能保存在本人账户。保留恢复包 SHA、
-        Notebook 首格代码 SHA、开发集结果与备份输出。Kaggle 进程或会话被突然回收时，
-        未下载或保存的本地进度可能丢失；原领域权重仍在原 Drive。
+        Recovery and transfer packages contain private data and must stay in your own account. Keep the recovery-package SHA,
+        the code SHA from the first cell, development results and backup output. If a Kaggle process or session terminates unexpectedly,
+        local progress not downloaded or saved may be lost; original domain weights remain on Drive.
         ''')]
     write("04c_kaggle_sft.ipynb", cells)
 

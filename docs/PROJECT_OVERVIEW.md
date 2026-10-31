@@ -1,151 +1,144 @@
 # 130U-FinLLM
 
-**2.4B 自用金融语言模型 · 24M Trial 公开展示**
+**A 2.4B financial language model for personal use · A public 24M Trial**
 
-## 把个人金融标准，变成模型行为
+## Turning personal financial standards into model behavior
 
-我做 130U-FinLLM，是为了把自己的金融研究经验转化为一个能够持续使用、解释和迭代的语言模型系统。它结合本人原创的历史金融观点与人工审核的公开金融文本，围绕一个具体问题展开：**面对一段金融材料，谁在对什么表达判断，依据是什么，哪些条件会改变这个判断。**
+I built 130U-FinLLM to turn my financial research experience into a language model system that I can use, explain, and improve over time. It brings together my original historical financial views and public financial texts that I have personally reviewed, organized around one question: **Who is expressing a judgment about what, on which evidence, and under what conditions would that judgment change?**
 
-项目由两个版本组成：24M Trial 展示从数据、基础训练到任务适配的工程过程；2.4B 是面向个人金融研究的自用模型，以金融语义建模和统一的多任务训练体系为技术主线。公开内容以 Trial 的代码、实验和工程方法为入口。
+The project has two versions. The 24M Trial exposes the engineering process from data preparation and language pretraining to task adaptation. The 2.4B version is intended for personal financial research, with financial semantics and a unified multitask training system at its core. The public repository presents the Trial's code, experiments, and engineering methods.
 
-我选择从训练层面掌握这个系统：亲自定义语料如何进入模型、监督落在哪些位置、不同任务如何共享能力，以及模型输出怎样进入实际研究流程。个人材料在其中提供两种价值：原创观点记录分析习惯，人工裁决沉淀稳定的判读标准。
+I chose to control the system at the training level: how material enters the model, where supervision applies, how tasks share representations, and how outputs enter my research workflow. Personal material serves two purposes. Original views capture my analytical habits, while human judgments establish consistent interpretation standards.
 
-整个项目以两项设计为核心：**金融语义许可监督**，规定模型应该对什么变化作出响应；**保持训练目标的扩容工程**，保证这些规则经过数据扩增、多任务训练和规模扩展后仍然保持原意。
+Two designs organize the project: **financial semantic permissions**, which specify the changes a model should respond to, and **objective-preserving scaling**, which keeps those requirements intact through data augmentation, multitask training, and larger-scale execution.
 
+## Validate with 24M, then extend the system to 2.4B
 
-## 先用 24M 验证，再把系统扩展到 2.4B
+The 24M model is the engineering starting point. Its size makes the training process observable, helps isolate interactions between data, labels, optimization, and evaluation, and connects each adjustment to specific examples and computation records.
 
-24M 是整个项目的工程起点。较小的模型让我能够完整观察训练过程，快速定位数据、标签、优化和评价之间的关系，并将每一次调整落实到具体样本与计算记录。
+The most useful early finding was the gap between aggregate accuracy and actual task performance. The initial Trial predicted neutral for every development example. Accuracy was still 75.25%, while recall for both directional classes was zero. Adjusting class exposure and training budget restored directional predictions but also increased directional false positives on neutral text. This established a principle for the project: **evaluate what the model learns and the additional errors it introduces to learn it.**
 
-这一阶段最有价值的发现，是总体准确率与实际任务能力可能严重脱节。Trial 初版在开发集上全部预测 neutral，准确率仍达到 75.25%，但两个方向类的召回均为零。调整类别曝光和训练预算后，方向识别恢复，同时也增加了中性文本的方向误报。这让我建立起一条贯穿项目的原则：**评价既要看模型学会了什么，也要看它为此增加了哪种错误。**
+The 2.4B version carries forward the task protocol, error analysis, and experimental methods. Vocabulary, model weights, context handling, training state, and probability calibration are rebuilt for the larger version rather than inherited as if small-model settings were sufficient.
 
-2.4B 承接的是这套任务协议、错误分析和实验方法。扩展时，词表、模型权重、上下文处理、训练状态与概率校准分别重建，避免把小模型的局部配置直接当作规模化答案。
-
-| 结构 | 24M Trial | 2.4B 自用版本 |
+| Architecture | 24M Trial | 2.4B private version |
 |---|---:|---:|
-| 总参数 | 24,255,744 | 2,397,459,968 |
-| Transformer 层数 | 6 | 28 |
-| 隐藏维度 | 512 | 2,560 |
-| FFN 中间维度 | 1,664 | 8,320 |
-| 每层 Q / KV heads | 8 / 4 | 20 / 4 |
-| 词表 / 上下文上限 | 8,192 / 512 | 65,536 / 4,096 |
+| Total parameters | 24,255,744 | 2,397,459,968 |
+| Transformer layers | 6 | 28 |
+| Hidden size | 512 | 2,560 |
+| FFN intermediate size | 1,664 | 8,320 |
+| Q / KV heads per layer | 8 / 4 | 20 / 4 |
+| Vocabulary / context limit | 8,192 / 512 | 65,536 / 4,096 |
 
-主干采用 dense decoder、GQA、RoPE、RMSNorm 与 SwiGLU，输入 embedding 与输出词表投影共享权重。2.4B 的每层包含 20 个 query heads、4 个 key/value heads，每个 head 的维度为 128。这一结构为金融文本、目标条件与多任务监督提供统一的计算基础。
+The backbone uses a dense decoder, GQA, RoPE, RMSNorm, and SwiGLU, with tied input embeddings and vocabulary projection weights. Each 2.4B layer has 20 query heads and 4 key/value heads, with a head dimension of 128. This provides a shared computational basis for financial text, target conditions, and multitask supervision.
 
-选择 2.4B，是为了同时容纳更复杂的目标关系与金融表达，并保持参数、状态内存和运行时实现的可控性。项目将容量用于多条件下的语义判读，把语料质量、监督设计和计算效率作为同等重要的工程对象。
+The 2.4B scale accommodates more complex target relationships and financial language while keeping parameter count, training-state memory, and runtime implementation manageable. Data quality, supervision design, and computational efficiency receive equal attention.
 
+## Four stages from source material to model use
 
-## 四步训练，形成完整闭环
+### 1. Organize material into explicit learning tasks
 
-### 第一步：将材料组织为明确的学习任务
+The data system distinguishes my original views, public texts I have reviewed, general-language material, and financial source text. Each task identifies its target, opinion holder, evidence scope, and information availability time. Source-text stance, metric direction, and my own judgment have separate definitions.
 
-语料按本人原创观点、本人审核的公开文本、通用语言材料和金融原文分类。每条任务明确目标、观点持有人、证据范围和可得时点；原文立场、指标方向和本人判断分别定义。
+Original text, target queries, question-answer pairs, and edits concerning the same event belong to one sample family. Families are split before derivative views are generated, so related material stays in the same partition. The 2.4B recipe allocates 32,000 human gold records: 12,000 for training, 4,000 for development, 4,000 for calibration, 4,000 for threshold selection, and 8,000 for final testing. These are recipe allocations; actual inventories and consumption are recorded separately.
 
-同一事件的原文、目标查询、问答与编辑归入同一个样本家族。先划分数据，再生成派生视图，使同源材料始终遵守同一分区。2.4B 的人工金标准配置以 32,000 条为基准：12,000 条训练，4,000 条开发，4,000 条校准，4,000 条阈值选择，8,000 条最终测试。
+### 2. Establish language foundations
 
-### 第二步：建立基础语言能力
+The foundation stage starts from random initialization and uses next-token prediction to learn language structure and contextual relationships. Its recipe allocates 50B input tokens and uses a vocabulary of 65,536. Tokenizer construction and pretraining follow the same evaluation-exclusion boundaries.
 
-基础阶段从随机初始化出发，以 next-token prediction 学习语言结构和上下文关系。训练配方以 50B 输入 tokens 配置基础阶段，并使用 65,536 词表统一编码。词表构建与训练语料遵守相同的验收排除边界。
+### 3. Adapt through a financial mixture
 
-### 第三步：进行金融混合适配
+The adaptation recipe allocates 5B input tokens: 4B financial source text, 0.75B general material, 0.20B reading questions and answers, and 0.05B stance and event tasks. Financial text supplies domain language, general material maintains language coverage, and QA and task supervision connect evidence to outputs. Sampling, supervised positions, and loss weights are managed separately for each stream.
 
-金融适配采用 5B 输入 tokens 的混合配方：4B 金融原文、0.75B 通用材料、0.20B 阅读问答、0.05B 立场与事件任务。金融材料提供专业表达，通用材料维持语言覆盖，问答与任务监督建立证据和输出之间的联系。各流分别管理抽样、有效监督位置与损失权重。
+### 4. Train tasks, calibrate, and package the model
 
-### 第四步：任务训练、校准与交付
+Target-conditioned SFT applies financial semantic permissions to supervision, separating investment stance from metric direction. The workflow then proceeds through development-set model selection, probability calibration, acceptance-rule selection, and final testing. A release binds the model, tokenizer, task protocol, calibration parameters, and version information, so every prediction belongs to a defined system configuration.
 
-目标条件化 SFT 将金融语义许可接入监督，分别学习投资立场与指标方向。随后依次完成开发选模、概率校准、接受规则选择与最终测试。交付对象绑定模型、词表、任务协议、校准参数和版本信息，让每一次判断都对应一套明确的系统配置。
+The workflow connects source material, interpretation standards, language learning, financial adaptation, and task training to structured judgments and human review. Usage feedback informs the next round of training-data preparation, with new independent examples used to evaluate updates.
 
-闭环从原始材料开始，经过标准定义、语言学习、金融适配与任务训练，最终连接到结构化判断和人工复核；使用反馈进入下一轮训练数据整理，并由新的独立样本检验更新效果。
+## Design 1: Financial semantic permissions
 
+Financial text often combines changes in facts, an author's attitude, and investment actions. Compressing them into a single positive/negative label can teach a model to detect sentiment words while answering the wrong question.
 
-## 特色一：金融语义许可监督
+For example: **“Company A's revenue grew year over year, but I am still reducing my position in A.”** The metric direction is upward, while the expressed investment stance may be bearish. If the reduction reflects portfolio or hedging constraints, the task's allowed context also matters.
 
-金融材料经常同时包含事实变化、作者态度和投资行动。把这些信息混成一个“正面／负面”标签，很容易让模型抓住情绪词，却回答错真正的问题。
+The supervision protocol evaluates each task axis separately. Every edit is reviewed for its effect on the target, opinion holder, and task. Changes with a clear new answer receive a new label. Semantically preserved components retain their labels. Where the relationship is indeterminate, no cross-example constraint is imposed.
 
-例如：**“A 公司营收同比增长，但我仍然减持 A。”** 这里的指标方向是向上，作者表达的投资立场可以是看空；如果减持来自仓位或对冲约束，还需要结合任务规定的上下文解释。
+### Separate label preservation from probability preservation
 
-我围绕这种关系设计逐轴监督协议：每次编辑都单独判断，它影响了哪个目标、哪个持有人和哪条任务轴。对于有明确监督的变化，重新标注；对于语义保持的部分，保留原标签；关系无法确定时，不强加跨样本约束。
+A meaning-preserving paraphrase can justify keeping output distributions close. An additional piece of evidence in the same direction may preserve the class while reasonably increasing confidence. The system therefore records separate permissions for label preservation and distribution preservation, allowing consistency constraints to follow semantics.
 
-### 标签保持与概率保持分别处理
+Correct labels at both endpoints anchor training. Strictly equivalent edits receive a distribution-consistency constraint; valid changes receive a relative-response constraint that moves predictions toward the new correct direction. Reviewed labels, edit names, and permission records control supervision without entering the model prompt as answer cues.
 
-同义改写可以要求输出分布接近。新增一条同方向证据，虽然类别可能保持，置信度却可以合理提高。因此，系统分别记录“保持标签”和“保持分布”的许可，使一致性约束服从语义，而非机械追求所有输出相同。
+### Express financial judgments as inspectable relationships
 
-训练以两端的正确标签为锚点：严格等价的编辑使用分布一致性约束；有效改变的编辑使用相对响应约束，要求模型向新的正确方向移动。审核标签、编辑名称和许可记录只控制监督，不进入模型 prompt 暗示答案。
+The contribution connects targets, opinion holders, conditions, and evidence scope to concrete edit rules and loss calculations. Behavioral requirements become explicit: preserve the judgment under irrelevant wording changes, respond to meaningful changes, and resolve attribution again when a quotation or target changes.
 
-### 将金融判断拆成可以解释的关系
+Task prefixes distinguish stance from event direction while sharing the same backbone. The semantic protocol specifies where the tasks may support each other and where their information must remain separate.
 
-这项设计的贡献，是把目标、持有人、条件和证据范围连接到具体的编辑规则与损失计算。它让模型的行为要求具体化：无关措辞变化时保持判断，有效语义变化时正确响应，引用或目标切换时重新识别归属。
+## Design 2: Objective-preserving scaling
 
-同一主干通过任务前缀区分立场与事件方向，保留共享语言能力。语义协议负责规定两条任务如何相互帮助，以及哪些信息不能被混用。
+A difficult scaling failure is easy to miss: the code still runs and the loss still falls, but the model is optimizing a different objective. Data accounting and runtime optimization therefore belong to one training contract that specifies what each computation must preserve.
 
+### At the data level, define learning weight explicitly
 
-## 特色二：保持训练目标的扩容工程
+Source text supplies many next-token targets. QA primarily supervises answers, while a stance record usually supplies one label. Twenty edits of one original text do not become twenty independent events.
 
-模型变大后，最容易被忽略的问题是：代码仍然可以运行，loss 仍然下降，实际学习目标却已经发生变化。我将数据计量与运行时优化放进同一套训练契约，明确规定每项计算应该保留什么。
+The training objective separately accounts for natural examples, sample families, task views, and supervised positions. Reviewed views are aggregated within families before task-level aggregation; natural examples retain their own distribution. Stream frequency, task weight, and repeated exposure are logged separately so the implemented objective can be reconstructed from the training ledger.
 
-### 在数据层，明确谁获得多少学习权重
+Distributed training and gradient accumulation use denominators covering the entire update. With W ranks and a reducer that averages rank gradients, each rank uses `W × λ × local loss sum / global effective denominator` for terms whose global denominator is positive. Globally absent terms are omitted; locally absent terms still follow the same communication order. Splitting a fixed effective batch across microbatches or devices should not unintentionally change its learning objective.
 
-原文有大量 next-token 监督，问答主要监督答案，一条立场记录通常只有一个标签。同一原文生成二十个编辑，也不会自然变成二十个独立事件。
+### At the computation level, preserve supervision and information boundaries
 
-训练目标分别计量自然样本、样本家族、任务视图与有效监督位置。审核视图先在家族内汇总，再按任务聚合；自然样本保持自己的分布。数据流出现频率、任务权重和重复曝光分别记录，使实际优化目标可以从训练账本还原。
+For single-label tasks, the runtime selects the hidden state that predicts the answer before applying the full-vocabulary projection and cross-entropy loss. The backbone still processes the entire context; the omitted work is the output projection at positions without direct supervision. With batch size 2, sequence length 2,048, vocabulary size 65,536, and FP32 logits, the full output tensor occupies 1 GiB. Selecting two supervised positions reduces that tensor to 0.5 MiB. This difference follows directly from tensor shapes.
 
-多卡与梯度累积采用整次更新的有效分母。对于默认平均梯度的 W 个 rank，每个 rank 使用 `W × λ × 本地损失和 / 全局有效分母`，仅计算全局有效分母大于零的任务，缺席任务跳过。这样，同一有效 batch 的学习目标不会因为被切成不同微批或分到不同设备而无意改变。
+Packing uses segmented causal attention so one example cannot read an adjacent example's answer. Input embeddings and the output head remain the same parameter object. Sharding and restoration jointly manage optimizer state, random state, and data-consumption position.
 
-### 在计算层，保留监督和信息边界
+Validation proceeds through effective-position outputs, individual loss terms, gradients, and parameter updates. This ties resource savings to experimental meaning: data defines the objective, and the runtime must execute it accurately.
 
-单标签任务先选取答案位置的 hidden，再计算完整词表投影与交叉熵。上下文仍完整通过主干；省去的是没有直接监督的输出投影。以 batch=2、长度=2,048、词表=65,536 的 FP32 输出为例，全序列 logits 张量为 1 GiB，选取两个监督位置后为 0.5 MiB。这是可以直接按张量形状核算的资源差异。
+## Engineering challenges at the boundaries between definitions
 
-样本打包采用分段因果 attention，确保一个样本不能读取相邻样本的答案。共享 embedding 与输出头保持同一个参数对象；分片与恢复同时管理优化器、随机状态和数据消费位置。
+### Make the model, annotator, and user answer the same question
 
-这套工程以有效位置输出、分项损失、梯度和参数更新作为逐级验收对象，将资源优化与实验含义连接起来。数据定义什么值得学习，运行时负责准确执行这一目标。
+A headline and a full article can support different answers, as can the author's view and my own judgment, or operating facts and investment stance. Task fields and annotation rules make these distinctions explicit, allowing errors to be traced to a target, role, or evidence scope. Personal judgments additionally require the information, horizon, and constraints available at the time to explain why a view changed.
 
+This requires more precise data preparation, but yields more stable supervision. Every label corresponds to a defined question and an allowed set of information.
 
-## 真正的工程挑战，来自定义之间的冲突
+### Connect additional training to identifiable gains
 
-### 让模型、标注者和使用者回答同一个问题
+The Trial's class failure showed that more correct answers do not necessarily mean better performance on the important part of the task. Independent examples, repeated exposures, supervised positions, and update counts are recorded together, connecting sampling changes to compute budgets. Semantic constraints also need comparison against ordinary cross-entropy on the same edited examples, separating the contribution of new data from that of the loss design.
 
-标题与全文、作者观点与本人判断、经营事实与投资立场，都可能给出不同的合理答案。项目把这些区别放进任务字段和标注规则，使错误能够定位到具体目标、角色或证据范围。个人判断还要带上当时的信息、期限与约束，才能解释观点为何发生变化。
+Moving from 24M to 2.4B extends this problem to multiple streams and devices. Global denominators and family accounting give the recipe an inspectable mathematical meaning and each change a clearer basis for attribution.
 
-这项取舍增加了数据整理的精度，也让后续训练拥有更稳定的监督对象。模型学习的每个标签，都对应明确的问题和可使用的信息。
+### Preserve the training problem while optimizing execution
 
-### 让新增训练投入对应真正的能力改善
+Counting FP32 parameters, gradients, and two Adam state tensors, the 2.4B model requires approximately 38.36 GB for its main training state, before activations and temporary tensors. Precision, sharding, recomputation, and packing are therefore integral to runtime design.
 
-Trial 的类别失效说明，更多正确答案不一定意味着关键能力改善。项目同时记录独立样本、重复曝光、监督位置和更新次数，将采样变化与计算预算联系起来。语义约束的效果也要与使用同一批编辑、只做普通交叉熵的配置比较，才能分清数据贡献和损失设计的贡献。
+Each optimization changes execution while preserving the supervision objective, permitted information flow, and state semantics. Projection positions may change while full-vocabulary loss is retained. Examples may be packed while attention remains isolated. Devices may change while effective gradient weights remain consistent.
 
-从 24M 到 2.4B，这个问题进一步扩展到多流和多卡。统一分母与样本家族计量，让训练配方拥有可以检查的数学含义，也让每次修改都有清楚的归因路径。
+## A model route for personal financial research
 
-### 在规模优化中保持同一个训练问题
+Financial models at a similar scale pursue different tasks. Eva-4B classifies answer quality in earnings calls, FinanceParam 2.9B organizes supervision around financial knowledge and demographic contexts, and FinLCR-4B focuses on long-document financial reasoning.[1][2][3]
 
-按 FP32 参数、梯度及两份 Adam 状态计算，2.4B 的主要训练状态约为 38.36 GB，尚未包含激活与临时张量。精度、分片、重计算和打包因此都需要进入运行时设计。
+130U-FinLLM focuses on **learning personal financial standards and modeling relationships between targets, opinion holders, and evidence**. Financial semantic permissions and training-objective accounting connect material, supervision, computation, and use.
 
-每项优化都沿同一条边界展开：改变执行方式，保持监督目标、样本可见范围与状态语义。投影位置可以改变，完整词表损失需要保留；样本可以打包，attention 必须隔离；设备可以变化，实际梯度权重必须一致。这是整个扩容工程的技术核心。
+MCP, tools, skills, and ASR serve complementary roles: connecting sources, retrieving data, running calculations, managing workflows, and transcribing speech. The specialized model handles recurring interpretation tasks, while tools and retrieval supply information that changes over time.
 
+The 24M Trial is the public window into the project's methods; the 2.4B version serves the private research workflow. The path from data and class failures to semantic supervision, multitask accounting, and runtime scaling demonstrates the ability to **define a problem, organize data, design supervision, control computation, and integrate model outputs into financial research.**
 
-## 一条面向个人金融研究的专用模型路线
+### Technical references
 
-同量级金融模型已经形成不同的技术方向：Eva-4B 面向财报电话会的回答质量分类，FinanceParam 2.9B 围绕金融知识与人群情境组织监督，FinLCR-4B 聚焦长文财务推理。[1][2][3]
+The combined design builds on established language-model and training methods. Counterfactual behavior tests and supervised-position projection provide relevant foundations for the semantic protocol and runtime design.[4][5] Third-party attribution for the backbone is retained in the public Trial repository.
 
-130U-FinLLM 的重心是**个人金融标准的内化，以及目标、持有人和证据之间的关系建模**。它把金融语义许可与训练目标计量连接起来，形成贯穿材料、监督、计算和使用的专用系统。
+1. [Eva-4B: Financial answer-quality classification](https://huggingface.co/FutureMa/Eva-4B)
+2. [FinanceParam: A 2.9B financial adaptation model](https://huggingface.co/bharatgenai/FinanceParam)
+3. [FinLCR: Financial long-context reasoning](https://aclanthology.org/2026.finnlp-1.3/)
+4. [ARTS: Target-aware behavioral robustness testing](https://aclanthology.org/2020.emnlp-main.292/)
+5. [Cut Your Losses: Supervised positions and output computation](https://arxiv.org/abs/2411.09009)
 
-MCP、Tools、Skills 和 ASR 在这个系统中各有位置：连接资料、获取数据、执行计算、管理工作流与转录语音。专用模型负责反复出现的金融判读任务；工具和检索负责提供可更新的信息。两者共同服务个人研究流程。
+## Training workflow
 
-24M Trial 是项目对外展示的方法窗口，2.4B 是面向自用的模型版本。从最初的数据和类别问题，到语义监督、多任务计量和运行时扩容，这条路径体现的是完整的训练工程能力：**能够定义问题、组织数据、设计监督、控制计算，并将模型输出接入自己的金融研究。**
+![Training workflow](../assets/training_workflow.svg)
 
-### 技术参考
+## Core training computation
 
-项目的组合设计建立在成熟语言模型与训练方法之上。反事实行为测试和有效监督位置投影的相关工作，为语义协议与运行时设计提供了技术基础。[4][5] 主干实现的第三方来源在公开 Trial 仓库中保留。
-
-1. [Eva-4B：金融回答质量分类](https://huggingface.co/FutureMa/Eva-4B)
-2. [FinanceParam：2.9B 金融适配模型](https://huggingface.co/bharatgenai/FinanceParam)
-3. [FinLCR：金融长上下文推理](https://aclanthology.org/2026.finnlp-1.3/)
-4. [ARTS：目标相关的行为鲁棒性测试](https://aclanthology.org/2020.emnlp-main.292/)
-5. [Cut Your Losses：有效监督位置与输出计算](https://arxiv.org/abs/2411.09009)
-
-
-## 训练全流程
-
-![训练全流程](../assets/training_workflow.svg)
-
-## 核心训练计算
-
-![核心训练计算](../assets/training_compute.svg)
+![Core training computation](../assets/training_compute.svg)

@@ -19,16 +19,16 @@ for path in (BEST, Path(str(BEST) + '.json'), DEV_REPORT,
              LITE / 'tokenizer/tokenizer.json', LITE / 'task/calibration_temperature.jsonl',
              LITE / 'task/calibration_threshold.jsonl', PROJECT / 'runtime_revision.txt'):
     if not path.is_file():
-        raise FileNotFoundError(f'缺少已完成 06 所需文件: {path}。保留现有文件，不要重训。')
+        raise FileNotFoundError(f'Missing a required stage 06 output: {path}. Keep existing files; do not retrain.')
 
 payload = load_checkpoint(BEST, allow_previous=False)
 if payload.get('config', {}).get('stage') != 'sft':
-    raise ValueError('所选检查点不是 SFT 模型。')
+    raise ValueError('The selected checkpoint is not an SFT model.')
 report = json.loads(DEV_REPORT.read_text(encoding='utf-8'))
 if report['bindings']['checkpoint_sha256'] != sha256_file(BEST):
-    raise ValueError('最佳检查点与开发报告不匹配，已停止。')
+    raise ValueError('The best checkpoint does not match the development report. Stopping.')
 if report['bindings']['tokenizer_sha256'] != sha256_file(LITE / 'tokenizer/tokenizer.json'):
-    raise ValueError('最佳检查点与词表不匹配，已停止。')
+    raise ValueError('The best checkpoint does not match the tokenizer. Stopping.')
 
 stamp = datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S%fZ')
 EXPORT = WORK / ('130u_inference_private_' + stamp)
@@ -48,12 +48,12 @@ small = {'model_state': payload['model_state'], 'model_config': payload['model_c
 save_checkpoint(EXPORT / 'model.pt', small)
 check = load_checkpoint(EXPORT / 'model.pt', allow_previous=False)
 if check['model_config'] != payload['model_config'] or check['tokenizer_hash'] != payload['tokenizer_hash']:
-    raise ValueError('轻量模型元数据与原最佳检查点不一致。')
+    raise ValueError('Inference-model metadata differs from the original best checkpoint.')
 if set(check['model_state']) != set(payload['model_state']) or any(
         not torch.equal(check['model_state'][k], payload['model_state'][k]) for k in check['model_state']):
-    raise ValueError('轻量模型权重与原检查点不一致。')
+    raise ValueError('Inference-model weights differ from the original checkpoint.')
 del check, payload, small
-print('06 最佳模型已核验，轻量权重：', sha256_file(EXPORT / 'model.pt'), flush=True)
+print('Stage 06 best model verified. Inference weights: ', sha256_file(EXPORT / 'model.pt'), flush=True)
 
 # Dataset event_id may be blank. A blank value denotes missing, not a common
 # event; the original function still checks all text and nonempty group IDs.
@@ -69,8 +69,8 @@ calibration = run_calibration(EXPORT / 'model.pt', EXPORT / 'tokenizer',
                               LITE / 'task/calibration_temperature.jsonl',
                               LITE / 'task/calibration_threshold.jsonl',
                               EXPORT / 'calibration.json', target_mode='literal_entity')
-print('校准温度:', calibration['temperature'], '复核阈值:', calibration['review_threshold'],
-      '；校准样本量小，分数不保证可靠。', flush=True)
+print('Calibration temperature:', calibration['temperature'], 'Review threshold:', calibration['review_threshold'],
+      '; calibration uses a small sample and does not establish score reliability.', flush=True)
 
 runner = '''from pathlib import Path
 import argparse, json, sys
@@ -94,7 +94,7 @@ examples = [
     {'text': 'Microsoft will release its results on Thursday.', 'target': 'Microsoft'},
 ]
 outputs = [predictor.predict(row) for row in examples]
-print('以下是合成示例的实际模型输出，不是市场新闻或准确率：', json.dumps(outputs, indent=2, ensure_ascii=False), flush=True)
+print('Actual model outputs on synthetic examples, not market news or accuracy measurements: ', json.dumps(outputs, indent=2, ensure_ascii=False), flush=True)
 meta = {'source_checkpoint_sha256': sha256_file(BEST), 'export_checkpoint_sha256': sha256_file(EXPORT / 'model.pt'),
         'tokenizer_sha256': sha256_file(EXPORT / 'tokenizer/tokenizer.json'),
         'revision': (PROJECT / 'runtime_revision.txt').read_text(encoding='utf-8').strip(),
@@ -114,5 +114,5 @@ with zipfile.ZipFile(archive, 'x', compression=zipfile.ZIP_STORED, allowZip64=Tr
             checksums[name] = {'sha256': sha256_file(path), 'bytes': path.stat().st_size}
             out.write(path, name)
     out.writestr('CHECKSUMS.json', json.dumps(checksums, indent=2, sort_keys=True))
-print('私有推理包:', archive, '字节:', archive.stat().st_size, 'SHA256:', sha256_file(archive), flush=True)
-print('请保留原 06 全量备份；该轻量包用于推理，不能恢复训练。', flush=True)
+print('Private inference package:', archive, 'bytes:', archive.stat().st_size, 'SHA256:', sha256_file(archive), flush=True)
+print('Keep the full stage 06 backup. This lightweight package supports inference, not training recovery.', flush=True)

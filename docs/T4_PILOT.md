@@ -1,65 +1,65 @@
-# 24M Trial｜T4 试跑与 300 步续训结果
+# 24M Trial | T4 Pilot and 300-Step Continuation Results
 
-范围：24M Trial 公开工程文档，本页数字仅属于 seed 阶段的实测记录；后续结果见[Trial 实验报告](experiment-results.md)，项目整体见[总览](../README.md)。
+Scope: public engineering documentation for the 24M Trial. The figures on this page are measured records from the seed stage only. See the [Trial experiment report](experiment-results.md) for subsequent results and the [project overview](../README.md).
 
-2026-10-11。用户提供的 Colab 截图显示，`02a_seed_pilot.ipynb` 在 T4 上完成训练，随后从 Drive 读取了 `run_summary.json`。下列数字来自该截图的人工转录；没有下载原始报告或检查点，也没有由代理独立复跑。机器可读记录见 [试跑记录](../reports/colab_t4_pilot_20261011.json)。
+2026-10-11. User-supplied Colab screenshots showed that `02a_seed_pilot.ipynb` completed training on a T4 and then read `run_summary.json` from Drive. The figures below were manually transcribed from those screenshots. The original report and checkpoint were not downloaded, and the agent did not independently rerun training. See the machine-readable [pilot record](../reports/colab_t4_pilot_20261011.json).
 
-| 指标 | 本次结果 |
+| Metric | Result |
 |---|---:|
-| 参数 | 24,255,744 |
-| 成功更新 / 尝试更新 | 61 / 61 |
-| 实际训练 tokens | 999,424 |
-| 最后一次训练 loss | 7.1595 |
-| 验证 loss | 7.2726 |
-| 本次验证位置数 | 102,400 |
-| 训练循环耗时 | 296.43 秒 |
-| 吞吐 | 3,371.56 tokens/秒 |
-| PyTorch 已分配峰值显存 | 1,136,339,456 字节，约 1.058 GiB |
+| Parameters | 24,255,744 |
+| Successful / attempted updates | 61 / 61 |
+| Actual training tokens | 999,424 |
+| Final training loss | 7.1595 |
+| Validation loss | 7.2726 |
+| Validation positions in this measurement | 102,400 |
+| Training-loop time | 296.43 seconds |
+| Throughput | 3,371.56 tokens/second |
+| Peak GPU memory allocated by PyTorch | 1,136,339,456 bytes, approximately 1.058 GiB |
 
-61 次尝试都完成了参数更新。最终备份输出显示 `verified: true` 和 `MyDrive/130U-FinLLM/seeds/seed_v1`。此前的当前内核导入错误没有阻止这次试跑。
+All 61 attempts completed parameter updates. The final backup output showed `verified: true` and `MyDrive/130U-FinLLM/seeds/seed_v1`. The earlier current-kernel import failure did not block this pilot.
 
-吞吐含训练循环中的验证和检查点备份耗时。显存值来自 `torch.cuda.max_memory_allocated`，不包含全部 CUDA 环境和缓存占用。验证采用配置中的限量批次，不是全部验证文本。`effective_max_tokens: 100000000` 是预算上限；实际训练量是 999,424。预训练 loss 不提供目标资产立场分类的准确率。
+Throughput includes validation and checkpoint-backup time within the training loop. GPU memory comes from `torch.cuda.max_memory_allocated` and does not include the entire CUDA environment or cache footprint. Validation uses the configured limited number of batches, rather than all validation text. `effective_max_tokens: 100000000` is a budget ceiling; actual training processed 999,424 tokens. Pretraining loss does not provide target-asset stance-classification accuracy.
 
-## 300 步续训与最终备份
+## 300-Step Continuation and Final Backup
 
-2026-10-11 用户提供的 `02b_seed_continue.ipynb` 日志连续覆盖第 63–300 步，随后提供最终备份输出。续训报告解析自该日志，备份数字来自用户消息；代理没有独立访问 Colab 运行时或下载 Drive 检查点。机器可读记录见 [续训记录](../reports/colab_t4_continuation_20261011.json)。
+On 2026-10-11, the user provided `02b_seed_continue.ipynb` logs covering steps 63–300 consecutively, followed by final backup output. The continuation report was parsed from that log; backup figures came from the user's message. The agent did not independently access the Colab runtime or download the Drive checkpoint. See the machine-readable [continuation record](../reports/colab_t4_continuation_20261011.json).
 
-| 指标 | 续训结果 |
+| Metric | Continuation result |
 |---|---:|
-| 累计成功更新 / 尝试更新 | 300 / 300 |
-| 累计有效训练 tokens | 4,914,941 |
-| 累计输入位置 | 4,915,200 |
-| 本段更新范围 / 新增更新 | 62→300 / 238 |
-| 本段新增有效 tokens | 3,899,133 |
-| 最后一次训练 loss | 5.4151 |
-| 限量验证 loss | 5.5419 |
-| 本次验证位置数 | 102,400 |
-| 本段训练循环耗时 | 1,150.17 秒，约 19 分 10 秒 |
-| 本段吞吐 | 3,390.06 tokens/秒 |
-| PyTorch 已分配峰值显存 | 1,141,189,120 字节，约 1.063 GiB |
+| Cumulative successful / attempted updates | 300 / 300 |
+| Cumulative effective training tokens | 4,914,941 |
+| Cumulative input positions | 4,915,200 |
+| Segment update range / new updates | 62→300 / 238 |
+| New effective tokens in this segment | 3,899,133 |
+| Final training loss | 5.4151 |
+| Bounded validation loss | 5.5419 |
+| Validation positions in this measurement | 102,400 |
+| Segment training-loop time | 1,150.17 seconds, approximately 19 minutes 10 seconds |
+| Segment throughput | 3,390.06 tokens/second |
+| Peak GPU memory allocated by PyTorch | 1,141,189,120 bytes, approximately 1.063 GiB |
 
-238 条更新日志连续，全部 `amp_skipped: false`，loss 均为有限值。有效 tokens 与输入位置相差 259 个 padding 位置，符合监督计数定义。验证 loss 从第 61 步的 7.2726 降到第 300 步的 5.5419；它衡量相同配置下的文本预测损失，不是金融立场准确率。该日志表明从已有权重继续训练完成，不能单独证明运行时曾被回收或完成新虚拟机恢复。
+The 238 update log entries were consecutive, all reported `amp_skipped: false`, and every loss was finite. Effective tokens were 259 below input positions because of padding, consistent with the supervised-token counting definition. Validation loss fell from 7.2726 at step 61 to 5.5419 at step 300. It measures text-prediction loss under the same configuration, not financial-stance accuracy. The log establishes completion of continuation from existing weights; it does not alone establish that the runtime was reclaimed or that recovery on a new VM succeeded.
 
-续训报告归档显示为 `MyDrive/130U-FinLLM/seeds/seed_v1/report_archive/updates_000062_to_000300`。最终运行快照备份输出为 7 个文件、615,936,768 字节、`verified: true`、`working_copy: false`，显示项目版本目录为 `MyDrive/130U-FinLLM/seeds/seed_v1`；实现中的运行快照子目录为 `run`。原始第 61 步试跑报告仍位于 `report_archive/pilot_updates_000061`。这些是用户运行的输出证据，未作独立 Drive 文件清单或哈希读回。
+The continuation report archive was shown as `MyDrive/130U-FinLLM/seeds/seed_v1/report_archive/updates_000062_to_000300`. Final run-snapshot backup output reported seven files, 615,936,768 bytes, `verified: true`, and `working_copy: false`, with the project version directory `MyDrive/130U-FinLLM/seeds/seed_v1`. The implementation uses `run` as the run-snapshot subdirectory. The original step-61 pilot report remains in `report_archive/pilot_updates_000061`. These are output records from the user's run; Drive file lists and hashes were not independently read back.
 
-本段续训和最终备份已完成，无需重跑训练。原先的 100M token 上限仍只是配置预算；当前累计实际训练量是 4,914,941。
+This continuation segment and its final backup are complete; no retraining is needed. The original 100M-token ceiling remains a configuration budget. The actual cumulative training volume is 4,914,941 tokens.
 
-## 续训入口与恢复
+## Continuation Entry Point and Recovery
 
-打开 [02b：检查恢复并继续通用预训练](https://colab.research.google.com/github/130U/130U-FinLLM/blob/main/notebooks/02b_seed_continue.ipynb)，保持 T4 和 `seed_v1`，从第一格顺序运行。
+Open [02b: verify recovery and continue general pretraining](https://colab.research.google.com/github/130U/130U-FinLLM/blob/main/notebooks/02b_seed_continue.ipynb), keep T4 and `seed_v1`, and run from the first cell in order.
 
-1. 从已有 Drive 备份恢复同一版数据、词表和训练成果，保留原始试跑报告。
-2. 必须找到并验证已有检查点；先从 61 步继续到 62 步。当前进度已经更靠后时复用进度，不回退。
-3. 从验证过的进度继续到累计 300 步；本次实际为 4,914,941 个有效训练 token，随后备份。已有 300 步检查点时复用成果。
+1. Restore the same data, tokenizer, and training artifacts from the existing Drive backup, preserving the original pilot report.
+2. An existing checkpoint must be found and verified. First continue from step 61 to 62. If progress is already beyond that point, reuse it without rolling back.
+3. Continue from verified progress to 300 cumulative steps, then back up. This run processed 4,914,941 actual effective training tokens. If a 300-step checkpoint already exists, reuse the completed artifacts.
 
-续训保留原 8K tokenizer、数据版本、优化器状态、随机状态、数据游标和学习率调度。`warmup_updates=122`、`schedule_updates=6104` 和原 token 上限保持不变，只提升停止步数；不改写受校验的 `data/processed/seed_v1/pilot_config.json`。改变 PyTorch/CUDA、数据或训练语义导致恢复不兼容时会停止，不能跳过检查或改成随机初始化。
+Continuation preserves the original 8K tokenizer, data version, optimizer state, random state, data cursor, and learning-rate schedule. `warmup_updates=122`, `schedule_updates=6104`, and the original token ceiling remain unchanged; only the stopping step increases. The verified `data/processed/seed_v1/pilot_config.json` is not rewritten. Incompatible PyTorch/CUDA, data, or training semantics cause recovery to stop; checks cannot be skipped or replaced with random initialization.
 
-从 61 到 300 步的原规划使用名义 batch 预算约 391.6 万个新增位置，耗时估算约 19.4 分钟。实际第 62→300 步报告为 3,899,133 个新增有效 token、19.17 分钟；第 61→62 步验证另成一段。每段报告的步数/token 数是累计值，耗时/吞吐只属于该次调用，不应相加成重复训练量。
+The original plan from step 61 to 300 implied approximately 3.916 million new positions under the nominal batch budget and an estimated 19.4 minutes. The actual step 62→300 report recorded 3,899,133 new effective tokens and 19.17 minutes; the step 61→62 check forms a separate segment. Step and token counts in each segment report are cumulative, while elapsed time and throughput belong only to that invocation. They must not be summed in a way that double-counts training.
 
-该入口此前本地完整测试 128 项通过，其中 8 项覆盖续训；10 本 Notebook 格式与语法通过。测试执行实际 Notebook 单元格和两个新 Jupyter 内核，以微型 CPU 配置验证 2→3→5 步训练，并验证报告归档和最终快照中断后的恢复。外部 Git/Drive 使用本地替代，工程检查与上方用户提供的 T4 结果分开记录。机器记录见 [续训工程检查](../reports/seed_continuation_checks.json)。
+Before this entry point was delivered, all 128 local tests passed, including eight continuation tests, along with format and syntax checks for 10 notebooks. Tests executed actual notebook cells and two new Jupyter kernels using a tiny CPU configuration for 2→3→5-step training, report archiving, and recovery after interruption of the final snapshot. External Git/Drive services were replaced with local substitutes. Engineering checks are recorded separately from the user-supplied T4 results above. See the machine-readable [continuation engineering checks](../reports/seed_continuation_checks.json).
 
-## 当时的后续安排及实际承接
+## Follow-Up Plan at the Time and Actual Handoff
 
-该阶段的独立通用训练语料约 498 万 token，300 步已接近一遍。当时后续安排是先扩充获准使用的通用及金融语料，建立新数据版本并继续保留任务原文排除池；该安排已由[扩充阶段](DATA_EXPANSION.md)承接。跨数据版本沿用已训练的词表和源检查点、只迁移权重；精确 `--resume` 会拒绝数据哈希变化。直接把同一批数据循环到 1 亿 token 约为 20 遍，不是取得了 1 亿新语料。
+This stage had approximately 4.98 million unique general training tokens, so 300 steps approached one pass. The planned next step was to expand authorized general and financial data, create a new data version, and retain the task-text exclusion pool. The [expansion stage](DATA_EXPANSION.md) subsequently implemented that handoff. Across data versions, the trained tokenizer and source checkpoint are retained, but only weights are transferred; exact `--resume` rejects changed data hashes. Cycling the same data to 100 million tokens would take approximately 20 passes, not produce 100 million new tokens of source data.
 
-`03_domain_pretrain.ipynb` 使用原有 `tokenizer/english`、`runs/pretrain` 和金融混合分片路径，不能直接接上 seed 路径。实际后续金融阶段由[03a](DOMAIN_HANDOFF.md)承接并完成，随后完成字面实体 SFT；DPO 偏好审核与训练另列，不包含在本页结果中。
+`03_domain_pretrain.ipynb` uses the original `tokenizer/english`, `runs/pretrain`, and financial-mixture shard paths, so it cannot directly continue from the seed paths. The actual subsequent financial stage was completed through [03a](DOMAIN_HANDOFF.md), followed by literal-entity SFT. DPO preference review and training are separate and are not included in this page's results.

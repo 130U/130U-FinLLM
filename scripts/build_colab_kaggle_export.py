@@ -5,31 +5,31 @@ from build_expansion_notebooks import DRIVE
 
 def build():
     cells = [markdown('''
-        # 04b｜用 Colab CPU 准备 Kaggle 私有转运包
+        # 04b | Prepare a private Kaggle transfer package on Colab CPU
 
-        本页读取你的 Drive 快照，核对领域检查点、8K词表及实际预训练排除清单，
-        将需要的原始已验证快照流式打成 ZIP。无需 GPU，不训练也不修改 Drive 中的模型。
+        Read your Drive snapshots and validate the domain checkpoint, 8K vocabulary and actual pretraining exclusion manifests,
+        then stream the required verified source snapshots into a ZIP. No GPU or training is required, and the Drive model is unchanged.
 
-        在 Colab 选择「运行时 → 更改运行时类型 → 无」，从第一格顺序运行并挂载自己的 Drive。
-        任务包、用户标注和模型均为私人材料，后续仅上传为 Kaggle **Private** 数据集。
-        转运包保存在临时的 `/content`，断线前请下载到电脑。实际大小以输出为准，可能超过 1 GB；
-        完成后记下 ZIP SHA256 和清单 manifest_sha256。不要同时运行另一份训练或修改原快照。
+        In Colab, select Runtime > Change runtime type > None, run cells in order and mount your own Drive.
+        Task packages, user annotations and models are private; upload them only as a Kaggle **Private** dataset.
+        The transfer package is stored in temporary `/content`; download it before disconnecting. Actual size is reported and may exceed 1 GB.
+        Record ZIP SHA256 and manifest_sha256 when complete. Do not run another training process or modify source snapshots concurrently.
         '''), code(BOOTSTRAP), code(DRIVE), code('''
         from finllm.kaggle_export import export_kaggle_bundle
         TRANSFER_ZIP = Path("/content/130u_kaggle_transfer.zip")
         export_report = export_kaggle_bundle(DRIVE_ROOT, TRANSFER_ZIP)
-        print("Kaggle 私有转运包已校验：", json.dumps(export_report, indent=2, ensure_ascii=False))
-        print("请记录 ZIP SHA256：", export_report["sha256"])
-        print("请记录清单 manifest_sha256（Kaggle解压后使用）：", export_report["manifest_sha256"])
+        print("Private Kaggle transfer package verified:", json.dumps(export_report, indent=2, ensure_ascii=False))
+        print("Record ZIP SHA256:", export_report["sha256"])
+        print("Record manifest_sha256 (used after extraction on Kaggle):", export_report["manifest_sha256"])
         '''), code('''
         from google.colab import files
         if not TRANSFER_ZIP.is_file():
-            raise FileNotFoundError("请先完成上一格的转运包生成与校验。")
+            raise FileNotFoundError("Generate and verify the transfer package in the previous cell first.")
         files.download(str(TRANSFER_ZIP))
-        print("浏览器下载已发起。请等待下载完成，再上传到私有 Kaggle 数据集。")
+        print("Browser download started. Wait for completion before uploading to a private Kaggle dataset.")
         '''), markdown('''
-        本页不启动 SFT，不会保证 Kaggle 已接收此包。若数据校验失败或空间不足，请保留完整报错。
-        如果中断后存在同名临时文件，选择新的 ZIP 文件名；不要覆盖或删除 Drive 原件。
+        This notebook does not start SFT or confirm receipt by Kaggle. Preserve complete errors if validation fails or disk space is insufficient.
+        If a temporary file with the same name remains after interruption, choose a new ZIP filename; do not overwrite or delete Drive originals.
         ''')]
     write("04b_kaggle_export.ipynb", cells)
 

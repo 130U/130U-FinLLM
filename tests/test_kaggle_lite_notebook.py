@@ -25,7 +25,7 @@ def test_lite_notebook_cells_install_train_evaluate_and_resume(mini_project, tmp
     # Execute the real input, training and evaluation cells; bootstrap/network
     # and GPU discovery are the only environment-specific pieces replaced.
     namespace = {"PROJECT": project, "Path": Path, "json": json, "__name__": "__main__"}
-    env_cell = (code[1].replace('"请填轻量包manifest_sha256"', json.dumps(report["manifest_sha256"]))
+    env_cell = (code[1].replace('"PASTE_LITE_MANIFEST_SHA256"', json.dumps(report["manifest_sha256"]))
                        .replace('"/kaggle/input"', json.dumps(str(private_input)))
                        .replace('"/kaggle/working/', json.dumps(str(working) + "/")[:-1]))
     train_cell = (code[2].replace("if not torch.cuda.is_available():", "if False:")
@@ -39,7 +39,7 @@ def test_lite_notebook_cells_install_train_evaluate_and_resume(mini_project, tmp
         result = namespace["result"]
         assert result["updates"] == 2
         assert (working / "130u_lite_sft_v1/sft_best_development.json").is_file()
-        assert "恢复检查点 SHA256" in capsys.readouterr().out
+        assert "Recovery checkpoint SHA256" in capsys.readouterr().out
         exec(compile(train_cell, "04e-resume", "exec"), namespace)
         assert namespace["result"]["updates"] == 2
     finally:

@@ -69,7 +69,7 @@ def assemble(input_path, annotations, output):
         decision = decisions[row["review_no"]]
         candidates = row.get("source_symbol_candidates", [])
         group = f"lexical:{find(row['review_no']):04d}"
-        draft_asset = " / ".join(candidates) if candidates else "待核对：" + row["source_entity"]
+        draft_asset = " / ".join(candidates) if candidates else "Pending verification: " + row["source_entity"]
         item = {**row, **decision, "ai_asset_candidate": draft_asset,
                 "asset_candidate_scope": "Historical author symbol or target name only; market/security identity remains unverified.",
                 "group_id": group, "lexical_group_size": group_sizes[find(row["review_no"])],

@@ -1,26 +1,26 @@
-# 24M Trial｜04a 实体立场 SFT 试验
+# 24M Trial | 04a Entity-Stance SFT Pilot
 
-范围：24M Trial 公开工程文档，保留 04a 的入口与故障记录。后续 SFT 已通过 Kaggle 轻量路径运行，结果见[Trial 实验报告](experiment-results.md)；项目整体见[总览](../README.md)。
+Scope: public engineering documentation for the 24M Trial, preserving the 04a entry point and failure records. Subsequent SFT ran through the lightweight Kaggle workflow; see the [Trial experiment report](experiment-results.md) for results and the [project overview](../README.md) for the broader project.
 
-本试验从已完成的`domain_v1` 74步检查点开始，复用原8K词表，训练标题中字面目标的三分类立场。它是帮助项目尽快形成可测模型的研究试验：目标不等于已核验证券，样本为金融新闻标题而不是X帖子。
+This pilot starts from the completed 74-step `domain_v1` checkpoint, reuses the original 8K tokenizer, and trains three-way stance classification toward literal targets in headlines. It is a research pilot intended to produce a measurable model promptly. Its targets are not verified securities, and its samples are financial news headlines rather than X posts.
 
-## 在 Colab 运行
+## Running in Colab
 
-1. 打开[04a Notebook](https://colab.research.google.com/github/130U/130U-FinLLM/blob/main/notebooks/04a_entity_sft_pilot.ipynb)，选择T4 GPU。
-2. 本机已有私有上传包：`runs/task_pilot/entity_v1_upload.zip`。从头顺序运行，挂载Drive；出现上传提示时选择这个ZIP。
-3. 本页校验数据包与既有预训练排除清单、Drive中的领域检查点与原词表，冻结母模型，再做单步验证及两遍训练。随后对同一开发集比较领域母模型与SFT最佳模型，最后执行备份。
-4. 保留最终训练与开发集输出、`verified: true`备份结果。断线后先确认旧训练进程已停，再从第一格恢复；自动检查完整状态，不能并行运行两份训练。
+1. Open the [04a notebook](https://colab.research.google.com/github/130U/130U-FinLLM/blob/main/notebooks/04a_entity_sft_pilot.ipynb) and select a T4 GPU.
+2. The private upload package already exists locally at `runs/task_pilot/entity_v1_upload.zip`. Run from the top, mount Drive, and select this ZIP when prompted to upload.
+3. The notebook checks the package against the existing pretraining exclusion manifests, verifies the domain checkpoint and original tokenizer on Drive, freezes the parent model, and runs a single-step check followed by two training epochs. It then compares the domain parent and the best SFT model on the same development set and performs the final backup.
+4. Retain the final training and development output and the backup result with `verified: true`. After disconnection, confirm the old training process has stopped before restoring from the first cell. Complete-state checks are automatic; do not run two training copies concurrently.
 
-ZIP含1008条用户确认的标题立场：训练705、开发101、校准101、测试101，后两者在本页不会用于模型选择或自动评测。已有词法和来源ID隔离，语义事件与时间未充分核验；开发指标为探索性结果。原出版方的第三方权利未独立核验，数据保留在本地与个人Drive，不上传公共GitHub。
+The ZIP contains 1008 user-confirmed headline-stance records: 705 training, 101 development, 101 calibration, and 101 test. The last two partitions are not used for model selection or automatic evaluation in this notebook. Lexical and source-ID isolation are in place, but semantic-event and temporal isolation have not been fully verified; development metrics are exploratory. Third-party rights held by the original publishers were not independently verified. The data remains local and on personal Drive, rather than being uploaded to public GitHub.
 
-本入口的模型接收单词形式的标题原文目标，评估及推理需显式`--target-mode literal_entity`。04a 输出三类未校准概率与方向分数；后续平衡 SFT 的推理导出已另行拟合温度与复核阈值。真实证券映射、扩充样本、DPO 和新的独立测试仍是不同的工作项，标题立场结果不等于股票价格预测能力。
+The model in this entry point accepts a single-word target appearing literally in the headline. Evaluation and inference require explicit `--target-mode literal_entity`. 04a outputs three uncalibrated class probabilities and a directional score. The later balanced-SFT inference export separately fitted temperature and a review threshold. Verified security mapping, more samples, DPO, and a new independent test remain separate work items; headline-stance performance is not stock-price prediction ability.
 
-04a 交付时本地完成数据／实体预测／SFT及恢复联合检查23项、15本Notebook格式检查；有真实微型CPU领域→SFT→开发集评估→备份测试。这些是本入口的工程检查；后续实际 SFT 的执行证据另见上方 Trial 实验报告。数据包SHA256：`e87d12013271eb8f93f926b0b2c71cef15b0c777cc58d6e08348773dbd6a7be6`。
+At delivery, 04a passed 23 combined local checks covering data, entity prediction, SFT, and recovery, plus format checks for 15 notebooks. A real tiny CPU test exercised domain training → SFT → development evaluation → backup. These are engineering checks for this entry point; the actual subsequent SFT execution evidence is in the Trial experiment report linked above. Package SHA256: `e87d12013271eb8f93f926b0b2c71cef15b0c777cc58d6e08348773dbd6a7be6`.
 
-## 04a 排除清单不一致修复
+## Fix for the 04a Exclusion-Manifest Mismatch
 
-用户截图显示上传任务包及Drive快照校验成功，但准备阶段报`Task package exclusions differ from the actual pretrained-data lineage`，当时尚未启动SFT。原因是入口错误地要求本地准备的排除清单与云端历史预训练清单具有相同的文件SHA；两者是独立构建，不能仅凭字节是否一致判断标题覆盖情况。
+User screenshots showed successful verification of the uploaded task package and Drive snapshot, followed by `Task package exclusions differ from the actual pretrained-data lineage` during preparation. SFT had not started. The entry point incorrectly required identical file SHA values for the locally prepared exclusions and the historical cloud pretraining exclusions. They were built independently; byte equality alone cannot establish whether the headlines are covered.
 
-修复后读取Drive中seed和expansion的训练、验证四份真实排除清单，校验清单快照及其与实际预训练检查点、分片、领域混合数据的关联；再逐条确认五个任务分区的标题均在对应的排除集合中。不同版本仅在以上验证全部通过后继续训练；缺少清单或标题、清单损坏和来源不匹配仍会报错。云端真实情况必须由用户Colab执行验证，本地测试不替代云端结果。
+The fix reads four actual exclusion manifests from Drive: seed and expansion, each with training and validation manifests. It verifies their snapshots and their association with the actual pretraining checkpoint, shards, and domain mixture, then checks every headline in all five task partitions against the corresponding exclusion sets. Different manifest versions allow training to proceed only after every check passes. Missing manifests or headlines, corrupted manifests, and lineage mismatches still raise errors. Actual cloud state must be verified by running the user's Colab notebook; local tests do not replace cloud results.
 
-修复合入后重启Colab运行时，从第一格依次运行，使内核加载最新代码。已有`tasks/entity_v1`快照校验通过后会复用，不需要重复上传；最终保留实际输出及验证备份。
+After the fix is merged, restart the Colab runtime and run from the first cell so the kernel loads the latest code. An existing `tasks/entity_v1` snapshot is reused after verification, so no repeated upload is required. Retain actual output and the verified final backup.

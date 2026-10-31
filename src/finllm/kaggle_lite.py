@@ -36,7 +36,7 @@ REPORTED_04B = {
 
 def _emit_lite(payload, parent, audit_record, output, expected_domain_sha256,
                expected_tokenizer_sha256, expected_task_sha256, expected_task_rows):
-    print("正在核对任务分区并导出模型权重。", flush=True)
+    print("Checking task partitions and exporting model weights.", flush=True)
     tokenizer, task = payload / "tokenizer/tokenizer.json", payload / "task"
     if sha256_file(tokenizer) != expected_tokenizer_sha256 or sha256_file(task / "task_manifest.json") != expected_task_sha256:
         raise ValueError("Task or tokenizer does not match the separately recorded identity")
@@ -59,7 +59,7 @@ def _emit_lite(payload, parent, audit_record, output, expected_domain_sha256,
               "scope": "weight-only SFT init; Kaggle cannot independently re-audit omitted historical pretraining files"}
     body = json.dumps(result, ensure_ascii=False, sort_keys=True).encode("utf-8")
     partial = output.with_name(output.name + ".partial")
-    print("正在生成轻量包并做完整性校验。", flush=True)
+    print("Building and integrity-checking the lightweight package.", flush=True)
     with zipfile.ZipFile(partial, mode="x", compression=zipfile.ZIP_STORED, allowZip64=True) as dest:
         for name in files:
             dest.write(payload / name, name)
@@ -96,7 +96,7 @@ def export_lite_from_drive(drive_root, output, *, expected_domain_sha256=DOMAIN_
     if (root / "sft/sft_entity_v1").exists() or (root / "live_checkpoints/sft_entity_v1").exists():
         raise ValueError("Existing Colab SFT progress found; inspect it before starting a separate Kaggle experiment")
     original_folder = root / "domains/domain_v1/run"
-    print("正在从 Drive 读取并核验原领域检查点；可能需要一些时间。", flush=True)
+    print("Reading and verifying the original domain checkpoint from Drive; this may take some time.", flush=True)
     original = _snapshot_file(original_folder, "latest.pt")
     _snapshot_file(original_folder, "latest.pt.json")
     if sha256_file(original) != expected_domain_sha256:
@@ -109,7 +109,7 @@ def export_lite_from_drive(drive_root, output, *, expected_domain_sha256=DOMAIN_
     output.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix="130u-lite-", dir=output.parent) as folder:
         payload = Path(folder) / "payload"
-        print("正在核验原词表和已审核任务数据。", flush=True)
+        print("Verifying the original tokenizer and reviewed task data.", flush=True)
         for source, name in ((root / "seeds/seed_v1/tokenizer", "tokenizer"), (root / "tasks/entity_v1", "task")):
             for entry in _inventory(source):
                 relative = _path(name + "/" + entry["path"], ROOTS)

@@ -1,34 +1,34 @@
-# 24M 公开 Trial：从领域权重到立场任务
+# 24M public Trial | From domain weights to stance tasks
 
-本页记录公开 Trial 的阶段衔接，现有链路已推进到平衡 SFT、校准及推理导出。2.4B 自用版本见[项目介绍](PROJECT_OVERVIEW.md)与[模型版本](MODEL_CARD.md)；本页结果只属于 24M。
+This page records stage transitions in the public Trial, whose completed path now includes balanced SFT, calibration, and inference export. See the [project overview](PROJECT_OVERVIEW.md) and [model card](MODEL_CARD.md) for the private 2.4B version. Results on this page belong only to 24M.
 
-## 已完成的衔接
+## Completed transitions
 
-| 环节 | 实际记录 |
+| Component | Recorded outcome |
 |---|---|
-| 领域母模型 | 74 updates、1,211,960 有效监督 tokens；金融验证 loss 3.2375；通用保留集 loss 3.9842 → 4.0574 |
-| 固定任务池 | 1,008 条标题实体样本；705 train、101 development、101 calibration、101 test |
-| 初版 SFT | 2 epochs、45 updates；开发集和旧测试集全部预测 neutral |
-| 平衡 SFT | 3 epochs、139 updates、4,419 标签监督位置；开发集 Macro-F1 0.6549 |
-| 校准及导出 | 已运行；温度约 1.50634、复核阈值约 0.57380；生成轻量推理包 |
+| Domain parent model | 74 updates; 1,211,960 valid supervised tokens; financial validation loss 3.2375; general-retention loss 3.9842 → 4.0574 |
+| Fixed task pool | 1,008 headline entity examples: 705 training, 101 development, 101 calibration, 101 test |
+| Initial SFT | 2 epochs, 45 updates; all-neutral predictions on development and the original test set |
+| Balanced SFT | 3 epochs, 139 updates, 4,419 supervised label positions; development macro-F1 0.6549 |
+| Calibration and export | Completed; temperature approximately 1.50634, review threshold approximately 0.57380; lightweight inference package generated |
 
-来源：[领域运行](../reports/colab_t4_domain_20261030.json)、[实体任务入口](ENTITY_SFT_PILOT.md)、[实验报告](experiment-results.md)、[平衡脚本](../scripts/kaggle_balanced_sft.py)和[导出脚本](../scripts/kaggle_inference_export.py)。
+Sources: [domain run](../reports/colab_t4_domain_20261030.json), [entity-task entry point](ENTITY_SFT_PILOT.md), [experiment report](experiment-results.md), [balanced-SFT script](../scripts/kaggle_balanced_sft.py), and [export script](../scripts/kaggle_inference_export.py).
 
-初版与平衡版均从领域母权重建立新的 SFT 优化状态。平衡版增加了类别曝光和训练预算，不是仅改采样、也不是沿用初版优化器续训。旧的准备期报告继续保留，用来说明当时的输入状态；它们不覆盖后续已完成运行。
+Both initial and balanced SFT created new optimization state from the domain parent weights. The balanced run increased class exposure and training budget; it did not change sampling alone or resume the initial SFT optimizer. Preparation-stage reports are retained to document inputs at the time, not to supersede later completed runs.
 
-## 阶段衔接的核对项
+## Stage-transition checks
 
-1. **母模型身份。** 配对检查点、模型配置、tokenizer hash、报告及来源 revision；权重应与所选领域阶段相符。
-2. **数据与排除清单。** 核对任务分区及其版本，区分来源文件完整性检查与排除内容覆盖检查。SHA 匹配只能证明文件身份，不能单独证明语义事件无泄漏。
-3. **任务语义。** 标签确认、目标关联、证券映射和事件归并分别记录；标题立场不自动扩展为全文观点或投资价格方向。
-4. **训练状态。** 阶段初始化与同一运行 resume 使用不同状态边界；轻量权重包用于新阶段或推理，不能代替完整恢复快照。
+1. **Parent identity.** Match the checkpoint, model configuration, tokenizer hash, reports, and source revision. Weights must correspond to the selected domain stage.
+2. **Data and exclusion manifests.** Verify task partitions and versions, distinguishing source-file integrity from exclusion-content coverage. A matching SHA establishes file identity; it does not independently establish absence of semantic event leakage.
+3. **Task semantics.** Record label confirmation, target association, security mapping, and event grouping separately. Headline stance does not automatically extend to full-article views or future price direction.
+4. **Training state.** Stage initialization and same-run resume have different state boundaries. Lightweight weight packages support a new stage or inference, not full training restoration.
 
-实现见 [SFT 预检](../src/finllm/sft_preflight.py)、[SFT 运行入口](../src/finllm/sft_pilot_runtime.py)和[轻量交接](../src/finllm/kaggle_lite.py)。
+Implementations: [SFT preflight](../src/finllm/sft_preflight.py), [SFT runtime](../src/finllm/sft_pilot_runtime.py), and [lightweight handoff](../src/finllm/kaggle_lite.py).
 
-## 目标模式与新任务
+## Target modes and new tasks
 
-历史 1,008 条任务池按当时的单标识符字面目标条件构建。当前推理支持范围与历史构建规则分别解释；扩大字面目标表达能力不会自动增加历史训练样本。证券模式还需要资产身份、代码类型、别名及历史有效性核验，不能用当前同名代码代替。
+The historical pool of 1,008 examples was built using the single-identifier literal-target rules in effect at the time. Current inference capabilities and historical construction rules must be interpreted separately. Supporting more literal-target expressions does not add historical training examples. Security mode also requires verification of asset identity, identifier type, aliases, and historical validity; a current ticker with the same name is not a substitute.
 
-新增标签或语义范围时，冻结新的审核版本、任务分区和排除清单。人工 CSV 确认与工作台进度 JSON 是不同导入路径，须分别按各自的来源身份和字段规则处理，见[审核口径](TASK_REVIEW_NEXT.md)。
+When adding labels or expanding semantic scope, freeze a new review version, task partitions, and exclusion manifests. Human CSV confirmation and review-workspace progress JSON are separate import paths, each with its own source-identity and field rules. See the [review definitions](TASK_REVIEW_NEXT.md).
 
-真实 DPO 需要独立的偏好监督，不能把标题三分类标签直接称为偏好对。进一步比较需要新的独立评价集；已用于查看初版结果的旧测试集不再作为新留出结果。接续工作入口见[工程交接](HANDOFF.md)。
+Real DPO requires preference supervision with its own review; three-class headline labels cannot simply be called preference pairs. Further comparisons need a new independent evaluation set. The old test set, already examined for the initial model, is no longer a fresh holdout. Continue through the [engineering handoff](HANDOFF.md).

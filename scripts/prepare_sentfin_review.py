@@ -177,18 +177,18 @@ def prepare(source_dir: Path, output: Path, count: int = 200, seed: int = 130, d
 
     (output / "SOURCE_LICENSE.txt").write_bytes((source_dir / "LICENSE").read_bytes())
     (output / "review_instructions.md").write_text(
-        "# 130U FinLLM 人工审核表\n\n"
-        "这是候选审核表，尚无任何本项目人工确认的资产立场标签。source_sentiment 是原作者的金融实体情绪标签，"
-        "不能直接改名为 bullish/bearish。proposed_stance 故意留空。\n\n"
-        "逐行确认 source_entity 是可投资资产、公司或适用资产类别；在 asset_identifier 填写明确的资产标识，"
-        "不确定时不要猜股票代码。填写 human_stance 为 bullish、bearish、neutral 或 exclude。"
-        "bullish/bearish 必须来自本文对指定目标表达的投资方向或前景；单纯已发生的涨跌事实默认 neutral。"
-        "监管机构、不明确目标、讽刺或归属不清时填写 exclude 并解释。完成后才将 human_reviewed 改为 true。\n\n"
-        "同一新闻的多实体标签要分别判断。本表按原标签分层，并包含多实体新闻；它不是总体随机样本，"
-        "不能用它估计完整数据的类别比例。不要依据后来市场涨跌补标签。"
-        "一人审核不等于两人独立一致性验证，必须如实记录。\n\n"
-        "task_exclusions.jsonl 已冻结全部不同原文，包含未抽中审核以及源字段解析失败的新闻；"
-        "这些文本从 tokenizer 和预训练语料排除。整个候选池保持隔离不等于已完成训练/测试划分。\n\n"
+        "# 130U-FinLLM human review worksheet\n\n"
+        "This candidate worksheet starts without project-confirmed asset-stance labels. source_sentiment is the original financial entity sentiment label; "
+        "it cannot simply be renamed bullish/bearish. proposed_stance is intentionally blank.\n\n"
+        "For each row, confirm whether source_entity is an investable asset, company, or applicable asset class. Enter an explicit asset_identifier; "
+        "do not guess symbols. Set human_stance to bullish, bearish, neutral, or exclude. "
+        "Bullish/bearish must follow the investment direction or outlook expressed for the target; a past price change alone defaults to neutral. "
+        "Use exclude with an explanation for regulators, unclear targets, sarcasm, or unclear attribution. Set human_reviewed=true only after review.\n\n"
+        "Review each entity separately in multi-entity news. This worksheet is stratified by source labels and includes multi-entity items; it is not a population-random sample, "
+        "so do not use it to estimate full-dataset class proportions. Do not label using later market movements. "
+        "Record the actual review process; one reviewer does not establish two-reviewer agreement.\n\n"
+        "task_exclusions.jsonl freezes all distinct source texts, including items not sampled for review and items whose source fields could not be parsed. "
+        "Exclude these texts from tokenizer and pretraining corpora. Isolating the candidate pool does not constitute a completed train/test split.\n\n"
         f"Source: https://github.com/pyRis/SEntFiN/tree/{REVISION}\n\n"
         f"Attribution: {ATTRIBUTION}. See SOURCE_LICENSE.txt.\n", encoding="utf-8")
 

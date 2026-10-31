@@ -70,7 +70,7 @@ def upload_existing_bundle(zip_path, export_report, *, owner="theotheo66",
         raise ValueError("04b ZIP or its recorded report is missing or invalid; keep existing files")
     if not isinstance(owner, str) or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9-]{1,63}", owner):
         raise ValueError("Invalid Kaggle account name")
-    print("正在校验已生成的转运包；无需重新打包。", flush=True)
+    print("Validating the existing transfer package; no repackaging is needed.", flush=True)
     if _sha_file(source) != expected:
         raise ValueError("Transfer ZIP hash differs from 04b output; upload cancelled")
     with zipfile.ZipFile(source) as archive:
@@ -87,7 +87,7 @@ def upload_existing_bundle(zip_path, export_report, *, owner="theotheo66",
 
     runner = runner or subprocess.run
     token_reader = token_reader or getpass.getpass
-    print("正在准备 Kaggle 官方命令行工具。", flush=True)
+    print("Preparing the official Kaggle command-line client.", flush=True)
     _execute([sys.executable, "-m", "pip", "install", "--quiet", "--upgrade", "kaggle"], runner=runner)
     slug = "130u-finllm-private-" + uuid.uuid4().hex[:12]
     dataset_id = f"{owner}/{slug}"
@@ -106,19 +106,19 @@ def upload_existing_bundle(zip_path, export_report, *, owner="theotheo66",
                 raise OSError("Not enough temporary disk to stage the transfer ZIP") from None
             shutil.copyfile(source, staged)
         (folder / "dataset-metadata.json").write_text(json.dumps(metadata, ensure_ascii=False), encoding="utf-8")
-        token = token_reader("请粘贴你的 Kaggle API token（输入不显示；不要发到聊天）：").strip()
+        token = token_reader("Paste your Kaggle API token (hidden input; do not share it in chat): ").strip()
         if not token or "\n" in token or "\r" in token or "\x00" in token:
             raise ValueError("A valid single-line Kaggle API token is required")
         environment = os.environ.copy()
         environment["KAGGLE_API_TOKEN"] = token
-        print("正在从 Colab 直接上传到 Kaggle 私有数据集；请保持会话连接。", flush=True)
+        print("Uploading directly from Colab to a private Kaggle dataset; keep the session connected.", flush=True)
         done = threading.Event()
         started = time.monotonic()
 
         def heartbeat():
             while not done.wait(20):
                 seconds = int(time.monotonic() - started)
-                print(f"上传命令仍在运行（已等待约 {seconds} 秒；暂无法显示百分比）。", flush=True)
+                print(f"Upload is still running ({seconds} seconds elapsed; percentage unavailable).", flush=True)
 
         notifier = threading.Thread(target=heartbeat, daemon=True)
         notifier.start()

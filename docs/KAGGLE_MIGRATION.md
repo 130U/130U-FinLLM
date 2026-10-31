@@ -1,27 +1,27 @@
-# 24M Trial｜Colab 到 Kaggle 的完整转运方案
+# 24M Trial | Full Transfer from Colab to Kaggle
 
-范围：24M Trial 公开工程文档，保留 04b/04c 完整转运方案。后续实际 SFT 采用[04d/04e 轻量路径](KAGGLE_LITE.md)，不据此改写本方案的执行记录；项目整体见[总览](../README.md)。
+Scope: public engineering documentation for the 24M Trial, preserving the 04b/04c full-transfer workflow. Subsequent actual SFT used the [04d/04e lightweight workflow](KAGGLE_LITE.md); that does not change the execution record for this workflow. See the [project overview](../README.md).
 
-这次迁移读取已完成的`domain_v1`领域检查点、用户确认的实体标签、8K词表及上游排除池，保持原Drive成果。Kaggle的SFT是新实验：只加载领域模型权重，重新建立优化器。截图的T4 ×2有两张GPU，本实现使用其中一张，不把两张显存视为一块。
+This migration reads the completed `domain_v1` checkpoint, user-confirmed entity labels, 8K tokenizer, and upstream exclusion pools while preserving the original Drive artifacts. Kaggle SFT is a new experiment: it loads only the domain model's weights and initializes a new optimizer. The T4 ×2 setting in the screenshot provides two GPUs; this implementation uses one and does not treat their combined memory as a single allocation pool.
 
-## 1. 在 Colab CPU 导出
+## 1. Export on Colab CPU
 
-打开[04b Kaggle导出](https://colab.research.google.com/github/130U/130U-FinLLM/blob/main/notebooks/04b_kaggle_export.ipynb)，选择「运行时 → 更改运行时类型 → 无」，依次运行并挂载原Drive。程序先核验领域权重、词表、任务标签、四份真实预训练排除池及上游权重链，再流式打包。
+Open [04b Kaggle export](https://colab.research.google.com/github/130U/130U-FinLLM/blob/main/notebooks/04b_kaggle_export.ipynb), select Runtime → Change runtime type → None, run in order, and mount the original Drive. The program verifies the domain weights, tokenizer, task labels, four actual pretraining exclusion pools, and upstream weight lineage before streaming the package to disk.
 
-记录输出中的ZIP SHA256和`manifest_sha256`；浏览器提示下载时，等待`130u_kaggle_transfer.zip`下载完成。文件可能超过1GB，以实际输出为准。包包含模型权重和原始标题，应保存在本人电脑并作为私人数据处理；当前没有独立读取用户Drive，实际云端校验结果以运行输出为准。
+Record the ZIP SHA256 and `manifest_sha256` from the output. When the browser prompts for a download, wait for `130u_kaggle_transfer.zip` to finish. The file may exceed 1GB; use the actual reported size. It contains model weights and original headlines and should be stored on the user's own computer and treated as private data. The user's Drive has not been independently read; actual cloud verification is established by execution output.
 
-## 2. 准备 Kaggle 输入与 Notebook
+## 2. Prepare Kaggle Inputs and the Notebook
 
-在自己的Kaggle账户将转运ZIP创建为**Private**数据集，检查Notebook本身也是Private。在用户已有Notebook中，通过File → Import Notebook导入本项目`notebooks/04c_kaggle_sft.ipynb`，再通过Add Input添加刚才的私有数据集。保留Session options中GPU T4 ×2和Internet on。
+In your own Kaggle account, create a **Private** dataset from the transfer ZIP and verify that the notebook itself is also Private. In the existing notebook, use File → Import Notebook to import this project's `notebooks/04c_kaggle_sft.ipynb`, then use Add Input to attach the private dataset. Retain GPU T4 ×2 and Internet on in Session options.
 
-在04c的配置单元粘贴04b输出的ZIP SHA256和manifest SHA256。Kaggle可能自动解压上传的ZIP：Notebook会识别解压目录并按manifest SHA、逐文件SHA核验；若ZIP保留则核验ZIP SHA。两个恢复SHA在首次运行时留空。
+Paste the ZIP SHA256 and manifest SHA256 reported by 04b into 04c's configuration cell. Kaggle may automatically extract an uploaded ZIP. The notebook detects the extracted directory and verifies its manifest SHA and per-file SHAs; if the ZIP is retained, it verifies the ZIP SHA. Leave both recovery SHAs blank on the first run.
 
-## 3. 运行与备份
+## 3. Run and Back Up
 
-按顺序运行，记录第一格完整40位代码SHA。程序核验领域→扩充→seed母模型链和实际排除池，单步验证后训练并在开发集比较。运行结果位于`/kaggle/working`；需下载最终私有恢复ZIP及其两个SHA，或确保私有Notebook版本保存了输出，不能把工作目录视为永久备份。
+Run in order and record the full 40-character code SHA from the first cell. The program verifies the domain → expansion → seed parent-model chain and actual exclusion pools, performs a single-step check, then trains and compares development results. Outputs are in `/kaggle/working`. Download the final private recovery ZIP and both of its SHAs, or ensure a private notebook version has saved the outputs. Do not treat the working directory as a permanent backup.
 
-跨会话恢复要附加原转运数据和私有恢复数据，填入恢复清单或ZIP SHA，并将第一格REF固定为首次运行的完整代码SHA。严格恢复还要求路径、数据、设备、AMP和PyTorch/CUDA等运行身份匹配；不符合时停止而非假装精确续训。突然中断时未另行保存的本地进度可能丢失。
+To resume across sessions, attach the original transfer data and private recovery data, enter the recovery manifest or ZIP SHA, and pin REF in the first cell to the full code SHA used on the initial run. Strict recovery also requires matching paths, data, device, AMP, PyTorch/CUDA, and other runtime identities. A mismatch stops execution instead of being presented as an exact resume. A sudden interruption can lose local progress that was not separately saved.
 
-本路径的任务是新闻标题的字面实体立场；未验证证券身份、完整事件及时间隔离，不能代表X场景或投资收益。本页下列测试属于完整转运方案的工程验证；后续轻量路径已在用户 Kaggle 环境运行，见[Trial 实验报告](experiment-results.md)。
+This workflow's task is literal-entity stance in news headlines. Security identity and complete event/time isolation have not been verified, so results do not represent the X setting or investment returns. The tests below are engineering validation of the full-transfer workflow. The later lightweight workflow ran in the user's Kaggle environment; see the [Trial experiment report](experiment-results.md).
 
-本地验证：31项转运、四池核查、SFT及中断恢复联合测试通过；另校验17本Notebook格式与Python语法。测试覆盖模拟Kaggle自动解压、微型seed→领域训练→导出→接收→SFT单步及恢复，但不等于真实用户云端成功。
+Local validation: 31 combined tests covering transfer, four-pool checks, SFT, and interruption recovery passed, along with format and Python syntax checks for 17 notebooks. Tests covered simulated Kaggle automatic extraction and a tiny seed → domain training → export → receipt → single-step SFT → recovery sequence. They do not establish success in the user's actual cloud environment.

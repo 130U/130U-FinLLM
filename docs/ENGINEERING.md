@@ -1,37 +1,37 @@
-# 工程复盘｜从 24M 到 2.4B
+# Engineering retrospective | From 24M to 2.4B
 
-24M Trial 是公开工程入口，2.4B 是自用模型版本。项目的工程主线是让数据语义、优化目标和运行时执行保持一致。以下从 Trial 的具体经验展开，连接到项目的两项核心设计。
+The 24M Trial is the public engineering entry point; the 2.4B version serves private use. The engineering objective is to keep data semantics, optimization targets, and runtime execution aligned. The following lessons connect concrete Trial observations to the project's two core designs.
 
-## 类别学习：准确率没有崩溃，方向识别已经失效
+## Class learning: Accuracy can conceal directional failure
 
-Trial 初版对 101 条开发样本全部预测 neutral，其中 neutral 有 76 条，所以准确率仍达到 75.25%。两个方向类的召回为零，macro-F1 为 0.2863。
+The initial Trial predicted neutral for all 101 development examples. Because 76 were neutral, accuracy remained 75.25%. Recall for both directional classes was zero, and macro-F1 was 0.2863.
 
-平衡曝光与增加训练预算后，开发集 macro-F1 为 0.6549：方向判断新增 17 条正确，同时 neutral 少判对 14 条，总正确数从 76 增至 79。这个结果将学习机会、方向召回和误报成本连接起来。完整逐类结果与实验条件见 [实验报告](experiment-results.md)。
+After balancing class exposure and increasing the training budget, development macro-F1 reached 0.6549. The model correctly classified 17 more directional examples while correctly classifying 14 fewer neutral examples, raising total correct predictions from 76 to 79. This connects learning opportunities, directional recall, and the cost of false positives. See the [experiment report](experiment-results.md) for per-class results and experimental conditions.
 
-工程取舍是分开训练分布与自然评价。采样可以增加少数类学习机会，开发与验收仍观察真实类别结构。独立样本、重复曝光和成功更新分别计量，使配方改进能够解释。
+The engineering choice is to separate the training distribution from natural-distribution evaluation. Sampling can increase minority-class exposure while development and acceptance tests retain the observed class structure. Independent examples, repeated exposures, and successful updates are counted separately to make recipe changes interpretable.
 
-## 任务语义：模型与标注者必须回答同一个问题
+## Task semantics: The model and annotator must answer the same question
 
-原文作者的立场、经营指标的变化和使用者的个人判断有不同的监督对象。任务字段明确目标、观点持有人与证据范围；个性化判断进一步关联当时信息和约束。
+An author's expressed stance, a change in an operating metric, and a user's personal judgment are different supervision targets. Task fields specify the target, opinion holder, and evidence scope. Personalized judgments additionally reference the information and constraints available at the time.
 
-金融语义许可将这套定义接入编辑监督：分别审核需要改变、应当保持和不建立约束的关系。模型既要在无关变换下保持判断，也要在目标或有效证据改变时作出正确响应。
+Financial semantic permissions apply these definitions to edited examples. Reviewers separately identify relations that should change, should be preserved, or should receive no constraint. The model should preserve judgments under irrelevant transformations and respond appropriately when a target or valid evidence changes.
 
-## 数据与计量：增加视图不等于增加独立信息
+## Data accounting: More views do not create independent information
 
-同一事件的原文、问答、不同目标查询和编辑属于同一 family。先分区再生成视图，让独立验收边界覆盖全部派生材料。来源和版本与内容一起记录，个人历史材料还需区分当时判断和后续修订。
+Original text, QA, different target queries, and edits concerning the same event belong to one family. Splitting families before generating views extends evaluation boundaries to all derivative material. Provenance and version accompany the content; personal historical material also distinguishes an original judgment from a later revision.
 
-训练同时处理原文、QA 和单标签监督。输入 token、有效损失位置与 family 权重分别管理；多卡和累积使用整个更新窗口的分项有效分母。这样可以从账本还原模型实际获得的学习权重。
+Training combines source text, QA, and single-label supervision. Input tokens, valid loss positions, and family weights are managed separately. Distributed execution and gradient accumulation use term-specific effective denominators across the entire update window. The resulting learning weights can be reconstructed from the ledger.
 
-## 规模与运行时：优化执行，保持训练含义
+## Scale and runtime: Optimize execution while preserving the objective
 
-2.4B 主要 FP32 训练状态按参数、梯度和两份 Adam 状态计算约为 38.36 GB；激活和临时张量另计。精度、状态分片、重计算与样本打包共同决定运行时资源。
+For the 2.4B architecture, FP32 parameters, gradients, and two Adam state tensors require approximately 38.36 GB, excluding activations and temporary tensors. Precision, state sharding, recomputation, and packing jointly determine runtime requirements.
 
-单标签任务在输出投影前选取监督位置，并保留完整词表 CE；样本打包使用分段因果 attention；共享 embedding 与输出头保持同一参数对象。等价检查按有效 logits、loss、梯度、一次更新与恢复后的下一更新展开。
+Single-label tasks select supervised prediction positions before the output projection while retaining full-vocabulary CE. Packing uses segmented causal attention. Input embeddings and the output head remain the same parameter object. Equivalence checks cover effective logits, loss, gradients, one update, and the next update after restoration.
 
-这套方法把性能优化放在明确的数学和信息边界内，使规模变化能够沿同一实验目标解释。公式与计算图见 [训练体系](TRAINING_SYSTEM.md)。
+This places performance optimization within explicit mathematical and information boundaries, allowing scale changes to be interpreted against the same experimental objective. Formulas and computation diagrams are in the [training system](TRAINING_SYSTEM.md).
 
-## 输出进入使用流程
+## Bringing outputs into the workflow
 
-分类、概率刻度与自动接受规则分别处理。校准和阈值配置绑定模型与输入协议，同时报告接受风险和覆盖率。模型、tokenizer、任务定义和校准参数共同构成版本化交付对象。
+Classification, probability scaling, and automatic acceptance rules are handled separately. Calibration and threshold settings are bound to the model and input protocol, with risk and coverage reported together. Model weights, tokenizer, task definitions, and calibration parameters constitute a versioned release.
 
-[项目介绍](PROJECT_OVERVIEW.md) · [模型说明](MODEL_CARD.md) · [Trial 运行指南](TRIAL_GUIDE.md)
+[Project overview](PROJECT_OVERVIEW.md) · [Model card](MODEL_CARD.md) · [Trial guide](TRIAL_GUIDE.md)

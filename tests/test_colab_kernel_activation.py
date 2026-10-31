@@ -57,7 +57,7 @@ def test_activation_refreshes_old_project_modules_without_reloading_torch(tmp_pa
     result = subprocess.run([sys.executable, "-I", "-X", "utf8", "-c", script, str(project)],
                             text=True, encoding="utf-8", capture_output=True)
     assert result.returncode == 0, result.stdout + result.stderr
-    assert result.stdout.count("当前 Notebook 内核导入检查通过") == 2
+    assert result.stdout.count("Current notebook kernel import check passed") == 2
 
 
 def dependency_helper(requirements, versions):

@@ -1,50 +1,50 @@
-# 24M Trial｜首批真实数据执行记录
+# 24M Trial | First Real-Data Preparation Record
 
-范围：24M Trial 公开工程文档，记录首批数据准备及对应阶段结果；后续训练进展见[Trial 实验报告](experiment-results.md)，项目整体见[总览](../README.md)。
+Scope: public engineering documentation for the 24M Trial, recording the first data preparation and corresponding stage results. See the [Trial experiment report](experiment-results.md) for subsequent training progress and the [project overview](../README.md).
 
-2026-10-09 的首批准备记录。以下下载、划分、词表训练和编码均已在本地执行；各段执行状态按其记录时点保留。
+Initial preparation record dated 2026-10-09. The downloads, splits, tokenizer training, and encoding below were executed locally. Each section preserves the execution status at the time it was recorded.
 
-## 实际产物
+## Actual Artifacts
 
-| 项目 | 已执行结果 |
+| Item | Completed result |
 |---|---:|
-| Wikipedia 固定版本子集 | 825 篇，19,985,370 字节 JSONL |
-| 美联储原创 FOMC 纪要快照 | 32 篇，1,791,245 字节 JSONL |
-| 通用训练／验证 | 794／31 篇；4,976,894／135,705 tokens |
-| 金融训练／验证 | 31／1 篇；341,309／9,209 tokens |
-| 候选任务原文排除池 | 10,686 个不同标题，覆盖 10,753 源记录 |
-| 自训 byte-level BPE | 8192 tokens，含 6 个特殊 token |
-| 四份 token 分片净载荷 | 10,926,234 字节，约 10.9 MB |
-| 实际来源、快照、中间文件、词表与分片 | 约 81 MB，另有下载库缓存和依赖 |
+| Fixed-revision Wikipedia subset | 825 documents; 19,985,370 JSONL bytes |
+| Original Federal Reserve FOMC minutes snapshots | 32 documents; 1,791,245 JSONL bytes |
+| General train / validation | 794 / 31 documents; 4,976,894 / 135,705 tokens |
+| Financial train / validation | 31 / 1 documents; 341,309 / 9,209 tokens |
+| Candidate task-text exclusion pool | 10,686 distinct headlines covering 10,753 source records |
+| Byte-level BPE trained from scratch | 8192 tokens, including six special tokens |
+| Payload of four token-shard sets | 10,926,234 bytes, approximately 10.9 MB |
+| Actual sources, snapshots, intermediate files, tokenizer, and shards | Approximately 81 MB, plus download-library caches and dependencies |
 
-数据保存在本地 Git 忽略目录 `data/raw/seed_v1/`、`data/processed/seed_v1/`、`tokenizer/seed_v1/`。审查表在 `data/raw/sentfin_review_v1/`。GitHub 仅发布脚本、空输出 Notebook 和汇总证据，未发布整库文本或模型权重。
+Data is stored in local Git-ignored directories `data/raw/seed_v1/`, `data/processed/seed_v1/`, and `tokenizer/seed_v1/`. Review sheets are in `data/raw/sentfin_review_v1/`. GitHub publishes only scripts, notebooks without stored output, and aggregate evidence; it does not publish full corpus text or model weights.
 
-来源与依据：[Wikipedia 固定版本数据卡](https://huggingface.co/datasets/wikimedia/wikipedia/blob/b04c8d1ceb2f5cd4588862100d08de323dccfbaa/README.md)、[Federal Reserve Board 说明](https://www.federalreserve.gov/disclaimer.htm)、[SEntFiN 作者仓库固定版本](https://github.com/pyRis/SEntFiN/tree/eba43610fe3cb57a3e5773cd6c037da1f8992ad5)。细节、限制及来源筛选见 [通用／金融语料核查](research/corpus_sources_20261009.md)和[任务数据核查](research/stance_sources_20261009.md)。
+Sources and supporting terms: [fixed-revision Wikipedia data card](https://huggingface.co/datasets/wikimedia/wikipedia/blob/b04c8d1ceb2f5cd4588862100d08de323dccfbaa/README.md), [Federal Reserve Board notice](https://www.federalreserve.gov/disclaimer.htm), and [fixed-revision SEntFiN author repository](https://github.com/pyRis/SEntFiN/tree/eba43610fe3cb57a3e5773cd6c037da1f8992ad5). See the [general/financial corpus review](research/corpus_sources_20261009.md) and [task-data review](research/stance_sources_20261009.md) for details, limitations, and source selection.
 
-通用样本是流式前缀，不能声称代表整个 Wikipedia。FOMC 是宏观政策文体，与推文存在分布差异；只有一篇金融验证文档，仅作起步诊断。首批规模足够开展约 1M-token 资源试跑；尚未取得 100M＋25M 独立语料，不把循环回放称为新增数据。
+The general sample is a streamed prefix and is not claimed to represent all of Wikipedia. FOMC minutes use a macroeconomic policy register with a distribution different from tweets. The single financial validation document is only an initial diagnostic. This first batch is sufficient for an approximately 1M-token resource pilot. A unique 100M + 25M corpus has not been obtained; cycling through the same data is not new data.
 
-## 数据处理与验证
+## Processing and Validation
 
-先冻结所有候选任务原文，再按来源文档哈希分出语言模型验证文档；用 SQLite 全局精确去重及已有 SimHash 排除词法近重复。词表只使用训练文本，最多 12 MB JSONL。逐条编码为 uint16 分片，训练时才读取当前批次并转换 int64。上述步骤不要求整库驻留内存，但 tokenizer 的词频表及排除索引仍会占用 RAM。
+All candidate task texts are frozen first. Language-model validation documents are then selected by source-document hash. SQLite provides global exact deduplication, with the existing SimHash check excluding lexical near-duplicates. Tokenizer training uses only training text, capped at 12 MB of JSONL. Documents are encoded individually into uint16 shards; only the current batch is read and converted to int64 during training. These steps do not require the entire corpus in memory, although tokenizer frequency tables and exclusion indexes still consume RAM.
 
-已验证实际 24,255,744 参数模型能够对这批真实 tokens 做一次 CPU 前向与反向，loss 和梯度均有限；没有执行优化器更新或保存权重，也不据此推断金融能力。证据见 `reports/seed_model_input_check.json` 与 `reports/seed_data_preparation.json`。
+An actual 24,255,744-parameter model completed one CPU forward and backward pass on these real tokens, with finite loss and gradients. No optimizer update was performed and no weights were saved; this check does not establish financial capability. Evidence is in `reports/seed_model_input_check.json` and `reports/seed_data_preparation.json`.
 
-输入脚本拒绝未完成的下载清单、哈希不符和空验证分区。已有完整成果通过清单、配置和文件哈希验证后只读复用；不完整成果保留并报错。Notebook 子进程输出逐行显示。两本 seed Notebook 的备份目录是 `MyDrive/130U-FinLLM/seeds/seed_v1/`，不会替换先前 smoke 或其他 seed 的汇总清单。
+Input scripts reject incomplete download manifests, hash mismatches, and empty validation partitions. Existing complete artifacts are reused read-only after manifest, configuration, and file-hash verification. Incomplete artifacts are preserved and an error is raised. Notebook subprocess output streams line by line. Both seed notebooks back up to `MyDrive/130U-FinLLM/seeds/seed_v1/`, without replacing summary manifests from earlier smoke tests or other seed versions.
 
-## 在 Colab 接着执行
+## Continuing in Colab
 
-1. 打开 [01a_seed_data.ipynb](https://colab.research.google.com/github/130U/130U-FinLLM/blob/main/notebooks/01a_seed_data.ipynb)，保存副本，按顺序运行。它先恢复并校验已有成果；首次运行才下载限量来源、建立排除池、训练自己的词表、编码并备份。它可使用 CPU，不会启动模型训练。
-2. 完成后打开 [02a_seed_pilot.ipynb](https://colab.research.google.com/github/130U/130U-FinLLM/blob/main/notebooks/02a_seed_pilot.ipynb)，选择 T4，按顺序运行。它恢复版本快照，从随机权重开始预训练 61 次更新；已有检查点时先校验并恢复进度。
-3. 这段约 1M-token 预训练结束后，读取 GPU 型号和 `run_summary.json` 的实际 tokens、吞吐、峰值显存及验证 loss，再决定下一段预算。[02b_seed_continue.ipynb](https://colab.research.google.com/github/130U/130U-FinLLM/blob/main/notebooks/02b_seed_continue.ipynb) 复用检查点继续到累计 300 步。2026-10-11 用户已提供该段 4,914,941-token 结果与最终备份校验通过输出，见 [T4 训练记录](T4_PILOT.md)，现有成果无需重训。下一阶段先扩充语料并明确跨数据版本承接，不自动跑完 100M。
+1. Open [01a_seed_data.ipynb](https://colab.research.google.com/github/130U/130U-FinLLM/blob/main/notebooks/01a_seed_data.ipynb), save a copy, and run in order. It first restores and verifies existing artifacts. Only the initial run downloads bounded sources, builds the exclusion pool, trains its own tokenizer, encodes data, and backs up. It can use CPU and does not start model training.
+2. Open [02a_seed_pilot.ipynb](https://colab.research.google.com/github/130U/130U-FinLLM/blob/main/notebooks/02a_seed_pilot.ipynb), select a T4, and run in order. It restores the versioned snapshot and pretrains from random weights for 61 updates. If a checkpoint already exists, it verifies and restores progress first.
+3. After this approximately 1M-token pretraining segment, inspect the GPU model and actual token count, throughput, peak GPU memory, and validation loss in `run_summary.json` before deciding the next budget. [02b_seed_continue.ipynb](https://colab.research.google.com/github/130U/130U-FinLLM/blob/main/notebooks/02b_seed_continue.ipynb) reuses the checkpoint and continues to 300 cumulative steps. On 2026-10-11, the user supplied its 4,914,941-token result and successful final backup verification. See the [T4 training record](T4_PILOT.md); existing results need no retraining. The next stage first expands the corpus and explicitly handles transfer across data versions, rather than automatically running to 100M.
 
-Colab 复现会记录自己的来源快照和 tokenizer 哈希；网页可能更新、库版本也可能不同，不能把本地哈希无条件当作未来 Colab 哈希。续训只能使用与原检查点匹配的那一套输入。重复执行 01a 会校验复用；需要重建时才选择新版本目录，不能覆盖已有 tokenizer。旧版重复执行及依赖冲突的处理见 [Colab 修复说明](COLAB_DEBUG.md)。
+A Colab reproduction records its own source snapshots and tokenizer hash. Web pages and library versions can change, so local hashes cannot unconditionally stand in for those from a future Colab run. Continuation must use the input set matching the original checkpoint. Rerunning 01a verifies and reuses artifacts. Choose a new version directory only when rebuilding is necessary; do not overwrite the existing tokenizer. See the [Colab fix notes](COLAB_DEBUG.md) for old rerun behavior and dependency conflicts.
 
-01a/02a/02b 由用户在自己的 Colab 中执行。2026-10-11 用户提供的截图、日志和备份输出显示，24M 模型完成累计 4,914,941-token 通用预训练及 Drive 快照校验；这不代表完整预训练预算、金融后训练或新虚拟机恢复已完成。代理尚未独立读取云端检查点。
+01a/02a/02b are executed by the user in their own Colab account. Screenshots, logs, and backup output supplied on 2026-10-11 show that the 24M model completed 4,914,941 cumulative tokens of general pretraining and Drive snapshot verification. This does not establish completion of the full pretraining budget, financial post-training, or recovery on a new VM. The agent had not independently read the cloud checkpoint.
 
-## 200 条立场审核
+## Reviewing 200 Stance Records
 
-`review_200.csv` 是原始审核表；`review_200_ai_proposals.csv` 是逐条 AI 初判版，每条附中文理由。原始情绪标签、AI 建议、人工确认分列保存，原表未修改。AI 初判为看多 22、看空 16、中性 122、排除 40；它们不是人工真值，也不能用来报告准确率。
+`review_200.csv` is the original review sheet. `review_200_ai_proposals.csv` contains record-level AI proposals with Chinese rationales. Original sentiment labels, AI suggestions, and human confirmations are stored in separate columns; the original sheet was not modified. The AI proposals comprise 22 bullish, 16 bearish, 122 neutral, and 40 excluded records. They are not human ground truth and cannot support an accuracy claim.
 
-审核时填写 `asset_identifier`、`human_stance`、`human_reviewed`：资产代码不清楚时先留空并写说明；`human_stance` 可为 bullish、bearish、neutral、exclude。已有涨跌事实默认中性，明确投资方向或前景才给看多／看空。原始发布数据中监管机构等实体也可能有标签，不能都当可投资目标。
+During review, fill in `asset_identifier`, `human_stance`, and `human_reviewed`. If the asset code is unclear, leave it blank and add a note. `human_stance` can be bullish, bearish, neutral, or exclude. Already-observed price changes default to neutral; bullish/bearish requires an explicit investment direction or outlook. The original published dataset may label entities such as regulators, which cannot all be treated as investable targets.
 
-该首批准备记录建立时，人工确认条数为 0。后续审核已扩至 2000 条，其中 1993 条获用户明确确认，见[审核记录](../reports/human_headline_review_20261030.json)；随后从合格的字面实体任务样本建立了 1008 条 Trial 分区并执行 SFT。标题立场确认与证券身份核验是两个步骤；AI 初判本身不算人工确认，DPO 偏好对也需另行审核。
+When this first preparation record was created, zero records had human confirmation. Review later expanded to 2000 records, of which 1993 received explicit user confirmation; see the [review record](../reports/human_headline_review_20261030.json). Eligible literal-entity task samples subsequently formed the 1008-record Trial partitions used for SFT. Confirming headline stance and verifying security identity are separate steps. An AI proposal alone is not human confirmation, and DPO preference pairs require their own review.

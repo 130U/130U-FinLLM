@@ -1,36 +1,36 @@
-# 训练体系｜从金融语义到参数更新
+# Training system | From financial semantics to parameter updates
 
-130U-FinLLM 的技术主线由两部分组成：金融语义许可规定模型应该学习什么，训练目标与运行时契约规定这些监督如何被准确执行。2.4B 面向自用；公开仓库通过 24M Trial 展示基础训练与工程方法。
+130U-FinLLM has two technical foundations. Financial semantic permissions define what the model should learn. The training objective and runtime contract define how that supervision is executed accurately. The 2.4B version serves personal research; the public 24M Trial exposes foundational training and engineering methods.
 
-![训练全流程](../assets/training_workflow.svg)
+![Training workflow](../assets/training_workflow.svg)
 
-## 数据与四步训练
+## Data and four training stages
 
-### 1. 定义材料、任务与分区
+### 1. Define material, tasks, and partitions
 
-本人原创观点、本人审核的公开文本、通用语言语料与金融原文分别记录来源。每个任务标明目标、观点持有人、证据范围和可得时点。原文立场、指标方向与本人判断采用独立语义，避免一个含混的标签同时承担三个问题。
+My original views, public texts I have reviewed, general-language corpora, and financial source text retain separate provenance. Each task specifies a target, opinion holder, evidence scope, and information availability time. Source-text stance, metric direction, and my own judgment have distinct semantics, so one ambiguous label does not stand in for three questions.
 
-同一事件的原文、目标查询、问答和编辑属于一个 family。先划分家族，再生成派生训练视图；同源材料继承同一区域。人工 gold 配额为 32k：12k train、4k development、4k calibration、4k threshold、8k final test。来源记录、训练视图、重复曝光和有效监督位置分别计数。
+Original text, target queries, QA, and edits about the same event belong to one family. Families are split before derivative training views are created, and related material inherits the same partition. The human-gold recipe allocates 32k records: 12k training, 4k development, 4k calibration, 4k threshold selection, and 8k final test. Source records, training views, repeated exposures, and supervised positions are counted separately.
 
-### 2. 基础语言预训练
+### 2. Foundational language pretraining
 
-2.4B 基础阶段采用随机初始化与 next-token prediction，配方配置 50B 输入 tokens。65,536 词表统一原文编码；词表训练与预训练遵守同样的验收排除边界。
+The 2.4B foundation recipe starts from random initialization with next-token prediction and allocates 50B input tokens. A vocabulary of 65,536 encodes the source text. Tokenizer training and pretraining follow the same evaluation-exclusion boundaries.
 
-### 3. 金融混合适配
+### 3. Financial mixed adaptation
 
-5B 输入配方由 4B 金融原文、0.75B 通用原文、0.20B 阅读问答和 0.05B 立场／事件输入组成。原文监督有效 next-token 位置，QA 监督答案位置，立场／事件视图监督任务标签。输入份额、监督份额和目标权重分别管理。
+The 5B-input-token recipe comprises 4B financial source text, 0.75B general source text, 0.20B reading QA, and 0.05B stance/event inputs. Source text supervises valid next-token positions, QA supervises answer positions, and stance/event views supervise task labels. Input shares, supervision shares, and objective weights are managed separately. Recipe allocations are distinct from actual data inventories and consumed tokens.
 
-### 4. SFT、校准与使用
+### 4. SFT, calibration, and use
 
-目标条件化 SFT 学习任务标准；开发集选择配置，独立校准集拟合概率刻度，阈值集确定接受／复核规则，最终测试检查冻结系统。模型、词表、输入协议和校准配置共同构成交付版本。
+Target-conditioned SFT learns task standards. The development set selects configurations, an independent calibration set fits probability scaling, a threshold set determines acceptance and review rules, and final testing evaluates the frozen system. Model weights, tokenizer, input protocol, and calibration configuration form one release.
 
-## 金融语义许可
+## Financial semantic permissions
 
-“营收增长”和“作者看多”可以同时出现，也可以相互背离。项目分别建模投资立场与财务指标方向，并将 `target / holder / scope / as_of` 放进任务定义。
+“Revenue increased” and “the author is bullish” can agree or diverge. The project models investment stance and financial metric direction separately, with `target / holder / scope / as_of` included in task definitions.
 
-每个编辑对、每条任务轴拥有独立关系：保持标签、重新标注或不建立关系约束。标签保持与分布保持分别授权：严格同义改写可以约束概率分布接近，新增有效证据则允许置信度变化。
+Each edit pair has a separate relation for each task axis: preserve the label, relabel, or impose no relation constraint. Label preservation and distribution preservation require separate permissions. Strict paraphrases can justify nearby probability distributions, while new valid evidence may change confidence.
 
-两端的正确标签构成 CE 锚点。许可为分布等价的对使用一致性约束；有效重标的对使用相对响应约束。对任务 j 的标签从 a 改为 b，响应量为：
+Correct labels at both endpoints provide cross-entropy anchors. Pairs licensed as distribution-equivalent receive consistency constraints; valid relabeled pairs receive relative-response constraints. For task j, when the label changes from a to b, define:
 
 ```text
 D = [log q_j(b | edited) − log q_j(a | edited)]
@@ -38,25 +38,25 @@ D = [log q_j(b | edited) − log q_j(a | edited)]
 L_change = max(0, margin − D)
 ```
 
-审核标签、编辑算子名称和许可证只进入监督控制面。模型输入保留真正可得的文本、任务及目标条件，使预测来自文本关系。
+Reviewed labels, edit-operator names, and permissions are supervision metadata. Model inputs contain the genuinely available text, task, and target conditions, so predictions must follow the textual relationships.
 
-## 训练目标与运行时
+## Training objective and runtime
 
-### 样本家族与有效分母
+### Sample families and effective denominators
 
-审核视图先在族内汇总，再按任务聚合；自然样本保留自身的分布目标。原文、QA、任务标签及有效 pair 分别定义统计单位。同一材料产生更多编辑，不会仅因派生数量而无意放大整个家族的权重。
+Reviewed views are aggregated within families before aggregation by task; natural examples retain their own distributional objective. Source text, QA, task labels, and valid pairs have explicitly defined statistical units. Generating more edits from one source should not unintentionally multiply the weight of its entire family.
 
-对一次更新中的第 j 项，设 rank r 的分子为 S_rj，全局有效分母为 C_j。默认平均 rank 梯度的 reducer 对应：
+For objective term j in one optimizer update, let S_rj be the numerator on rank r and C_j the global effective denominator. With a reducer that averages gradients across W ranks:
 
 ```text
 local_loss_r = W × Σ[j: C_j > 0] λ_j × S_rj / C_j
 ```
 
-分母覆盖整次梯度累积窗口与所有 rank；全局缺席项跳过，局部缺席仍遵守统一通信顺序。抽样频率、重复曝光与任务权重分别记账。
+Denominators cover the entire gradient-accumulation window and all ranks. Globally absent terms are omitted; ranks with no local examples still follow the same collective communication order. Sampling frequency, repeated exposure, and task weights are recorded separately.
 
-### 保持完整词表目标
+### Preserve the full-vocabulary objective
 
-对稀疏标签任务，先选择有效监督位置，再进行共享词表投影：
+For sparse-label tasks, select the hidden states used to predict the supervised answers before applying the shared vocabulary projection:
 
 ```text
 H        = backbone(input)                  # [B, S, 2560]
@@ -65,22 +65,22 @@ logits   = H_valid @ W_vocab.T              # [M, 65536]
 loss     = CE_full_vocabulary(logits, gold)
 ```
 
-上下文完整参与主干计算，省去的是无直接监督位置的输出投影。只投影三个标签会改变完整词表 CE 的归一化目标，因此两者作为不同训练目标处理。
+The entire context still participates in backbone computation. The omitted work is the output projection at positions without direct supervision. Projecting only three labels would change the full-vocabulary CE normalization, so it is treated as a different training objective.
 
-### 保持信息与状态语义
+### Preserve information and state semantics
 
-packing 采用分段因果 attention：每个样本只能读取本段的先前位置。loss mask、position IDs 与 attention 边界各司其职。同一 family 的不同视图也保持独立 segment。
+Packing uses segmented causal attention: an example can attend only to earlier positions within its own segment. Loss masks, position IDs, and attention boundaries serve different roles. Different views of the same family also remain in independent segments.
 
-共享 embedding 与输出头保持同一个参数对象。多卡、精度与恢复路径按有效 logits、分项损失、梯度、一次参数更新与恢复后的下一更新逐级验收，再衡量显存和吞吐。
+The shared embedding and output head remain the same parameter object. Distributed execution, precision changes, and restoration paths are validated in stages: effective logits, individual loss terms, gradients, one parameter update, and the next update after restoration. Memory and throughput are measured after these checks.
 
-![核心训练计算](../assets/training_compute.svg)
+![Core training computation](../assets/training_compute.svg)
 
-## 公开实现入口
+## Public implementation entry points
 
-[Trial 模型](../src/finllm/model.py) · [数据处理](../src/finllm/data.py) · [训练器](../src/finllm/training.py) · [评价](../src/finllm/evaluation.py) · [复现指南](TRIAL_GUIDE.md)
+[Trial model](../src/finllm/model.py) · [Data processing](../src/finllm/data.py) · [Trainer](../src/finllm/training.py) · [Evaluation](../src/finllm/evaluation.py) · [Trial guide](TRIAL_GUIDE.md)
 
-本页介绍项目层面的 2.4B 方法与训练体系；上述可执行入口属于公开 24M Trial。公开配置和训练记录按该版本解释。
+This page describes the project-level 2.4B methods and training system. The executable entry points above belong to the public 24M Trial, as do the public configurations and run records.
 
-## 方法基础
+## Method foundations
 
-[ARTS](https://aclanthology.org/2020.emnlp-main.292/) 和 [CheckList](https://aclanthology.org/2020.acl-main.442/) 提供目标变化与行为测试的相关基础；[Cut Your Losses](https://arxiv.org/abs/2411.09009) 讨论监督位置及输出计算。项目的组合设计将这些方法与金融任务许可、全局目标计量和运行时验收连接起来。
+[ARTS](https://aclanthology.org/2020.emnlp-main.292/) and [CheckList](https://aclanthology.org/2020.acl-main.442/) provide relevant foundations for target changes and behavioral testing. [Cut Your Losses](https://arxiv.org/abs/2411.09009) addresses supervised positions and output computation. The project's combined design connects these methods to financial task permissions, global objective accounting, and runtime validation.

@@ -1,57 +1,57 @@
-# 24M Trial｜02d 扩充通用预训练的严格续训
+# 24M Trial | Strict Continuation of Expanded General Pretraining in 02d
 
-范围：24M Trial 公开工程文档，记录扩充阶段的训练状态与恢复语义；后续结果见[Trial 实验报告](experiment-results.md)，项目整体见[总览](../README.md)。
+Scope: public engineering documentation for the 24M Trial, recording the expansion stage's training state and recovery semantics. See the [Trial experiment report](experiment-results.md) for subsequent results and the [project overview](../README.md) for the broader project.
 
-2026-10-11。入口：[02d_expanded_continue.ipynb](https://colab.research.google.com/github/130U/130U-FinLLM/blob/main/notebooks/02d_expanded_continue.ipynb)。
+2026-10-11. Entry point: [02d_expanded_continue.ipynb](https://colab.research.google.com/github/130U/130U-FinLLM/blob/main/notebooks/02d_expanded_continue.ipynb).
 
-2026-10-30更新：该入口已由用户运行完成，扩充累计1220步。已独立读回GitHub保存的执行输出，见[1220步记录](../reports/colab_t4_expanded_continuation_20261030.json)。之后[03a金融阶段](DOMAIN_HANDOFF.md)已核验并承接该母检查点；以下保留02d原运行与恢复说明。
+2026-10-30 update: the user completed this entry point, reaching 1220 cumulative expansion steps. Execution output saved on GitHub was independently read back; see the [1220-step record](../reports/colab_t4_expanded_continuation_20261030.json). The subsequent [03a financial stage](DOMAIN_HANDOFF.md) verified and inherited this parent checkpoint. The original 02d execution and recovery instructions are preserved below.
 
-用户提供的 02c 日志显示扩充阶段已到 610 步、9,994,240 个监督 tokens，最后训练 loss 4.1933，新通用验证子集 loss 4.1311。随后截图显示原 seed 保留子集训练后 loss 4.4032，最终 7 个文件／615,996,721 字节的快照为 `verified: true`。完整证据及边界见 [运行记录](../reports/colab_t4_expansion_20261011.json)。代理未独立下载云端检查点；用户没有提供原验证集 before 数值，因此不计算该集的改善幅度。
+User-supplied 02c logs showed 610 expansion steps, 9,994,240 supervised tokens, final training loss of 4.1933, and loss of 4.1311 on the new general validation subset. A later screenshot showed after-training loss of 4.4032 on the original seed retention subset and a final seven-file snapshot totaling 615,996,721 bytes with `verified: true`. See the [execution record](../reports/colab_t4_expansion_20261011.json) for the full evidence and its scope. The agent did not independently download the cloud checkpoint. The user did not provide the before value for the original validation set, so no improvement on that set is calculated.
 
-## 运行顺序
+## Execution Order
 
-1. 打开 02d，选择 T4，按顺序运行。Notebook 默认挂载 Drive，首次弹窗按正常授权流程完成。
-2. 环境安装及当前内核导入检查后，恢复已验证的 `seed_v1`／`expansion_v1` 输入。校验完成的 610 步模型、报告和原保留集测量，将完整成果归档后才允许训练。
-3. 记录续训前的原 seed 保留集 loss，或复用已经校验的相同测量。先严格恢复到第 611 步，确认保存与恢复正常。
-4. 接着严格恢复到扩充阶段累计 1220 步。不会重置优化器、调度器、AMP scaler、随机状态、数据游标或阶段计数。
-5. 在相同原验证位置测量续训后的 loss，运行最后一格校验备份。保留报告中的本段新增 tokens、扩充累计 tokens、含 seed 的路径累计 tokens，以及最终 `verified: true` 输出。
+1. Open 02d, select a T4, and run in order. The notebook mounts Drive by default; complete the normal authorization flow when first prompted.
+2. After environment installation and the current-kernel import check, restore the verified `seed_v1` and `expansion_v1` inputs. Verify the completed 610-step model, reports, and original retention measurements, and archive the complete artifacts before training is allowed to begin.
+3. Record the original seed retention loss before continuation, or reuse the same measurement if it has already been verified. First strictly resume to step 611 and confirm that saving and restoration work.
+4. Continue with strict recovery to 1220 cumulative expansion steps. The optimizer, scheduler, AMP scaler, random state, data cursor, and stage counters are not reset.
+5. Measure after-continuation loss at the same original validation positions, then run the final verified-backup cell. Retain the segment's new tokens, cumulative expansion tokens, path-cumulative tokens including the seed stage, and final `verified: true` output.
 
-无需重做数据或原 02c。02d 开始推进后使用 02d 恢复；02c 的 after 结果保持代表 610 步，不将它改写为 1220 步结果。不要同时启动两个 Notebook 的训练单元格。
+There is no need to regenerate data or repeat 02c. Once 02d has advanced training, use 02d for recovery. The 02c after-result continues to represent 610 steps and is not rewritten as a 1220-step result. Do not run the training cells of both notebooks concurrently.
 
-## 阶段预算
+## Stage Budget
 
-| 项目 | 步数／名义 token 位置 |
+| Item | Updates / nominal token positions |
 |---|---:|
-| 已完成的扩充阶段 | 610／9,994,240 |
-| 单步恢复验证 | 累计 611 |
-| 本段停止目标 | 扩充阶段累计 1220 |
-| 本段新增量，含单步验证 | 610／9,994,240 |
-| 完成后的扩充阶段累计 | 19,988,480 |
+| Completed expansion stage | 610 / 9,994,240 |
+| Single-step recovery check | 611 cumulative |
+| Stopping target for this segment | 1220 cumulative expansion steps |
+| New work in this segment, including the single-step check | 610 / 9,994,240 |
+| Cumulative expansion total on completion | 19,988,480 |
 
-计数仍属于同一个 `expansion_v1` 预训练实验，不从零创建另一阶段。有效 tokens 根据报告计数，表中的满长度算术不覆盖 AMP 跳步或 padding。seed 的 4,914,941 个监督 tokens 单独列出；模型路径累计不是唯一语料数量。
+These counters still belong to the same `expansion_v1` pretraining experiment; a separate stage is not created from zero. Effective tokens are counted in the report. The table's full-length arithmetic does not account for skipped AMP updates or padding. The seed's 4,914,941 supervised tokens are listed separately; the cumulative model path is not the quantity of unique data.
 
-沿用原 batch 4、梯度累积 8、序列长度 512、学习率调度跨度 6104、warmup 50 及 100M token 上限。只增加停止步数，不重新热身。已有 41,499,364 个新增通用训练 tokens 足够支持本段无回放；这也不代表 100M 总预算已完成。按前一段端到端吞吐估算，本段约 45 分钟，实际时间以新的报告为准。
+The original batch size 4, gradient accumulation 8, sequence length 512, learning-rate schedule span 6104, warmup 50, and 100M-token ceiling remain in force. Only the stopping step increases; warmup is not restarted. The existing 41,499,364 new general training tokens can support this segment without replay, but that does not mean the 100M total budget is complete. Based on the preceding segment's end-to-end throughput, this segment is estimated at approximately 45 minutes. Actual time comes from its new report.
 
-## 保存与恢复
+## Storage and Recovery
 
-所有 Drive 路径以下均相对 `MyDrive/130U-FinLLM/expansions/expansion_v1`：
+All Drive paths below are relative to `MyDrive/130U-FinLLM/expansions/expansion_v1`:
 
-| 内容 | 路径 |
+| Artifact | Path |
 |---|---|
-| 完整 610 步成果及原 before/after 记录 | `continuations/updates_000610_to_001220/baseline_run` |
-| 本段原验证集前后测量 | `continuations/updates_000610_to_001220/retention/{before,after}` |
-| 本段报告 | `continuations/updates_000610_to_001220/report_archive` |
-| 当前完整运行快照 | `run` |
-| 历次兼容报告 | `report_archive` |
+| Complete 610-step artifacts and original before/after records | `continuations/updates_000610_to_001220/baseline_run` |
+| Before/after measurements on the original validation set for this segment | `continuations/updates_000610_to_001220/retention/{before,after}` |
+| Segment reports | `continuations/updates_000610_to_001220/report_archive` |
+| Current complete run snapshot | `run` |
+| Compatible reports from prior runs | `report_archive` |
 
-自动检查点继续写入项目根目录下 `live_checkpoints/expansion_v1_pretrain`。原 `seeds/seed_v1`、扩充数据、原词表和原 `retention/{before,after}` 保持不变。保存完整 610 步成果会增加约 600 MiB 的持久化空间；保留其模型与优化器状态，不能只保存一个文本报告。
+Automatic checkpoints continue to write to `live_checkpoints/expansion_v1_pretrain` under the project root. The original `seeds/seed_v1`, expanded data, original tokenizer, and original `retention/{before,after}` remain unchanged. Preserving the complete 610-step artifacts adds approximately 600 MiB of persistent storage. The model and optimizer state must be retained; a text report alone is insufficient.
 
-断开后先等待连接恢复，确认旧执行已结束或停止，再从 02d 第一格顺序运行。新虚拟机选择同版本中最新的完整本地／Drive 检查点；已完成 1220 步时只做严格校验并复用原测量，不回退、不重新计时或写出零秒吞吐。
+After disconnection, wait for reconnection and confirm that the old execution has ended or stopped before running 02d from the first cell. A new VM selects the latest complete local/Drive checkpoint for the same version. If 1220 steps are already complete, it performs strict verification and reuses original measurements, without rolling back, restarting timing, or writing zero-second throughput.
 
-恢复要求数据、词表、架构、优化语义、设备类型、精度及 PyTorch/CUDA 身份一致。来自不同环境的检查点不会被当作精确恢复；错误输出应保留实际版本，不能绕过校验。前一段完整证据缺失、检查点损坏、测量或备份失败时明确停止，保留已有成果。
+Recovery requires matching data, tokenizer, architecture, optimization semantics, device type, precision, and PyTorch/CUDA identity. A checkpoint from a different environment is not treated as an exact resume. Preserve the actual versions in error output instead of bypassing verification. Missing evidence for the preceding complete segment, checkpoint corruption, measurement failure, or backup failure causes an explicit stop while existing artifacts are preserved.
 
-## 验收与边界
+## Acceptance and Scope
 
-02d 的成功标准是：恢复验证通过、扩充累计 1220 步、原验证集 before/after 记录可校验、本段报告已归档、最终快照显示 `verified: true`。初次交付时完整232项本地测试通过（343.60秒），13本Notebook格式／语法检查和依赖检查通过。02d代码单元格在两个隔离Jupyter内核中实际执行，另以带dropout的CPU小模型验证直接与分段续训的模型、优化器、调度器、RNG及进度完全一致。工程记录见 [续训检查](../reports/expanded_continuation_checks_20261011.json)；用户随后已完成该段，云端权重独立核验仍由后续入口执行。
+02d succeeds when recovery checks pass, cumulative expansion progress reaches 1220 steps, original validation before/after records are verifiable, the segment report is archived, and the final snapshot reports `verified: true`. At initial delivery, all 232 local tests passed in 343.60 seconds, together with format and syntax checks for 13 notebooks and dependency checks. 02d code cells ran in two isolated Jupyter kernels. A small CPU model with dropout also verified exact agreement of model, optimizer, scheduler, RNG, and progress between uninterrupted and segmented continuation. See the [continuation checks](../reports/expanded_continuation_checks_20261011.json) for the engineering record. The user subsequently completed this segment; independent verification of the cloud weights remains the responsibility of the following entry point.
 
-新通用验证集 loss 和原 seed 保留子集 loss 分开报告。它们均衡量语言建模，不是资产看多／看空准确率。后续领域训练、字面实体 SFT 及概率校准已另有执行记录；DPO 和新的独立测试不包含在本阶段结果中。
+Loss on the new general validation set and the original seed retention subset is reported separately. Both measure language modeling, not bullish/bearish asset accuracy. Subsequent domain training, literal-entity SFT, and probability calibration have separate execution records. DPO and a new independent test are not included in this stage's results.

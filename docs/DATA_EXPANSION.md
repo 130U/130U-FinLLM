@@ -1,70 +1,70 @@
-# 24M Trial｜扩充语料与新阶段权重承接
+# 24M Trial | Corpus Expansion and Weight Transfer into a New Stage
 
-范围：24M Trial 公开工程文档，记录 `expansion_v1` 的数据及权重承接；项目整体见[总览](../README.md)。
+Scope: public engineering documentation for the 24M Trial, covering the data and weight transfer for `expansion_v1`. See the [project overview](../README.md) for the broader project.
 
-2026-10-11建立，扩充结果于2026-10-30更新。本轮入口承接已完成的 `seed_v1` 300 步成果。原数据、8192-token 词表、检查点与报告归档均保留；新产物单独放在 `expansion_v1`。用户已完成01b、02c和02d，扩充累计1220步、19,988,195个有效tokens，最终快照输出校验通过。证据见[1220步读回记录](../reports/colab_t4_expanded_continuation_20261030.json)。后续[03a金融阶段](DOMAIN_HANDOFF.md)也已完成74步／1,211,960个有效tokens；任务 SFT 结果另见[Trial 实验报告](experiment-results.md)。
+Created on 2026-10-11; expansion results updated on 2026-10-30. These entry points build on the completed 300-step `seed_v1` run. The original data, 8192-token vocabulary, checkpoint, and report archives are retained; new artifacts live separately under `expansion_v1`. The user completed 01b, 02c, and 02d, reaching 1220 cumulative expansion steps and 19,988,195 effective tokens, with successful verification reported for the final snapshot. See the [1220-step record read back from the supplied output](../reports/colab_t4_expanded_continuation_20261030.json). The subsequent [03a financial stage](DOMAIN_HANDOFF.md) also completed 74 steps and 1,211,960 effective tokens. Task SFT results are documented separately in the [Trial experiment report](experiment-results.md).
 
-## 运行顺序
+## Execution Order
 
-1. 打开 [01b：扩充语料](https://colab.research.google.com/github/130U/130U-FinLLM/blob/main/notebooks/01b_expand_data.ipynb)，CPU 即可；完成 Drive 授权，从第一格顺序运行。
-2. 查看 `expansion_summary.json` 的实际独立篇数、去重／排除数量和 token 数；确认 `corpora`、`prepared`、`processed` 三部分备份均 `verified: true`。
-3. 打开 [02c：扩充通用预训练](https://colab.research.google.com/github/130U/130U-FinLLM/blob/main/notebooks/02c_expanded_pretrain.ipynb)，选择 T4，完成授权后顺序运行。
-4. 02c 先测母检查点在原 seed 验证分片上的限量 loss，验证新阶段第 1 步，再训练到新阶段累计 610 步。最后在同一原验证分片上重新测 loss，完成运行快照校验备份。
+1. Open [01b: corpus expansion](https://colab.research.google.com/github/130U/130U-FinLLM/blob/main/notebooks/01b_expand_data.ipynb). A CPU runtime is sufficient. Authorize Drive and run the cells from the top.
+2. Inspect the actual unique-document counts, deduplication and exclusion counts, and token counts in `expansion_summary.json`. Confirm `verified: true` for all three backups: `corpora`, `prepared`, and `processed`.
+3. Open [02c: expanded general pretraining](https://colab.research.google.com/github/130U/130U-FinLLM/blob/main/notebooks/02c_expanded_pretrain.ipynb), select a T4, authorize access, and run in order.
+4. 02c first measures the parent checkpoint's loss on a bounded portion of the original seed validation shards, verifies the first update of the new stage, and then trains to 610 cumulative updates in that stage. It finally remeasures loss on the same original validation shards and verifies and backs up the run snapshot.
 
-两个入口都有完整环境安装和当前内核导入检查。01b 在一次 pip 事务中安装项目与 `[data]` 依赖并保留 Colab 的 PyTorch；02c 安装训练所需依赖。无需重做 01a、02a、02b。旧 `03_domain_pretrain.ipynb` 的路径仍不适用于这些版本，不要直接运行。
+Both entry points include complete environment installation and an import check in the current kernel. 01b installs the project and `[data]` dependencies in a single pip transaction while retaining Colab's PyTorch; 02c installs the training dependencies. There is no need to repeat 01a, 02a, or 02b. The paths in the old `03_domain_pretrain.ipynb` still do not match these versions; do not run it directly.
 
-## 来源和真实新增量
+## Sources and the Actual Increment
 
-通用候选取同一固定 Wikipedia revision 的更大前缀，默认最多 200,000,000 字节／50,000 篇。金融候选从 Board 官方历史索引及近年日历的实际链接取得 2011–2025 FOMC 纪要，默认最多 128 篇／12,000,000 字节。版权依据、归属、真实公开日与原 HTML 快照保留，详见 [来源核验](research/expanded_corpus_sources_20261011.md)。
+General candidates use a larger prefix of the same fixed Wikipedia revision, with default limits of 200,000,000 bytes and 50,000 documents. Financial candidates follow actual links in the Board's official historical indexes and recent calendars to obtain 2011–2025 FOMC minutes, with default limits of 128 documents and 12,000,000 bytes. Rights information, attribution, actual publication dates, and original HTML snapshots are retained. See the [source review](research/expanded_corpus_sources_20261011.md).
 
-扩充候选包括旧 seed 前缀和 2021–2024 纪要，因此来源字节数不是新增量。准备管线先排除旧 seed 全部训练及验证文档的来源身份、重复／词法近重复内容，以及已冻结的任务原文池；剩余文档才分为新增 train/dev。原 seed 验证集保持原样，扩充语料自己的验证集单独记录。
+The expansion candidates include the old seed prefix and 2021–2024 minutes, so source bytes are not a measure of new data. The preparation pipeline first excludes source identities, duplicates, and lexical near-duplicates from all old seed training and validation documents, together with the frozen task-text pool. Only the remaining documents are split into new train/dev sets. The original seed validation set remains unchanged; the expanded corpus has its own separately reported validation set.
 
-本轮复用 `tokenizer/seed_v1/tokenizer.json` 的原 hash，不建立新词表。正文逐行处理、token 分片使用 `uint16`，训练时 mmap 读取；不会将全量英文 Wikipedia 转为内存列表。JSONL 输出上限不包含 Parquet 缓冲、HTML／恢复缓存、清洗文本和检查点，不能作为全部空间占用的承诺。
+This stage reuses the original hash of `tokenizer/seed_v1/tokenizer.json`; it does not train a new tokenizer. Text is processed line by line, token shards use `uint16`, and training reads them through mmap. The full English Wikipedia is never materialized as an in-memory list. JSONL output limits exclude Parquet buffers, HTML and restoration caches, cleaned text, and checkpoints, so they are not a guarantee of total disk usage.
 
-实际新语料规模必须由本次 `expansion_summary.json` 给出。少量宏观纪要不能自动满足 25M 独立金融 tokens，重复回放不能算新增文档。01b 另准备不循环源内容的 80% 金融／20% 通用 `domain_mix` 分片，规模受实际金融源限制。本次 02c 不用它启动金融阶段，更不生成资产看多／看空标签；金融阶段的检查点衔接、配置和 Notebook 需另行交付。
+The actual amount of new data must come from this run's `expansion_summary.json`. A small collection of macroeconomic minutes cannot automatically supply 25M unique financial tokens, and replay does not create new documents. 01b also prepares an 80% financial / 20% general `domain_mix` without cycling through source content; its size is limited by the financial source available. This 02c entry point does not use that mix to start the financial stage or generate bullish/bearish asset labels. Checkpoint handoff, configuration, and a notebook for the financial stage require a separate delivery.
 
-## 本地实际准备结果
+## Actual Local Preparation Results
 
-默认来源限额已在本地实际下载并完成 CPU 构建，详见 [机器可读报告](../reports/expansion_local_validation_20261011.json)。28,486 篇 Wikipedia 和 120 篇 FOMC 候选中排除了旧 seed 的 825 篇通用、32 篇金融文档；10,686 条冻结任务原文纳入排除检查。原 seed 清单和 8192-token 词表 hash 保持不变。
+The default source limits were used for a real local download and CPU build; see the [machine-readable report](../reports/expansion_local_validation_20261011.json). From 28,486 Wikipedia and 120 FOMC candidates, the pipeline excluded the old seed's 825 general and 32 financial documents. The 10,686 frozen task texts were included in exclusion checks. The original seed manifests and 8192-token tokenizer hash remained unchanged.
 
-| 新增分片 | 文档数 | tokens |
+| New shards | Documents | Tokens |
 |---|---:|---:|
-| 通用 train | 26,267 | 41,499,364 |
-| 通用 validation | 1,394 | 2,235,968 |
-| 金融 train | 84 | 972,438 |
-| 金融 validation | 4 | 50,999 |
+| General train | 26,267 | 41,499,364 |
+| General validation | 1,394 | 2,235,968 |
+| Financial train | 84 | 972,438 |
+| Financial validation | 4 | 50,999 |
 
-`domain_mix` 为 1,215,545 tokens，其中金融 972,436、通用 243,109，比例为 80/20。它重新组织上述训练源，不能再计为独立新增语料。金融内容是宏观纪要，尚不覆盖推文立场或人工资产标签。
+`domain_mix` contains 1,215,545 tokens: 972,436 financial and 243,109 general, an 80/20 ratio. It reorganizes the training sources above and must not be counted again as independent new data. The financial content consists of macroeconomic minutes; it does not yet cover tweet stance or human asset labels.
 
-本地构建耗时 544.91 秒；每 0.1 秒采样的进程 RSS 峰值为 361,443,328 字节，约 344.7 MiB。候选／缓存 247,243,919 字节、清洗产物 248,168,041 字节、token 产物 91,966,277 字节，合计 587,378,237 字节，约 560.2 MiB。这些仅为本地 CPU 测量和三类产物的占用，不含旧 seed、模型检查点及外部缓存；采样 RSS 也不是精确分配峰值或 T4 显存。
+The local build took 544.91 seconds. Process RSS sampled every 0.1 seconds peaked at 361,443,328 bytes, approximately 344.7 MiB. Candidates and caches occupied 247,243,919 bytes, cleaned artifacts 248,168,041 bytes, and token artifacts 91,966,277 bytes: 587,378,237 bytes in total, approximately 560.2 MiB. These figures measure only the local CPU run and those three artifact categories; they exclude the old seed, model checkpoints, and external caches. Sampled RSS is neither an exact allocation peak nor T4 GPU memory.
 
-01b／02c 交付时的 205 项本地测试通过（274.58 秒），12 本 Notebook 检查通过，`pip check` 无损坏依赖，代码单元格已在隔离 Jupyter 内核及本地替代输入上执行。用户另提供 01b 成功构建及三部分校验备份、02c 的 610 步训练和最终备份输出；代理未独立读回 Drive 文件或下载云端权重。这些证据分别记录，不将本地测试当成云端复跑。
+At the 01b/02c delivery, all 205 local tests passed in 274.58 seconds, checks for 12 notebooks passed, and `pip check` found no broken dependencies. Code cells were executed in isolated Jupyter kernels with local substitute inputs. Separately, the user supplied successful 01b build output, verified backups for all three components, and 02c's 610-step training and final backup output. The agent did not independently read back Drive files or download cloud weights. These evidence sources are recorded separately; local tests are not treated as cloud reruns.
 
-## 权重承接和恢复语义
+## Weight Transfer and Resume Semantics
 
-原 `--resume` 要求数据 hash 相同，不能用来把新语料伪装为旧训练流。02c 使用显式 `pretrain_transition.kind = data_expansion`，冻结并校验母检查点的 SHA256、正式预训练身份、至少 300 步进度及 tokenizer。
+The original `--resume` requires matching data hashes and cannot be used to disguise new data as the old training stream. 02c explicitly uses `pretrain_transition.kind = data_expansion`, freezes the parent checkpoint, and verifies its SHA256, formal pretraining identity, progress of at least 300 steps, and tokenizer.
 
-首次新阶段只加载母模型权重，重新建立 AdamW、调度器、AMP scaler、随机状态和数据游标，阶段更新／token 计数从零开始。报告同时列出母模型 tokens、新阶段 tokens 及沿此模型路径处理的总量。模型架构和词表保持不变。
+On the first entry into the new stage, only the parent model weights are loaded. AdamW, the scheduler, AMP scaler, random state, and data cursor are initialized afresh; stage update and token counters start at zero. Reports list parent-model tokens, new-stage tokens, and the total processed along this model's training path. Architecture and tokenizer remain unchanged.
 
-本段默认 610 次更新，batch 4 × 梯度累积 8 × 序列 512，对应名义 9,994,240 个位置；padding、AMP 跳步等会影响有效计数，实际 token 数按训练报告。新阶段 warmup 50 步、调度跨度 6104 步，当前停止预算 610 步，100M token 上限仍是配置预算。新增通用分片不足以支持本段无回放时明确停止。
+The segment defaults to 610 updates, with batch 4 × gradient accumulation 8 × sequence length 512, equivalent to 9,994,240 nominal positions. Padding and skipped AMP updates affect effective counts; actual tokens come from the training report. The new stage uses 50 warmup steps and a 6104-step schedule, with the current stopping budget set to 610 steps. The 100M-token ceiling remains a configuration budget. Training stops explicitly if the new general shards cannot support this segment without replay.
 
-新阶段创建检查点后，同版本重复执行只能按新阶段 provenance 严格恢复；不能再次从母模型权重重启。改变 tokenizer、语料、精度或语义配置会报错，需保留旧版本并创建独立实验。每 10 步检查点同步 Drive，报告独立归档。训练、原验证集测量或备份失败时，Notebook 成功标记为 false，后续完整备份单元格停止。
+Once the new stage has created a checkpoint, reruns of the same version must resume under its strict provenance checks; they cannot restart from the parent weights. Changes to the tokenizer, corpus, precision, or semantic configuration raise an error and require a separate experiment while preserving the old version. Checkpoints sync to Drive every 10 steps, and reports are archived separately. If training, measurement on the original validation set, or backup fails, the notebook's success flag is false and the subsequent full-backup cell stops.
 
-## 保存位置和验收
+## Storage and Acceptance
 
-| 内容 | Colab 工作目录 | Drive 项目目录下 |
+| Artifact | Colab working directory | Under the Drive project directory |
 |---|---|---|
-| 候选和清洗文本 | `data/raw/expansion_v1/{corpora,prepared}` | `expansions/expansion_v1/{corpora,prepared}` |
-| token 分片与构建报告 | `data/processed/expansion_v1` | `expansions/expansion_v1/processed` |
-| 冻结母检查点 | `checkpoints/expansion_v1_parent` | `expansions/expansion_v1/parent` |
-| 新阶段运行快照 | `runs/expansion_v1_pretrain` | `expansions/expansion_v1/run` |
-| 定期检查点 | 同上 | `live_checkpoints/expansion_v1_pretrain` |
-| 原验证集前后测量／段报告 | 由入口保存 | `expansions/expansion_v1/{retention,report_archive}` |
+| Candidate and cleaned text | `data/raw/expansion_v1/{corpora,prepared}` | `expansions/expansion_v1/{corpora,prepared}` |
+| Token shards and build reports | `data/processed/expansion_v1` | `expansions/expansion_v1/processed` |
+| Frozen parent checkpoint | `checkpoints/expansion_v1_parent` | `expansions/expansion_v1/parent` |
+| New-stage run snapshot | `runs/expansion_v1_pretrain` | `expansions/expansion_v1/run` |
+| Periodic checkpoints | Same as above | `live_checkpoints/expansion_v1_pretrain` |
+| Before/after measurements on the original validation set and segment reports | Saved by the entry point | `expansions/expansion_v1/{retention,report_archive}` |
 
-Drive 项目根目录为 `MyDrive/130U-FinLLM`。原 `seeds/seed_v1` 是只读输入，不被这些入口覆盖。
+The Drive project root is `MyDrive/130U-FinLLM`. The original `seeds/seed_v1` is a read-only input and is not overwritten by these entry points.
 
-01b 完成以真实构建报告和三部分校验备份为准；02c 完成以新阶段目标步数、原验证集 before/after、正式段报告及最终 `verified: true` 为准。连接弹窗不等于后台训练已停止：先等连接恢复，确认运行已结束或停止，再从本页第一格恢复，避免并行启动两个训练。
+01b is complete only with its actual build report and verified backups of all three components. 02c is complete with the target new-stage step count, before/after measurements on the original validation set, the formal segment report, and final `verified: true`. A connection dialog does not establish that background training has stopped: wait for reconnection, confirm the run has ended or stopped, and then restore from the first cell to avoid launching two training processes concurrently.
 
-这两个入口的交付不表示全部通用预训练、金融领域训练或后训练完成。后续还需根据实际语料规模和新阶段测量决定下一段，准备匹配版本的金融混合配置，并完成目标资产映射和人工立场标签。
+Delivery of these two entry points does not mean that all general pretraining, financial-domain training, or post-training is complete. Subsequent segments still depend on the actual corpus size and new-stage measurements, a matching financial-mixture configuration, target-asset mapping, and human stance labels.
 
-02c的610步记录与其保留集测量独立保存。随后02d严格恢复同一扩充实验到1220步；已读回的新通用验证loss为3.6929，原seed保留子集在该续训前后为4.4032→3.9842，最终7文件／616,109,865字节备份输出为`verified: true`。两种验证集仍分开报告。下一阶段03a核验并冻结1220步模型，首次迁移权重进入新的金融优化状态；不会覆盖原02c测量或原seed成果。
+The 610-step 02c record and its retention measurements are preserved separately. 02d then strictly resumed the same expansion experiment to 1220 steps. The read-back general validation loss was 3.6929; loss on the original seed retention subset changed from 4.4032 to 3.9842 across that continuation. The final backup output reported `verified: true` for seven files totaling 616,109,865 bytes. The two validation sets remain separately reported. The next stage, 03a, verifies and freezes the 1220-step model, then transfers its weights into a new financial-stage optimizer state. It does not overwrite the original 02c measurements or seed artifacts.

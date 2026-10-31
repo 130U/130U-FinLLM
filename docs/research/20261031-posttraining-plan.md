@@ -1,55 +1,55 @@
-# 24M Trial｜类别平衡、偏好学习与概率校准的方法说明
+# 24M Trial | Class Balancing, Preference Learning, and Probability Calibration
 
-范围：这是 130U-FinLLM 的 24M Trial 历史方法研究，整理于 2026-10-31，保留原文件名以维持引用。初始 SFT、平衡 SFT 及后续推理校准已有各自执行记录；DPO 仍是条件性方法选项。本文解释这些方法的用途与证据，不作为 2.4B 项目的整体实施进度表。项目整体见[总览](../../README.md)。
+Scope: historical methodology research for the 24M Trial of 130U-FinLLM, compiled on 2026-10-31. The original filename is retained to preserve references. Initial SFT, balanced SFT, and subsequent inference calibration each have execution records; DPO remains a conditional methodological option. This document explains the methods and evidence, rather than serving as an implementation schedule for the overall 2.4B project. See the [project overview](../../README.md).
 
 ## Charter
 
-- **目标**：说明 24M Trial 如何处理类别失衡、组织后训练对照、校准概率并解释实际测量结果。
-- **范围／对象／主题**：英语金融文本分类／已有模型的资产目标立场／类别平衡 SFT、可选 DPO 和未见数据验证。
-- **研究类型**：描述性方法研究；结合 Trial 训练记录说明方法选择、比较条件与适用范围。
-- **问题**：Q1 如何处理类别失衡；Q2 DPO 需要什么数据；Q3 如何判断新模型；Q4 是否可使用外部推特金融数据。
-- **证据路径**：优先原始论文、原始数据集卡和官方文档；项目日志及代码记录该项目的实际行为。检索日期 2026-10-31。
+- **Objective:** explain how the 24M Trial handles class imbalance, structures post-training comparisons, calibrates probabilities, and interprets measured results.
+- **Scope / object / topic:** English financial-text classification / asset-target stance in the existing model / class-balanced SFT, optional DPO, and validation on unseen data.
+- **Research type:** descriptive methodology research, using Trial training records to explain method selection, comparison conditions, and applicability.
+- **Questions:** Q1: How should class imbalance be handled? Q2: What data does DPO require? Q3: How should a new model be assessed? Q4: Can external financial Twitter data be used?
+- **Evidence approach:** prioritize original papers, original dataset cards, and official documentation. Project logs and code establish actual project behavior. Search date: 2026-10-31.
 
-## Canonical sources
+## Canonical Sources
 
-| 级别 | 资料 | 用途 |
+| Tier | Source | Purpose |
 |---|---|---|
-| 1 | [DPO 原论文](https://arxiv.org/abs/2305.18290) | 偏好训练方法和数据语义 |
-| 1 | [BEA 2025 类别不平衡实验](https://aclanthology.org/2025.bea-1.103/) | 不平衡任务中重采样、类别权重的实例 |
-| 1 | [Twitter Financial News Sentiment 数据集卡](https://huggingface.co/datasets/zeroshot/twitter-financial-news-sentiment) | 候选外部数据的声明字段、标签、许可及局限 |
-| 1 | [神经网络校准论文](https://arxiv.org/abs/1706.04599) | 概率校准用途 |
-| 2 | [scikit-learn F1 文档](https://scikit-learn.org/stable/modules/generated/sklearn.metrics.f1_score.html)；[模型评估文档](https://scikit-learn.org/stable/modules/cross_validation.html) | 宏平均定义、未见样本的重要性 |
-| 3 | [本项目结果报告](../experiment-results.md)；[平衡 SFT 脚本](../../scripts/kaggle_balanced_sft.py) | 用户提供的实际日志、配置和当前数据范围 |
+| 1 | [Original DPO paper](https://arxiv.org/abs/2305.18290) | Preference-training method and data semantics |
+| 1 | [BEA 2025 class-imbalance experiment](https://aclanthology.org/2025.bea-1.103/) | Examples of resampling and class weighting in an imbalanced task |
+| 1 | [Twitter Financial News Sentiment dataset card](https://huggingface.co/datasets/zeroshot/twitter-financial-news-sentiment) | Declared fields, labels, license, and limitations of candidate external data |
+| 1 | [Neural-network calibration paper](https://arxiv.org/abs/1706.04599) | Purpose of probability calibration |
+| 2 | [scikit-learn F1 documentation](https://scikit-learn.org/stable/modules/generated/sklearn.metrics.f1_score.html); [model-evaluation documentation](https://scikit-learn.org/stable/modules/cross_validation.html) | Definition of macro averaging and importance of unseen samples |
+| 3 | [Project results report](../experiment-results.md); [balanced SFT script](../../scripts/kaggle_balanced_sft.py) | Actual user-supplied logs, configuration, and current data scope |
 
-## Findings ledger
+## Findings Ledger
 
-| 编号 | 发现 | 证据 | 级别 | 问题 |
+| ID | Finding | Evidence | Tier | Question |
 |---|---|---|---:|---|
-| F1 | 类别平衡后的模型在 101 条开发集上的 macro-F1 为 0.6549；原 SFT 为 0.2863；类别加权 TF-IDF 对照为 0.6087。这些是用于模型选择的成绩。 | [项目结果报告](../experiment-results.md)，用户 Kaggle 日志 | 3 | Q1、Q3 |
-| F2 | 一个三分类教育文本实验采用过采样、类别权重与增强；其任务和模型与本项目不同，不能把其结果直接当作本项目效果。 | [BEA 2025 原始论文](https://aclanthology.org/2025.bea-1.103/) | 1 | Q1 |
-| F3 | DPO 方法以相对偏好信号为目标；没有项目专属偏好对时，不可声称已有新的独立人类偏好反馈。 | [DPO 原论文](https://arxiv.org/abs/2305.18290)；项目现有任务数据 | 1、3 | Q2 |
-| F4 | `macro` F1 对各类别的 F1 取不加权平均；开发集用于选模后需要未见数据来评估泛化。 | [F1 文档](https://scikit-learn.org/stable/modules/generated/sklearn.metrics.f1_score.html)；[模型评估文档](https://scikit-learn.org/stable/modules/cross_validation.html) | 2 | Q3 |
-| F5 | 数据集卡把 Twitter 金融数据描述为带三类标签的文本分类，展示字段为 `text` 与 `label`，没有单独的目标资产字段。数据卡自述 MIT，且正文总量与划分行数陈述不一致。 | [原数据集卡](https://huggingface.co/datasets/zeroshot/twitter-financial-news-sentiment) | 1 | Q4 |
-| F6 | 温度缩放用于校准概率；正温度缩放不改变最高分的类别（由运算顺序直接推得），因此它不能修复三类预测塌缩。 | [校准原论文](https://arxiv.org/abs/1706.04599)；数学推导 | 1、3 | Q3 |
+| F1 | The class-balanced model achieved macro-F1 of 0.6549 on the 101-record development set, compared with 0.2863 for the original SFT and 0.6087 for the class-weighted TF-IDF baseline. These scores were used for model selection. | [Project results report](../experiment-results.md), user-supplied Kaggle logs | 3 | Q1, Q3 |
+| F2 | A three-class educational-text experiment used oversampling, class weighting, and augmentation. Its task and model differ from this project, so its results cannot be treated as this project's effects. | [Original BEA 2025 paper](https://aclanthology.org/2025.bea-1.103/) | 1 | Q1 |
+| F3 | DPO targets relative preference signals. Without project-specific preference pairs, no new independent human-preference feedback can be claimed. | [Original DPO paper](https://arxiv.org/abs/2305.18290); existing project task data | 1, 3 | Q2 |
+| F4 | `macro` F1 is the unweighted mean of per-class F1. After development-set model selection, unseen data is needed to assess generalization. | [F1 documentation](https://scikit-learn.org/stable/modules/generated/sklearn.metrics.f1_score.html); [model-evaluation documentation](https://scikit-learn.org/stable/modules/cross_validation.html) | 2 | Q3 |
+| F5 | The Twitter financial dataset card describes three-class text classification and shows `text` and `label` fields, without a separate target-asset field. The card declares MIT, while its stated total size and split counts are inconsistent. | [Original dataset card](https://huggingface.co/datasets/zeroshot/twitter-financial-news-sentiment) | 1 | Q4 |
+| F6 | Temperature scaling calibrates probabilities. Positive temperature scaling leaves the highest-scoring class unchanged, as follows directly from the operation's ordering, so it cannot repair three-class prediction collapse. | [Original calibration paper](https://arxiv.org/abs/1706.04599); mathematical deduction | 1, 3 | Q3 |
 
-## Scope filter
+## Scope Filter
 
-不将 F2 从教育对话任务泛化成金融文本的保证效果；不将文本情绪或新闻标题分数解释成未来收益或已验证的证券代码表现。
+F2 is not generalized from educational dialogue into a guaranteed effect on financial text. Text-sentiment or headline scores are not interpreted as future returns or validated performance on security identifiers.
 
-## Object filter
+## Object Filter
 
-F1 仅为训练过程中反复使用的、非时间切分开发集结果；之前已经查看的旧测试集不能作为新模型的全新独立测试。F5 的整条文本标签不自动等于文中每一个资产的独立立场；多资产或目标不明确的内容需排除或单独标注。数据集卡列出的许可仍需结合实际来源及使用方式判断，且应先核对真实行数。
+F1 consists only of results on a non-temporal development split reused during training. An old test set already inspected cannot serve as a fresh independent test for a new model. The whole-text labels in F5 do not automatically provide a separate stance toward every asset mentioned. Multi-asset or ambiguous-target content requires exclusion or separate annotation. The dataset-card license must still be assessed against actual sources and intended use, and actual row counts should be checked first.
 
-## 方法结论与 Trial 应用
+## Methodological Conclusions and Trial Application
 
-1. **类别平衡与模型选择。**Trial 从训练分区内部进行重采样，已完成初始 SFT、平衡 SFT 和简单基线的开发集比较，实际分数见 F1。比较使用 macro-F1 与各类召回，以识别“全预测中性”被多数类准确率掩盖的问题。平衡 SFT 同时改变了训练曝光与更新预算，这组结果不能单独归因为重采样；进一步归因需要等预算对照。选定检查点后，新独立测试承担泛化评估，不能从开发集成绩直接推断实际推特表现（F1、F4）。
-2. **DPO 的适用条件。**可从训练集中已确认的正确标签与错误标签构造派生 `chosen/rejected`，冻结 SFT 参考模型，检验偏好目标是否提供额外收益；这种监督应称为**从类别标签派生的偏好**，而非新增人类偏好（F3）。现有 formal DPO 入口要求每对 `preference_reviewed=true`，类别标签确认不等于偏好对逐对审核。采用派生对需明确区分的探索流程，或先完成人工偏好审核。此选项尚未执行，结果比较须允许保留表现更好的 SFT。
-3. **外部弱监督的语义对齐。**候选推特数据需固定版本并核实可用性、许可与标签语义；仅在明确单一目标且标签适配时作为弱监督候选，多目标和方向不清的样本不得默认为真实资产立场（F5）。后续外部数据实验应单列训练来源和验证对象，不能并入 F1 的标题数据对照。
-4. **选模后的概率校准。**Trial 后续推理导出对选定的平衡 SFT 模型拟合温度与复核阈值；原 101 条校准分区再按组分成 51 条温度子集、50 条阈值子集。实现入口见[推理导出脚本](../../scripts/kaggle_inference_export.py)。校准调整三标签条件概率的尖锐程度，正温度不改变类别排序，因此不用于修复预测塌缩（F6）；小样本上的复核阈值也不构成未来错误率保证。
+1. **Class balancing and model selection.** The Trial resampled only within the training partition and completed development-set comparisons of initial SFT, balanced SFT, and simple baselines; actual scores are in F1. Macro-F1 and per-class recall expose all-neutral prediction that majority-class accuracy can conceal. Balanced SFT changed both training exposure and the update budget, so these results cannot isolate resampling as the cause. Attribution requires matched-budget comparisons. After checkpoint selection, a new independent test must assess generalization; development scores do not directly establish performance on actual Twitter data (F1, F4).
+2. **Conditions for DPO.** Confirmed correct and incorrect training labels can form derived `chosen/rejected` pairs. With the SFT reference model frozen, an experiment can test whether the preference objective adds value. This supervision should be called **preferences derived from class labels**, rather than new human preferences (F3). The existing formal DPO entry point requires `preference_reviewed=true` for every pair; confirmation of class labels does not constitute pair-by-pair preference review. Derived pairs require a clearly distinguished exploratory workflow, or prior human preference review. This option has not been executed, and comparison must allow retention of a better-performing SFT model.
+3. **Semantic alignment of external weak supervision.** Candidate Twitter data requires a fixed version and checks of availability, license, and label semantics. It is a weak-supervision candidate only when the target is unambiguously singular and the label matches the task. Multi-target samples and unclear directions must not default to genuine asset stance (F5). Subsequent external-data experiments should report their training sources and evaluation objects separately, rather than being merged into the headline-data comparisons in F1.
+4. **Probability calibration after model selection.** The Trial's later inference export fitted temperature and a review threshold for the selected balanced-SFT model. The original 101-record calibration partition was split by group into 51 temperature-fitting and 50 threshold-selection records. See the [inference export script](../../scripts/kaggle_inference_export.py). Calibration adjusts the sharpness of the three-label conditional probabilities. Positive temperature does not change class ranking and therefore does not fix prediction collapse (F6). A review threshold fitted on a small sample is not a guarantee of future error rates.
 
-## 复现实验的条件与适用范围
+## Reproduction Conditions and Applicability
 
-1. 每个实验绑定实际检查点、词表、代码版本、训练分区和输出；备份生成、下载与独立校验分别记录。轻量推理导出不代替包含优化器状态的训练恢复包。
-2. SFT 与 DPO 对照使用固定数据、预算与同一开发集，评估分区不进入偏好构造；旧测试一经用于观察结果，不能重新称为未见测试。
-3. 泛化评估使用未参与训练或调参的新数据，按目标、事件和时间审查，报告每类样本量、宏 F1、各类召回及复核覆盖率。标题数据与外部推特数据的成绩分别报告。
-4. 本文可复核的实测对象是 24M Trial 的标题立场实验。有关外部域迁移、完整事件隔离和投资收益的判断需要对应实验，不能由本页开发集对照推出。
+1. Bind each experiment to its actual checkpoint, tokenizer, code version, training partition, and output. Record backup creation, download, and independent verification separately. A lightweight inference export does not replace a training-recovery package containing optimizer state.
+2. SFT/DPO comparisons use fixed data, budgets, and the same development set. Evaluation partitions do not enter preference construction. Once an old test set has been used to inspect results, it cannot again be described as unseen.
+3. Generalization evaluation uses new data that participated in neither training nor tuning, reviewed by target, event, and time. Report per-class sample counts, macro-F1, per-class recall, and review coverage. Report headline and external Twitter results separately.
+4. The reproducible measured object here is the 24M Trial's headline-stance experiment. External-domain transfer, complete event isolation, and investment returns require corresponding experiments and cannot be inferred from this page's development comparisons.
