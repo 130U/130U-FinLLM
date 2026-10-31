@@ -2,11 +2,11 @@
 
 A financial sentence can express opposite views about different assets. “Long $AAPL, short $TSLA” needs one interpretation for Apple and another for Tesla. Assigning a single sentiment label to the sentence loses that distinction.
 
-I built **130U-FinLLM** to train and evaluate a compact language model from random initialization. The system takes English text and a specified asset, and produces **bearish, neutral, or bullish** stance, class probabilities, and a direction score.
+I built **130U-FinLLM** to train and evaluate a compact language model from random initialization. The experimental interface takes English text and a specified target and produces **bearish, neutral, or bullish** stance, class probabilities, and a direction score. The current experiment uses literal entities in financial news headlines; ticker resolution and Twitter performance have not been established.
 
 ## The model and learning problem
 
-The model specification is a **24.26M-parameter decoder** implemented in native PyTorch, with a self-trained byte-level BPE tokenizer. The training path covers general pretraining, financial-domain pretraining, full-parameter supervised fine-tuning, and a preference-training experiment.
+The model specification is a **24.26M-parameter decoder** implemented in native PyTorch, with a self-trained byte-level BPE tokenizer. The completed training path covers general pretraining, financial-domain pretraining, and full-parameter supervised fine-tuning. Preference-training code is implemented, but no DPO training run has been reported.
 
 My task design puts the asset inside the model input and places supervision at the answer label. This keeps the learning objective focused on the text’s stance toward that asset. Preference training compares alternative stance labels against a frozen supervised reference model.
 
@@ -26,9 +26,15 @@ This provides a concrete setup for researching financial language models from sc
 
 [Training code](src/finllm/training.py) · [Data preparation](docs/SEED_DATA.md) · [Evaluation](src/finllm/evaluation.py) · [Model specification](docs/MODEL_CARD.md)
 
+### Measured headline classification results
+
+The first SFT run predicted every example as neutral: on 101 development headlines it reached 75.25% accuracy but only 0.2863 macro-F1; on 101 test headlines it reached 58.42% accuracy and 0.2458 macro-F1. Both directional-class recalls were zero.
+
+A subsequent class-balanced SFT run reported **0.6549 macro-F1 on the same 101-example development set**, compared with **0.6087** for a class-weighted TF-IDF/logistic-regression baseline. Bearish recall was 50% (5/10) and bullish recall was 80% (12/15). These are model-selection results reported in user-supplied Kaggle output, not a fresh independent test of the balanced model. The [experiment report](docs/experiment-results.md) records the method, comparison, evidence, and limits.
+
 Start with the [small training-to-prediction notebook](https://colab.research.google.com/github/130U/130U-FinLLM/blob/main/notebooks/00_setup_and_smoke.ipynb). Continue through [seed preparation](notebooks/01a_seed_data.ipynb), the [model pilot](notebooks/02a_seed_pilot.ipynb), and [checkpoint continuation](https://colab.research.google.com/github/130U/130U-FinLLM/blob/main/notebooks/02b_seed_continue.ipynb).
 
-A user-run Colab T4 experiment reached 300 cumulative updates and 4,914,941 supervised tokens, with validation loss decreasing from 7.2726 at the pilot to 5.5419. The continuation took about 19 minutes, and the final Drive backup reported successful verification. The [training record](docs/T4_PILOT.md) documents the user-supplied evidence, measurement limits, and next steps. Financial stance accuracy has not yet been evaluated.
+A user-run Colab T4 experiment reached 300 cumulative updates and 4,914,941 supervised tokens, with validation loss decreasing from 7.2726 at the pilot to 5.5419. The continuation took about 19 minutes, and the final Drive backup reported successful verification. The [training record](docs/T4_PILOT.md) documents the user-supplied evidence, measurement limits, and next steps.
 
 The expanded corpus uses [01b: additional data](https://colab.research.google.com/github/130U/130U-FinLLM/blob/main/notebooks/01b_expand_data.ipynb) and [02c: expanded pretraining](https://colab.research.google.com/github/130U/130U-FinLLM/blob/main/notebooks/02c_expanded_pretrain.ipynb). It keeps the existing tokenizer, removes overlap with seed and evaluation documents, and transfers the 300-step model weights into a separately recorded training stage. User-supplied Colab logs show this stage reached 610 updates and 9,994,240 supervised tokens. Its new validation subset had loss 4.1311; a separate frozen seed validation subset had post-training loss 4.4032. The final Drive snapshot reported `verified: true`. The [expansion training record](reports/colab_t4_expansion_20261011.json) distinguishes supplied evidence from independent cloud verification.
 
