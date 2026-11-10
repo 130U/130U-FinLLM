@@ -1,8 +1,8 @@
-# 24M public Trial | Engineering handoff
+# 24M public Trial | Maintenance
 
 This page supports further work on the public 24M Trial code and records. The project's private 2.4B version is described in the [project overview](PROJECT_OVERVIEW.md) and [model card](MODEL_CARD.md). Replacing the repository's default configuration with that architecture does not complete the migration.
 
-The Trial has completed pretraining from random initialization, financial adaptation, headline entity-stance SFT, a balanced-sampling comparison, and calibrated inference export. Language training totals 26,115,096 valid supervised tokens. The final SFT training pool has 705 independent examples; the balanced run consumed 4,419 supervised label positions. See [implementation status](STATUS.md), the [counting ledger](PROJECT_PROGRESS.md), and the [experiment report](experiment-results.md).
+The Trial has completed pretraining from random initialization, financial adaptation, headline entity-stance SFT, a balanced-sampling comparison, and calibrated inference export. Language training totals 26,115,096 valid supervised tokens. The final SFT training pool has 705 independent examples; the balanced run consumed 4,419 supervised label positions. See [implementation status](STATUS.md), the [counting ledger](TRAINING_LEDGER.md), and the [experiment report](experiment-results.md).
 
 ## Engineering entry points
 
@@ -11,11 +11,11 @@ The Trial has completed pretraining from random initialization, financial adapta
 | Installation and synthetic smoke | [Dependencies](../pyproject.toml), [00 notebook](../notebooks/00_setup_and_smoke.ipynb), [CLI](../src/finllm/cli.py) | Checks the code pipeline; does not measure real financial task performance |
 | Seed data and pretraining | [Seed data](SEED_DATA.md), [T4 pilot](T4_PILOT.md) | Matching corpora, tokenizer, and exclusion manifests |
 | Expansion and continuation | [Data expansion](DATA_EXPANSION.md), [Expanded continuation](EXPANDED_CONTINUATION.md) | Distinguish intermediate checkpoints from later cumulative records |
-| Domain adaptation and task transition | [Domain handoff](DOMAIN_HANDOFF.md), [Post-domain transition](POST_DOMAIN_NEXT.md) | Verify parent weights, vocabulary, data, and stage configuration |
+| Domain adaptation and task transition | [Domain handoff](DOMAIN_TRAINING.md), [Post-domain transition](DATA_IMPORT.md) | Verify parent weights, vocabulary, data, and stage configuration |
 | Entity-stance SFT | [Entity SFT pilot](ENTITY_SFT_PILOT.md), [04e notebook](../notebooks/04e_kaggle_lite_sft.ipynb) | Private task package and matching domain weights |
 | Balanced-sampling comparison | [Run script](../scripts/kaggle_balanced_sft.py) | Prepared 04e session inputs; sampling confined to the training partition |
 | Calibration and inference export | [Run script](../scripts/kaggle_inference_export.py) | Best balanced-SFT weights, original tokenizer, and two calibration subsets |
-| Human review and import | [Task review](TASK_REVIEW_NEXT.md), [Review workspace](REVIEW_WORKSPACE.md) | Verify source version, label scope, and human-confirmation status |
+| Human review and import | [Task review](TASK_REVIEW.md), [Review workspace](REVIEW_WORKSPACE.md) | Verify source version, label scope, and human-confirmation status |
 
 The repository contains code, default configurations, and public summaries, without private headlines, labels, training weights, or complete run backups. Reproducing a historical real-data run requires its matching data, checkpoints, and runtime configuration. Generic configuration files are not complete manifests of every experiment.
 
@@ -37,4 +37,4 @@ Freeze new examples for further independent evaluation. Previously examined test
 
 ## Preservation and publication
 
-Retain historical reports, including failures and preparation-stage records. [Status](STATUS.md) and the [experiment report](experiment-results.md) supply later updates. Public code licensing and third-party attribution are in [LICENSE](../LICENSE) and [THIRD_PARTY_NOTICES](../THIRD_PARTY_NOTICES.md). Data use follows the [data guide](DATA_GUIDE.md) and the conditions of each source.
+Retain experiment protocols, measured results, and the provenance required to interpret them. [Status](STATUS.md) and the [experiment report](experiment-results.md) supply later updates. Public code licensing and third-party attribution are in [LICENSE](../LICENSE) and [THIRD_PARTY_NOTICES](../THIRD_PARTY_NOTICES.md). Data use follows the [data guide](DATA_GUIDE.md) and the conditions of each source.

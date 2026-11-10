@@ -71,9 +71,9 @@ def test_generated_cells_preserve_pilot_and_repeat_completed_run(tmp_path, monke
     exec(setup, namespace)
     state = namespace["continuation"]
     assert (Path(state["pilot_archive"]) / "run_summary.json").read_bytes() == pilot_bytes
-    with pytest.raises(RuntimeError, match="断点续训"):
+    with pytest.raises(RuntimeError, match="Complete the resume verification"):
         exec(continuation, namespace)
-    with pytest.raises(RuntimeError, match="续训尚未"):
+    with pytest.raises(RuntimeError, match="Continued training has not completed successfully"):
         exec(backup, namespace)
     exec(probe, namespace)
     assert namespace["probe_result"]["start_updates"] == 2
@@ -141,7 +141,7 @@ def test_training_or_backup_failure_never_prints_success(tmp_path, monkeypatch):
     with pytest.raises(RuntimeError, match="simulated CLI failure"):
         exec(probe, namespace)
     assert not namespace["RESUME_PROBE_SUCCEEDED"]
-    with pytest.raises(RuntimeError, match="续训尚未"):
+    with pytest.raises(RuntimeError, match="Continued training has not completed successfully"):
         exec(backup, namespace)
     namespace["finllm"] = _runner
     exec(probe, namespace)

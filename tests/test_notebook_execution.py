@@ -246,15 +246,15 @@ def test_live_kernel_install_and_seed_notebook_checkpoint_roundtrip(tmp_path, mo
     print("Notebook integration: start live kernel before editable install", flush=True)
     with _kernel(python, first) as execute:
         execute("import importlib.util\nassert importlib.util.find_spec('finllm') is None")
-        # The old notebook installed into an already-running kernel. A fresh
-        # CLI sees editable .pth changes; that live kernel does not.
+        # A fresh CLI sees editable .pth changes; an already-running kernel
+        # requires explicit source activation.
         execute(f"import subprocess, sys\nsubprocess.run([sys.executable, '-m', 'pip', 'install', '-q', '-e', {str(repository)!r}, '--no-deps', '--no-build-isolation', '--ignore-installed'], check=True)")
         output = execute("print(subprocess.check_output([sys.executable, '-m', 'finllm', 'environment'], text=True))")
         assert '"python"' in output
         error = execute("from finllm.runtime import restore_seed_checkpoint", expected_error="ModuleNotFoundError")
         assert "finllm" in error["evalue"]
-        evidence["old_live_kernel_import_error"] = error["ename"]
-        print("Notebook integration: reproduced old live-kernel import failure", flush=True)
+        evidence["unactivated_kernel_import_error"] = error["ename"]
+        print("Notebook integration: verified explicit kernel activation is required", flush=True)
         execute(bootstrap)
         execute("from finllm.runtime import restore_seed_checkpoint\nassert callable(restore_seed_checkpoint)")
         # Repeat execution in the SAME kernel is part of the user workflow.

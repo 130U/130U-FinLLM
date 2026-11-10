@@ -20,7 +20,7 @@ This command trains a small configuration on project-generated synthetic example
 | Data fields, eligibility, and partitions | [Data guide](DATA_GUIDE.md) · [Annotation template](../data/examples/annotation_template.jsonl) |
 | Initial source text, tokenizer, and shards | [Seed data](SEED_DATA.md) · [Preparation notebook](../notebooks/01a_seed_data.ipynb) |
 | Foundation training and expansion | [Model pilot](../notebooks/02a_seed_pilot.ipynb) · [Expanded training](../notebooks/02c_expanded_pretrain.ipynb) |
-| Financial-domain adaptation | [Domain handoff](DOMAIN_HANDOFF.md) · [Domain notebook](../notebooks/03a_domain_pretrain.ipynb) |
+| Financial-domain adaptation | [Domain handoff](DOMAIN_TRAINING.md) · [Domain notebook](../notebooks/03a_domain_pretrain.ipynb) |
 | Target-stance SFT | [Entity task](ENTITY_SFT_PILOT.md) · [Balanced-exposure script](../scripts/kaggle_balanced_sft.py) |
 | Calibration and prediction | [Inference-export script](../scripts/kaggle_inference_export.py) · [CLI](../src/finllm/cli.py) |
 

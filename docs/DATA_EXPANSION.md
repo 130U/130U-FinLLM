@@ -2,7 +2,7 @@
 
 Scope: public engineering documentation for the 24M Trial, covering the data and weight transfer for `expansion_v1`. See the [project overview](../README.md) for the broader project.
 
-Created on 2026-10-11; expansion results updated on 2026-10-30. These entry points build on the completed 300-step `seed_v1` run. The original data, 8192-token vocabulary, checkpoint, and report archives are retained; new artifacts live separately under `expansion_v1`. The user completed 01b, 02c, and 02d, reaching 1220 cumulative expansion steps and 19,988,195 effective tokens, with successful verification reported for the final snapshot. See the [1220-step record read back from the supplied output](../reports/colab_t4_expanded_continuation_20261030.json). The subsequent [03a financial stage](DOMAIN_HANDOFF.md) also completed 74 steps and 1,211,960 effective tokens. Task SFT results are documented separately in the [Trial experiment report](experiment-results.md).
+Created on 2026-10-11; expansion results updated on 2026-10-30. These entry points build on the completed 300-step `seed_v1` run. The original data, 8192-token vocabulary, checkpoint, and report archives are retained; new artifacts live separately under `expansion_v1`. The user completed 01b, 02c, and 02d, reaching 1220 cumulative expansion steps and 19,988,195 effective tokens, with successful verification reported for the final snapshot. See the [1220-step record read back from the supplied output](../reports/colab_t4_expanded_continuation_20261030.json). The subsequent [03a financial stage](DOMAIN_TRAINING.md) also completed 74 steps and 1,211,960 effective tokens. Task SFT results are documented separately in the [Trial experiment report](experiment-results.md).
 
 ## Execution Order
 
@@ -11,7 +11,7 @@ Created on 2026-10-11; expansion results updated on 2026-10-30. These entry poin
 3. Open [02c: expanded general pretraining](https://colab.research.google.com/github/130U/130U-FinLLM/blob/main/notebooks/02c_expanded_pretrain.ipynb), select a T4, authorize access, and run in order.
 4. 02c first measures the parent checkpoint's loss on a bounded portion of the original seed validation shards, verifies the first update of the new stage, and then trains to 610 cumulative updates in that stage. It finally remeasures loss on the same original validation shards and verifies and backs up the run snapshot.
 
-Both entry points include complete environment installation and an import check in the current kernel. 01b installs the project and `[data]` dependencies in a single pip transaction while retaining Colab's PyTorch; 02c installs the training dependencies. There is no need to repeat 01a, 02a, or 02b. The paths in the old `03_domain_pretrain.ipynb` still do not match these versions; do not run it directly.
+Both entry points include environment installation and an import check in the current kernel. 01b installs the project and `[data]` dependencies in a single pip transaction while retaining Colab's PyTorch; 02c installs the training dependencies. Continue this versioned path through [03a domain training](DOMAIN_TRAINING.md). The standalone `03_domain_pretrain.ipynb` uses the generic `tokenizer/english` and `runs/pretrain` layout.
 
 ## Sources and the Actual Increment
 
@@ -21,7 +21,7 @@ The expansion candidates include the old seed prefix and 2021–2024 minutes, so
 
 This stage reuses the original hash of `tokenizer/seed_v1/tokenizer.json`; it does not train a new tokenizer. Text is processed line by line, token shards use `uint16`, and training reads them through mmap. The full English Wikipedia is never materialized as an in-memory list. JSONL output limits exclude Parquet buffers, HTML and restoration caches, cleaned text, and checkpoints, so they are not a guarantee of total disk usage.
 
-The actual amount of new data must come from this run's `expansion_summary.json`. A small collection of macroeconomic minutes cannot automatically supply 25M unique financial tokens, and replay does not create new documents. 01b also prepares an 80% financial / 20% general `domain_mix` without cycling through source content; its size is limited by the financial source available. This 02c entry point does not use that mix to start the financial stage or generate bullish/bearish asset labels. Checkpoint handoff, configuration, and a notebook for the financial stage require a separate delivery.
+The actual amount of new data comes from the run's `expansion_summary.json`. Source availability bounds unique financial-token counts; replay does not create new documents. 01b prepares an 80% financial / 20% general `domain_mix` without cycling through source content. 02c trains the general expansion stage. [03a](DOMAIN_TRAINING.md) verifies the completed expansion checkpoint and initializes financial-domain training from its weights. Task labels and entity-stance SFT have separate preparation and validation contracts.
 
 ## Actual Local Preparation Results
 

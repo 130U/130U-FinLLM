@@ -21,7 +21,7 @@ The initial all-neutral failure remains in the experiment report. On the same de
 
 ## Data and task scope
 
-The human-review task contains 2,000 headlines: 1,993 confirmed decisions, including 114 exclusions; 7 unresolved records; and 1,879 three-class candidates. Literal-target requirements yielded a Trial pool of 1,008 examples, split into 705 training, 101 development, 101 calibration, and 101 test records. The calibration pool was further split into 51 temperature-fitting and 50 threshold-selection examples. See the [human-confirmation record](../reports/human_headline_review_20261030.json), [review definitions](TASK_REVIEW_NEXT.md), and [entity SFT entry point](ENTITY_SFT_PILOT.md).
+The human-review task contains 2,000 headlines: 1,993 confirmed decisions, including 114 exclusions; 7 unresolved records; and 1,879 three-class candidates. Literal-target requirements yielded a Trial pool of 1,008 examples, split into 705 training, 101 development, 101 calibration, and 101 test records. The calibration pool was further split into 51 temperature-fitting and 50 threshold-selection examples. See the [human-confirmation record](../reports/human_headline_review_20261030.json), [review definitions](TASK_REVIEW.md), and [entity SFT entry point](ENTITY_SFT_PILOT.md).
 
 The confirmed labels describe stance within the headline. They do not establish security identity, full-article stance, or future price direction. The existing partitions group text and supplied relationship identifiers; they are not chronological holdouts. Event-level semantic independence requires separate review. The target expressions supported by current code must not be used to infer a different historical training-set size.
 
@@ -38,6 +38,6 @@ DPO has an implementation and a small synthetic pipeline check, but no DPO resul
 
 The initial run artifacts were received in a verified private backup. Completion of balanced SFT and inference export is supported by user-supplied run outputs. The public repository supplies code, configurations, and summary records; private headlines, labels, weights, and backups are not published with it. See the [experiment report](experiment-results.md) for result attribution.
 
-The [CPU smoke](../reports/cpu_smoke_check.json), [full-configuration CPU check](../reports/full_config_cpu_check.json), [continuation checks](../reports/seed_continuation_checks.json), and [domain handoff checks](../reports/domain_handoff_checks_20261030.json) document engineering validation rather than task performance. Historical reports retain their original status. Early descriptions such as “awaiting review” or “SFT not started” are supplemented by subsequent run records.
+The [CPU smoke](../reports/cpu_smoke_check.json), [full-configuration CPU check](../reports/full_config_cpu_check.json), [continuation checks](../reports/seed_continuation_checks.json), and [domain training checks](../reports/domain_handoff_checks_20261030.json) document engineering validation. Each dated report records its measured inputs and completion state; the experiment report supplies the completed task results.
 
-Continue with the [training and data ledger](PROJECT_PROGRESS.md), [engineering handoff](HANDOFF.md), or [Trial technical specification](PLAN.md).
+Continue with the [training and data ledger](TRAINING_LEDGER.md), [engineering handoff](MAINTENANCE.md), or [Trial technical specification](TRIAL_SPEC.md).

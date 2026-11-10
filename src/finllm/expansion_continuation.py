@@ -313,9 +313,9 @@ def run_expansion_continuation(state, phase, runner):
     def resume_only(*arguments):
         if "--resume" not in arguments:
             raise ValueError("Expansion continuation requires an explicit strict resume")
-        # Existing expansion helper writes the config before invoking the CLI.
-        # Remove the old weights-transfer entry even though CLI --resume takes
-        # precedence: this notebook can never initialize a fresh model.
+        # The expansion helper writes the config before invoking the CLI.
+        # A continuation uses resume state exclusively and cannot initialize
+        # a fresh model from transfer weights.
         runtime_path = Path(arguments[2])
         config = json.loads(runtime_path.read_text(encoding="utf-8"))
         config.pop("init_checkpoint", None)

@@ -4,7 +4,7 @@ Scope: public engineering documentation for the 24M Trial, recording the expansi
 
 2026-10-11. Entry point: [02d_expanded_continue.ipynb](https://colab.research.google.com/github/130U/130U-FinLLM/blob/main/notebooks/02d_expanded_continue.ipynb).
 
-2026-10-30 update: the user completed this entry point, reaching 1220 cumulative expansion steps. Execution output saved on GitHub was independently read back; see the [1220-step record](../reports/colab_t4_expanded_continuation_20261030.json). The subsequent [03a financial stage](DOMAIN_HANDOFF.md) verified and inherited this parent checkpoint. The original 02d execution and recovery instructions are preserved below.
+The completed run reached 1220 cumulative expansion steps on 2026-10-30. Its execution output saved on GitHub was independently read back; see the [1220-step record](../reports/colab_t4_expanded_continuation_20261030.json). The [03a financial stage](DOMAIN_TRAINING.md) verifies and inherits this parent checkpoint through the execution and recovery contract below.
 
 User-supplied 02c logs showed 610 expansion steps, 9,994,240 supervised tokens, final training loss of 4.1933, and loss of 4.1311 on the new general validation subset. A later screenshot showed after-training loss of 4.4032 on the original seed retention subset and a final seven-file snapshot totaling 615,996,721 bytes with `verified: true`. See the [execution record](../reports/colab_t4_expansion_20261011.json) for the full evidence and its scope. The agent did not independently download the cloud checkpoint. The user did not provide the before value for the original validation set, so no improvement on that set is calculated.
 

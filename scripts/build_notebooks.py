@@ -60,8 +60,7 @@ from packaging.requirements import Requirement
 
 def tokenizer_install_requirements():
     # Colab can include Transformers even though this project does not use it.
-    # Pass its active tokenizer bounds to pip so an old runtime can retain 0.22,
-    # while a current runtime (or an already broken one) can use 0.23.
+    # Pass its active tokenizer bounds to pip and validate the shared environment.
     requirements = ["tokenizers>=0.21,<0.24"]
     try:
         existing = metadata.requires("transformers") or []
@@ -83,7 +82,7 @@ def check_tokenizer_compatibility(requirements):
     print("tokenizers compatibility check passed:", installed)
 
 def check_project_dependencies():
-    # Read the refreshed installed metadata, not the previous editable checkout.
+    # Validate the installed project metadata after dependency resolution.
     problems = []
     for value in metadata.requires("finllm-130u") or []:
         requirement = Requirement(value)
@@ -148,10 +147,8 @@ tokenizer_requirements = tokenizer_install_requirements()
 print("Active tokenizers constraints:", tokenizer_requirements)
 torch_version_before = metadata.version("torch")
 torch_file_before = Path(torch.__file__).resolve()
-# One resolver transaction replaces the previous finllm metadata AND its
-# dependencies. Upgrading tokenizers first leaves old finllm bounds active and
-# produces a misleading conflict warning even when the eventual install works.
-# The exact installed Torch build is constrained, so pip keeps Colab's CUDA build.
+# Resolve the project and tokenizer together while pinning the exact installed
+# Torch build to preserve Colab's CUDA environment.
 command(sys.executable, "-m", "pip", "install", "-q", "-e", ".",
         "torch==" + torch_version_before, *tokenizer_requirements)
 importlib.invalidate_caches()
