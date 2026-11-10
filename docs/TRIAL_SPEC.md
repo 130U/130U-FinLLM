@@ -43,13 +43,13 @@ Architecture references and adaptation provenance are retained in [THIRD_PARTY_N
 | DPO | Code and synthetic pipeline checks available | Real financial preference training is not among the completed experiments |
 | New independent final evaluation | No new result record yet | Event independence, time range, complete prediction pipeline |
 
-Actual language training consumed 26,115,096 valid supervised tokens. The earlier 100M foundation plus 25M domain tokens were historical Trial budgets; consumption and budgets are recorded separately. [Status](STATUS.md), the [counting ledger](PROJECT_PROGRESS.md), and the [experiment report](experiment-results.md) document executed runs.
+Actual language training consumed 26,115,096 valid supervised tokens. The earlier 100M foundation plus 25M domain tokens were historical Trial budgets; consumption and budgets are recorded separately. [Status](STATUS.md), the [counting ledger](TRAINING_LEDGER.md), and the [experiment report](experiment-results.md) document executed runs.
 
 ## Labels and partitions
 
 Of 2,000 reviewed headlines, 1,993 decisions were confirmed, including 114 exclusions. 7 remained unresolved, leaving 1,879 three-class candidates. The Trial selected 1,008 examples and split them into 705 training, 101 development, 101 calibration, and 101 test records. The calibration pool was further divided into 51 temperature-fitting and 50 threshold-selection examples.
 
-Human confirmation applies to headline-scope labels. 5 disagreements between headline and contextual AI judgments were retained; full-context AI comparisons are not full-article human gold. Security-identity checks, event grouping, and label review use different fields, and one completion flag cannot substitute for the others. See the [review definitions](TASK_REVIEW_NEXT.md) and [human-confirmation report](../reports/human_headline_review_20261030.json).
+Human confirmation applies to headline-scope labels. 5 disagreements between headline and contextual AI judgments were retained; full-context AI comparisons are not full-article human gold. Security-identity checks, event grouping, and label review use different fields, and one completion flag cannot substitute for the others. See the [review definitions](TASK_REVIEW.md) and [human-confirmation report](../reports/human_headline_review_20261030.json).
 
 Data processing groups normalized text, near-duplicates, and supplied relationship identifiers, and freezes task-exclusion manifests. The existing Trial split is not a chronological holdout and does not establish complete semantic event isolation. Evaluation-content exclusion must also be checked for tokenizer training and language corpora, not just overlap between SFT files. See the [data implementation](../src/finllm/data.py) and [data guide](DATA_GUIDE.md).
 
@@ -69,7 +69,7 @@ Resuming the same run restores its complete training state. Initializing a new s
 
 Calibration fits probability scaling on the temperature subset and selects a review threshold on the threshold subset. Results are bound to the checkpoint, tokenizer, and target mode. The executed Trial produced a temperature of approximately 1.50634 and a threshold of approximately 0.57380; these are not default settings for 2.4B. Positive temperature scaling preserves the class argmax, and calibration does not replace risk-and-coverage evaluation under a new distribution. See the [export script](../scripts/kaggle_inference_export.py).
 
-Public engineering checks cover label tokens, causal masks, supervision positions, finite values, checkpoint integrity, and restoration. Check records are kept separately from task results. See the [engineering handoff](HANDOFF.md) for continuation entry points.
+Public engineering checks cover label tokens, causal masks, supervision positions, finite values, checkpoint integrity, and restoration. Check records are kept separately from task results. See the [engineering handoff](MAINTENANCE.md) for continuation entry points.
 
 ## Data and references
 

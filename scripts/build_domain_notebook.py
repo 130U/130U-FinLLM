@@ -43,7 +43,7 @@ def build():
             PROJECT, DRIVE_ROOT, DOMAIN_VERSION, EXPANSION_VERSION, SEED_VERSION,
             min_parent_updates=MIN_PARENT_UPDATES, probe_updates=PROBE_UPDATES,
             target_updates=TARGET_UPDATES)
-        # Read the verified frozen parent checkpoint directly; an old screenshot is not a current Drive read.
+        # Read and verify the frozen parent checkpoint directly from Drive.
         parent_checkpoint = Path(domain["config"]["init_checkpoint"])
         parent_payload = load_checkpoint(parent_checkpoint, allow_previous=False)
         parent_audit = {

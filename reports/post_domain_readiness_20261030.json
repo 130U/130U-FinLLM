@@ -29,5 +29,5 @@
   ],
   "sft_started": false,
   "dpo_started": false,
-  "guide": "docs/POST_DOMAIN_NEXT.md"
+  "guide": "docs/DATA_IMPORT.md"
 }

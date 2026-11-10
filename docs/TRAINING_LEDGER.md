@@ -1,6 +1,6 @@
 # 24M public Trial | Training and data ledger
 
-This page summarizes actual inputs and outputs of the public Trial. Completion against an old budget does not describe the project as a whole. See the [project overview](PROJECT_OVERVIEW.md) and [model card](MODEL_CARD.md) for the private 2.4B version. All run counts below belong to 24M.
+This page summarizes actual inputs and outputs of the public Trial. Planned budgets and measured consumption are recorded separately. See the [project overview](PROJECT_OVERVIEW.md) and [model card](MODEL_CARD.md) for the private 2.4B version. All run counts below belong to 24M.
 
 ## Language training
 
@@ -27,7 +27,7 @@ The expanded stage's 1,220 updates include the earlier 610 updates. Cumulative v
 | Training / development / calibration / test | 705 / 101 / 101 / 101 | Four partitions of the same fixed task pool |
 | Temperature / threshold subsets | 51 / 50 | Fit temperature and select the review threshold separately |
 
-Sources: [human-confirmation record](../reports/human_headline_review_20261030.json), [review definitions](TASK_REVIEW_NEXT.md), and [entity-task documentation](ENTITY_SFT_PILOT.md).
+Sources: [human-confirmation record](../reports/human_headline_review_20261030.json), [review definitions](TASK_REVIEW.md), and [entity-task documentation](ENTITY_SFT_PILOT.md).
 
 A completed label review does not simultaneously validate full-article labels, security mappings, or event identity. The 1,008-example task pool is not the training set; there are 705 independent training examples.
 
