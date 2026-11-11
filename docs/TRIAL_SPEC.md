@@ -30,7 +30,7 @@ The actual Trial uses headline literal-entity target mode. This does not establi
 
 The backbone is a dense autoregressive decoder initialized at random, using GQA, RoPE, pre-RMSNorm, QK normalization, and SwiGLU. The tokenizer is a self-trained byte-level BPE. See the [model implementation](../src/finllm/model.py), [tokenizer](../src/finllm/tokenizer.py), and [model_24m.json](../configs/model_24m.json).
 
-Architecture references and adaptation provenance are retained in [THIRD_PARTY_NOTICES](../THIRD_PARTY_NOTICES.md), including MiniMind revision [f659b55761b754d306bd140573493a6543cafd7f](https://github.com/jingyaogong/minimind/tree/f659b55761b754d306bd140573493a6543cafd7f). Licensing and attribution remain separate from version positioning and do not change with the model scale described.
+Architecture references and adaptation provenance are retained in [THIRD_PARTY_NOTICES](THIRD_PARTY_NOTICES.md), including MiniMind revision [f659b55761b754d306bd140573493a6543cafd7f](https://github.com/jingyaogong/minimind/tree/f659b55761b754d306bd140573493a6543cafd7f). Licensing and attribution remain separate from version positioning and do not change with the model scale described.
 
 ## Stages and observed status
 

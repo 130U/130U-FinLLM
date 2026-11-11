@@ -4,7 +4,7 @@ Reference: jingyaogong/minimind @ f659b55761b754d306bd140573493a6543cafd7f,
 model/model_minimind.py. Modified for 130U-FinLLM in 2026: native PyTorch
 configuration, fixed dense architecture, explicit padding-safe causal attention,
 no Transformers, generation cache, MoE, hidden downloads, or internal loss shift.
-See THIRD_PARTY_NOTICES.md and LICENSE.
+See docs/THIRD_PARTY_NOTICES.md and LICENSE.
 """
 
 from dataclasses import dataclass

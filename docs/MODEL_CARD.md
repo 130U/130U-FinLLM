@@ -46,4 +46,4 @@ Model weights, tokenizer, task protocol, calibration parameters, and training st
 
 ## Code provenance and licensing
 
-The public Trial backbone references a fixed MiniMind revision; modifications are documented in the [third-party notices](../THIRD_PARTY_NOTICES.md). Code is licensed under [Apache-2.0](../LICENSE). Corpora, derived data, and model weights have separately tracked provenance and usage conditions.
+The public Trial backbone references a fixed MiniMind revision; modifications are documented in the [third-party notices](THIRD_PARTY_NOTICES.md). Code is licensed under [Apache-2.0](../LICENSE). Corpora, derived data, and model weights have separately tracked provenance and usage conditions.

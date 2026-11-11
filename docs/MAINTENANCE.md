@@ -37,4 +37,4 @@ Freeze new examples for further independent evaluation. Previously examined test
 
 ## Preservation and publication
 
-Retain experiment protocols, measured results, and the provenance required to interpret them. [Status](STATUS.md) and the [experiment report](experiment-results.md) supply later updates. Public code licensing and third-party attribution are in [LICENSE](../LICENSE) and [THIRD_PARTY_NOTICES](../THIRD_PARTY_NOTICES.md). Data use follows the [data guide](DATA_GUIDE.md) and the conditions of each source.
+Retain experiment protocols, measured results, and the provenance required to interpret them. [Status](STATUS.md) and the [experiment report](experiment-results.md) supply later updates. Public code licensing and third-party attribution are in [LICENSE](../LICENSE) and [THIRD_PARTY_NOTICES](THIRD_PARTY_NOTICES.md). Data use follows the [data guide](DATA_GUIDE.md) and the conditions of each source.

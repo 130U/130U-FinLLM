@@ -63,4 +63,4 @@ The smoke command uses a small synthetic configuration to exercise tokenization,
 
 ## License and provenance
 
-Public code is licensed under [Apache-2.0](LICENSE). The Trial backbone builds on MiniMind; attribution and modifications are documented in [THIRD_PARTY_NOTICES](THIRD_PARTY_NOTICES.md). Data and model-weight licenses are managed separately from the code license.
+Public code is licensed under [Apache-2.0](LICENSE). The Trial backbone builds on MiniMind; attribution and modifications are documented in [THIRD_PARTY_NOTICES](docs/THIRD_PARTY_NOTICES.md). Data and model-weight licenses are managed separately from the code license.
